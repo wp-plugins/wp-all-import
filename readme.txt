@@ -1,4 +1,4 @@
-=== WP All Import Lite ===
+=== WP All Import ===
 Contributors: soflyy
 Tags: wordpress, xml, csv, datafeed, import
 Requires at least: 3.0
