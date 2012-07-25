@@ -1,13 +1,23 @@
-=== WP All Import ===
+=== WP All Import Lite ===
 Contributors: soflyy
 Tags: wordpress, xml, csv, datafeed, import
 Requires at least: 3.0
 Tested up to: 3.4.1
 Stable tag: 2.12
 
-Create Posts/Pages with content from any XML or CSV file.
+The most powerful tool for importing any CSV or XML file to WordPress.
 
 == Description ==
+
+= WP All Import Professional Edition =
+
+[Upgrade to the professional edition of WP All Import](http://www.wpallimport.com/upgrade-to-pro)
+
+*WP All Import* is a **significant upgrade** that adds many features to WP All Import Lite:
+
+[Demo Video](http://www.wpallimport.com/) | [[Pricing](http://www.wpallimport.com/order-now/)
+
+
 Long description here. 
 
 
