@@ -1,25 +1,28 @@
-﻿=== WP All Import ===
-Contributors: Soflyy
-Tags: xml, csv, import
-Requires at least: 2.9
+=== WP All Import ===
+Contributors: soflyy
+Tags: wordpress, xml, csv, datafeed, import
+Requires at least: 3.0
 Tested up to: 3.4.1
 Stable tag: 2.12
 
-The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs.
+Create Posts/Pages with content from any XML or CSV file.
 
 == Description ==
+Long description here. 
 
 
 = Features =
 
-= Technical support =
+= Technical Support =
 
 
 
 == Installation ==
 
-1. Upload `wpallimport` folder to the `/wp-content/plugins/` directory.
-2. Activate the plugin through the 'Plugins' menu in WordPress.
+Either: -
+	* Upload the plugin from the Plugins page in WordPress
+	* Unzip wp-all-import.zip and upload the contents to /wp-content/plugins/, and then activate the plugin from the Plugins page in WordPress
+
 
 == Frequently Asked Questions ==
 
@@ -33,3 +36,5 @@ The most powerful solution for importing XML and CSV files to WordPress. Create 
 
 == Changelog ==
 
+= 2.12 =
+* Initial release on WordPress.org.
