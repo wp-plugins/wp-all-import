@@ -1,9 +1,10 @@
-﻿=== WP All Import ===
+=== WP All Import ===
 Contributors: Soflyy
 Tags: xml, csv, import
 Requires at least: 2.9
 Tested up to: 3.4.1
 Stable tag: 2.12
+Contributors: bestwebsoft, soflyy
 
 The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs.
 
