@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro
 Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs. Free lite edition.
-Version: 2.12
+Version: 2.13
 Author: Soflyy
 */
 /**
@@ -63,6 +63,8 @@ final class PMXI_Plugin {
 	 * @var string
 	 */
 	const FILE = __FILE__;
+
+	public static $csv_mimes = array('text/comma-separated-values','text/csv','application/csv','application/excel','application/vnd.ms-excel','application/vnd.msexcel','text/anytext', 'text/plain');
 
 	/**
 	 * Return singletone instance
@@ -322,8 +324,6 @@ final class PMXI_Plugin {
 			}
 		}
 
-		$this->__ver_2_06_load_options_add();
-
 		return FALSE;
 	}
 
@@ -413,18 +413,6 @@ final class PMXI_Plugin {
 	}
 
 	/**
-	 *
-	 *
-	 *
-	 */
-	public function __ver_2_06_load_options_add() {
-		$table = $table = $this->getTablePrefix() . 'templates';
-		global $wpdb;
-		$wpdb->query("ALTER TABLE {$table} ADD options TEXT NOT NULL");
-		$wpdb->query("ALTER TABLE {$table} ADD scheduled VARCHAR(64) NOT NULL");
-	}
-
-	/**
 	 * Method returns default import options, main utility of the method is to avoid warnings when new
 	 * option is introduced but already registered imports don't have it
 	 */
@@ -433,16 +421,14 @@ final class PMXI_Plugin {
 			'type' => 'post',
 			'custom_type' => '',
 			'categories' => '',
-			'categories_delim' => ',',
 			'tags' => '',
 			'tags_delim' => ',',
 			'post_taxonomies' => array(),
-			'post_taxonomies_delim' => array(),
 			'parent' => '',
 			'order' => '0',
 			'status' => 'publish',
+			'page_template' => 'default',
 			'page_taxonomies' => array(),
-			'page_taxonomies_delim' => array(),
 			'date_type' => 'specific',
 			'date' => 'now',
 			'date_start' => 'now',
@@ -473,6 +459,27 @@ final class PMXI_Plugin {
 			'is_scheduled' => '',
 			'scheduled_period' => ''
 		);
+	}
+
+	/*
+	 * Convert csv to xml using yahoo API
+	 */
+	public static function csv_to_xml($csv_url){
+
+		include_once(self::ROOT_DIR.'/libraries/XmlImportCsvParse.php');
+
+		$csv = new PMXI_CsvParser($csv_url);
+
+		return $csv->toXML();
+
+	}
+	/*
+	*
+	* Detect CSV file
+	*
+	*/
+	public static function detect_csv($type){
+		return in_array($type, self::$csv_mimes);
 	}
 }
 
