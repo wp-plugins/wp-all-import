@@ -48,10 +48,11 @@ CREATE TABLE {$table_prefix}imports (
 	PRIMARY KEY  (id)
 ) $charset_collate;
 CREATE TABLE {$table_prefix}posts (
+	id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
 	post_id BIGINT(20) UNSIGNED NOT NULL,
 	import_id BIGINT(20) UNSIGNED NOT NULL,
 	unique_key TEXT,
-	PRIMARY KEY  (post_id)
+	PRIMARY KEY  (id)
 ) $charset_collate;
 CREATE TABLE {$table_prefix}files (
 	id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
