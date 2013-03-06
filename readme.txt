@@ -5,7 +5,7 @@ Requires at least: 3.0
 Tested up to: 3.4.2
 Stable tag: 2.14
 
-The most powerful tool for importing any CSV or XML feed to WordPress. -- tag
+The most powerful tool for importing any CSV or XML feed to WordPress. --tag
 
 == Description ==
 
