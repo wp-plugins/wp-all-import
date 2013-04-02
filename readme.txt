@@ -13,13 +13,12 @@ WP All Import is an extremely powerful plugin that makes it easy to import any X
 
 WP All Import has a four step import process and an intuitive drag & drop interface that makes complicated import tasks simple and fast.
 
-[youtube http://www.youtube.com/watch?v=5YYZyYmX3yg /]
-
 There are no special requirements that the elements in your file must be laid out in a certain way. WP All Import really can import any XML or CSV file.
 
 WP All Import can be used for everything from building a store with an affiliate datafeed to displaying live stock quotes or sports scores to building a real estate portal.
 
 = WP All Import Professional Edition =
+[youtube http://www.youtube.com/watch?v=5YYZyYmX3yg /]
 
 *WP All Import Pro* is a $99 upgrade that adds the following features to the free version of WP All Import:
 
