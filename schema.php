@@ -34,6 +34,7 @@ CREATE TABLE {$table_prefix}templates (
 	content LONGTEXT,
 	is_keep_linebreaks TINYINT(1) NOT NULL DEFAULT 0,
 	is_leave_html TINYINT(1) NOT NULL DEFAULT 0,
+	fix_characters TINYINT(1) NOT NULL DEFAULT 0,
 	PRIMARY KEY  (id)
 ) $charset_collate;
 CREATE TABLE {$table_prefix}imports (

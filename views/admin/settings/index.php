@@ -5,7 +5,7 @@
 <?php if ($this->errors->get_error_codes()): ?>
 	<?php $this->error() ?>
 <?php endif ?>
-	
+
 <h3><?php _e('Saved Templates', 'pmxi_plugin') ?></h3>
 <?php $templates = new PMXI_Template_List(); $templates->getBy()->convertRecords() ?>
 <?php if ($templates->total()): ?>
@@ -39,7 +39,25 @@
 <div><?php printf(__('max_input_time %s', 'pmxi_plugin'), ini_get('max_input_time')) ?></div>
 
 <h3><?php _e('Recurring & Scheduled Imports', 'pmxi_plugin') ?></h3>
-<a href="http://www.wpallimport.com/upgrade-to-pro?from=upi" target="_blank" class="upgrade_link">Upgrade to the paid edition of WP All Import to use this feature.</a>
+
+
+							<hr />
+
+							<h3>Please upgrade to the professional edition of WP All Import to perform recurring and scheduled imports.</h3>
+
+							<p>WP All Import can periodically check your XML/CSV for updates on the schedule you define, and overwrite your existing import with new data. New posts will be made for new entries in the XML/CSV. Entries that haven't changed will be left alone. WP All Import can even delete "expired" posts (if their data is no longer in the updated XML/CSV).</p>
+
+							<p>You can configure recurring imports from within WP All Import, or by setting up a cron job in your web hosting control panel.</p>
+
+							<p>WP All Import can perform recurring imports with a file online at an http:// URL, or a file on an FTP server.</p>
+
+							<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=recurring&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+
+							<hr />
+
+
+<h3><?php _e('Import Settings', 'pmxi_plugin') ?></h3>
+<div><?php printf(__('Chunk maximum size %s (Kb)', 'pmxi_plugin'), '<input type="text" name="chunk_size" value="' . esc_attr($post['chunk_size']) . '"/>') ?></div>
 <p class="submit-buttons">
 	<?php wp_nonce_field('edit-settings', '_wpnonce_edit-settings') ?>
 	<input type="hidden" name="is_settings_submitted" value="1" />

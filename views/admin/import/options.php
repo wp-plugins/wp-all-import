@@ -13,7 +13,11 @@
 					$i++;
 					?>
 		            <li id="item_<?php echo $i; ?>">
-		            	<div class="drag-element"><input type="checkbox" class="assign_post" <?php if ($child_cat->assign): ?>checked="checked"<?php endif; ?>/><input class="widefat" type="text" value="<?php echo $child_cat->xpath; ?>"/></div><a href="javascript:void(0);" class="icon-item remove-ico"></a>
+		            	<div class="drag-element">
+		            		<input type="checkbox" class="assign_post" <?php if ($child_cat->assign): ?>checked="checked"<?php endif; ?> title="<?php _e('Assign post to the taxonomy.','pmxi_plugin');?>"/>
+		            		<input class="widefat" type="text" value="<?php echo esc_attr($child_cat->xpath); ?>"/>
+		            	</div>
+		            	<a href="javascript:void(0);" class="icon-item remove-ico"></a>
 		            	<?php echo reverse_taxonomies_html($post_taxonomies, $child_cat->item_id, $i); ?>
 		            </li>
 					<?php
@@ -86,7 +90,7 @@
 								include( 'options/_custom_fields_template.php' );
 								include( 'options/_featured_template.php' );
 								include( 'options/_author_template.php' );
-								include( 'options/_reimport_template.php' );								
+								include( 'options/_reimport_template.php' );
 							?>
 						</table>
 					</div>
@@ -129,7 +133,7 @@
 								$entry = 'page';
 								include( 'options/_taxonomies_template.php' );
 								include( 'options/_featured_template.php' );
-								include( 'options/_reimport_template.php' );								
+								include( 'options/_reimport_template.php' );
 							?>
 						</table>
 					</div>
@@ -144,8 +148,41 @@
 			<?php if (count($custom_types)): ?>
 				<?php foreach ($custom_types as $key => $ct): ?>
 					<div id="tabs-<?php echo $key;?>">
-						
-						<p><a href="http://www.wpallimport.com/upgrade-to-pro?from=upi" target="_blank" class="upgrade_link">Upgrade to the paid edition of WP All Import to use this feature.</a></p>
+
+						<center>
+
+							<h3>Please upgrade to the professional edition of WP All Import to import to Custom Post Types.</h3>
+
+							<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-post-types&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+
+							<hr />
+
+						</center>
+
+
+						<form class="options <?php echo ! $this->isWizard ? 'edit' : '' ?>" method="post">
+							<input type="hidden" name="custom_type" value="post"/>
+							<input type="hidden" name="type" value="post"/>
+							<div class="post-type-options">
+								<table class="form-table" style="max-width:none;">
+									<?php
+										$post_type = $entry = $key;
+
+										include( 'options/_main_options_template.php' );
+										include( 'options/_taxonomies_template.php' );
+										include( 'options/_categories_template.php' );
+										include( 'options/_custom_fields_template.php' );
+										include( 'options/_featured_template.php' );
+										include( 'options/_author_template.php' );
+										include( 'options/_reimport_template.php' );
+										include( 'options/_scheduling_template.php' );
+									?>
+								</table>
+							</div>
+
+							<?php include( 'options/_buttons_template.php' ); ?>
+
+						</form>
 
 					</div>
 				<?php endforeach ?>

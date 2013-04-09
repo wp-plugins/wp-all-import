@@ -46,6 +46,27 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		
 		$this->render();
 	}
+
+	public function dismiss(){
+
+		PMXI_Plugin::getInstance()->updateOption("dismiss", 1);
+
+		exit('OK');
+	}
+
+	public function dismiss_manage_top(){
+
+		PMXI_Plugin::getInstance()->updateOption("dismiss_manage_top", 1);
+
+		exit('OK');
+	}
+
+	public function dismiss_manage_bottom(){
+
+		PMXI_Plugin::getInstance()->updateOption("dismiss_manage_bottom", 1);
+
+		exit('OK');
+	}
 	
 	/**
 	 * upload.php

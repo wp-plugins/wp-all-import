@@ -13,14 +13,24 @@
 			<input type="checkbox" id="create_draft_<?php echo $entry; ?>" name="create_draft" value="yes" <?php echo 'yes' == $post['create_draft'] ? 'checked="checked"' : '' ?> disabled="disabled"/>
 			<label for="create_draft_<?php echo $entry; ?>"><?php _e('<small>If no images are downloaded successfully, create entry as Draft.</small>', 'pmxi_plugin') ?></label>
 		</div>
-		<a href="http://www.wpallimport.com/upgrade-to-pro?from=upi" target="_blank" class="upgrade_link">Upgrade to the paid edition of WP All Import to use this feature.</a>
+
+						<center>
+
+							<hr />
+
+							<b>Please upgrade to the professional edition of WP All Import to download and import images to the post media gallery.</b>
+
+							<p style='font-size: 1.1em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=featured-images&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+
+						</center>
+
 		<h3>
 			<?php _e('Download & Import Attachments', 'pmxi_plugin') ?>
 			<span class="separated_by">Separated by</span>
 		</h3>
 		<div>
-			<input type="text" name="attachments" style="width:92%;" value="<?php echo esc_attr($post['attachments']) ?>" />
-			<input type="text" class="small" name="atch_delim" maxlength="1" value="<?php echo esc_attr($post['atch_delim']) ?>" style="width:5%; text-align:center;"/>
+			<input type="text" name="attachments" style="width:92%;" value="<?php echo esc_attr($post['attachments']) ?>" <?php echo ($post_type != "post") ? 'disabled="disabled"' : '';?>/>
+			<input type="text" class="small" name="atch_delim" maxlength="1" value="<?php echo esc_attr($post['atch_delim']) ?>" style="width:5%; text-align:center;" <?php echo ($post_type != "post") ? 'disabled="disabled"' : '';?>/>
 		</div>
 		<br>
 	</td>

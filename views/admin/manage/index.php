@@ -4,6 +4,19 @@
 	<a href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import'), admin_url('admin.php'))) ?>" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" style="font-size:15px; padding:10px 20px; text-decoration:none;"><?php echo esc_html_x('New Import', 'pmxi_plugin'); ?></a>
 </h2>
 
+<?php
+	// notify user
+	if (!PMXI_Plugin::getInstance()->getOption('dismiss_manage_top')) {
+		?>
+		<div class="updated"><p>
+			<?php printf(
+					__('Need help with WP All Import? Please visit <a href="http://www.wpallimport.com/support">http://www.wpallimport.com/support</a> or send an e-mail to <a href="mailto:support@soflyy.com">support@soflyy.com</a>. We give priority to professional edition customers, but we respond to most inquiries from free version users within 24 hours during business days.<br/><br/>Please note that we are unable to handle technical support requests in the WordPress.org community forums. <br/><br/><a href="javascript:void(0);" id="dismiss_manage_top"><u>dismiss</u></a>', 'pmxi_plugin')
+			) ?>
+		</p></div>
+		<?php
+	}
+?>
+
 <?php if ($this->errors->get_error_codes()): ?>
 	<?php $this->error() ?>
 <?php endif ?>
@@ -26,7 +39,7 @@ $columns = array(
 	'post_count'	=> __('Records', 'pmxi_plugin'),
 	'first_import'	=> __('First Import', 'pmxi_plugin'),
 	'registered_on'	=> __('Last Import', 'pmxi_plugin'),
-	/*'scheduled'		=> __('Reimport Schedule', 'pmxi_plugin'),	
+	/*'scheduled'		=> __('Reimport Schedule', 'pmxi_plugin'),
 	'next_import'	=> __('Next Import', 'pmxi_plugin'),*/
 );
 ?>
@@ -92,7 +105,7 @@ $columns = array(
 			<tr>
 				<td colspan="<?php echo count($columns) + 1 ?>"><?php _e('No previous imports found.', 'pmxi_plugin') ?></td>
 			</tr>
-		<?php else: ?>			
+		<?php else: ?>
 			<?php $class = ''; foreach ($list as $item): ?>
 				<?php $class = ('alternate' == $class) ? '' : 'alternate'; ?>
 				<tr class="<?php echo $class; ?>" valign="middle">
@@ -108,7 +121,7 @@ $columns = array(
 									<?php echo $item['id'] ?>
 								</th>
 								<?php
-								break;							
+								break;
 							case 'first_import':
 								?>
 								<td>
@@ -157,7 +170,7 @@ $columns = array(
 
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl)) ?>"><?php _e('Edit Template', 'pmxi_plugin') ?></a></span> |
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"><?php _e('Edit Options', 'pmxi_plugin') ?></a></span> |
-										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"><?php _e('Update', 'pmxi_plugin') ?></a></span> |										
+										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"><?php _e('Update', 'pmxi_plugin') ?></a></span> |
 										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php'))) ?>"><?php _e('Use New File', 'pmxi_plugin') ?></a></span> |
 										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'log'), $this->baseUrl)) ?>"><?php _e('Download Log', 'pmxi_plugin') ?></a></span> |
 										<span class="delete"><a class="delete" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'delete'), $this->baseUrl)) ?>"><?php _e('Delete', 'pmxi_plugin') ?></a></span>
@@ -215,5 +228,22 @@ $columns = array(
 		</div>
 	</div>
 	<div class="clear"></div>
-	<a href="http://www.wpallimport.com/upgrade-to-pro?from=upi" target="_blank" class="upgrade_link">Upgrade to the paid edition of WP All Import to use this feature.</a>
+	<?php
+	// notify user
+	if (!PMXI_Plugin::getInstance()->getOption('dismiss_manage_bottom')) {
+		?>
+		<div class="updated_bottom"><p>
+			<?php printf(
+					__('<a href="http://wordpress.org/extend/plugins/wp-all-import" target="_blank">If you like WPAllImport, please rate us five stars on WordPress.org!</a> <a href="http://wordpress.org/extend/plugins/wp-all-import" class="pmxi_stars" target="_blank"></a> <br/><br/><a href="javascript:void(0);" id="dismiss_manage_bottom">dismiss</a>', 'pmxi_plugin')
+			) ?>
+		</p></div>
+		<?php
+	}
+	?>
+
+
+
+		<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=manage&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Find out more about the professional edition of WP All Import.</a></p>
+
+
 </form>

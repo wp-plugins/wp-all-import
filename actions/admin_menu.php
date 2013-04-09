@@ -14,8 +14,7 @@ function pmxi_admin_menu() {
 		add_submenu_page('pmxi-admin-home', __('Import XML', 'pmxi_plugin') . ' &lsaquo; ' . __('WP All Import', 'pmxi_plugin'), __('New Import', 'pmxi_plugin'), 'manage_options', 'pmxi-admin-import', array(PMXI_Plugin::getInstance(), 'adminDispatcher'));
 		add_submenu_page('pmxi-admin-home', __('Manage Previous Imports', 'pmxi_plugin') . ' &lsaquo; ' . __('WP All Import', 'pmxi_plugin'), __('Manage Imports', 'pmxi_plugin'), 'manage_options', 'pmxi-admin-manage', array(PMXI_Plugin::getInstance(), 'adminDispatcher'));
 		add_submenu_page('pmxi-admin-home', __('Settings', 'pmxi_plugin') . ' &lsaquo; ' . __('WP All Import', 'pmxi_plugin'), __('Settings', 'pmxi_plugin'), 'manage_options', 'pmxi-admin-settings', array(PMXI_Plugin::getInstance(), 'adminDispatcher'));
-		// add_submenu_page('pmxi-admin-home', __('WP All Import', 'pmxi_plugin'), __('About', 'pmxi_plugin'), 'manage_options', 'pmxi-admin-home', array(PMXI_Plugin::getInstance(), 'adminDispatcher'));
-		// add_submenu_page('pmxi-admin-home', __('Help', 'pmxi_plugin') . ' &lsaquo; ' . __('WP All Import', 'pmxi_plugin'), __('Help', 'pmxi_plugin'), 'manage_options', 'pmxi-admin-help', array(PMXI_Plugin::getInstance(), 'adminDispatcher'));
+		add_submenu_page('pmxi-admin-home', __('Support', 'pmxi_plugin') . ' &lsaquo; ' . __('WP All Import', 'pmxi_plugin'), __('Support', 'pmxi_plugin'), 'manage_options', 'pmxi-admin-help', array(PMXI_Plugin::getInstance(), 'adminDispatcher'));
 
 	}
 }

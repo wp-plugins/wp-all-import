@@ -1,9 +1,9 @@
 <?php
 /*
-Plugin Name: WP All Import Lite
-Plugin URI: http://www.wpallimport.com/
+Plugin Name: WP All Import
+Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description:  The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs. Free lite edition.
-Version: 3.0
+Version: 3.01
 Author: Soflyy
 */
 /**
@@ -496,11 +496,14 @@ final class PMXI_Plugin {
 		global $wpdb;
 		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
 		$is_leave_html = false;
+		$fix_characters = false;
 		// Check if field exists
 		foreach ($tablefields as $tablefield) {
 			if ('is_leave_html' == $tablefield->Field) $is_leave_html = true;
+			if ('fix_characters' == $tablefield->Field) $fix_characters = true;
 		}
 		if (!$is_leave_html) $wpdb->query("ALTER TABLE {$table} ADD `is_leave_html` TINYINT( 1 ) NOT NULL DEFAULT '0';");
+		if (!$fix_characters) $wpdb->query("ALTER TABLE {$table} ADD `fix_characters` TINYINT( 1 ) NOT NULL DEFAULT '0';");
 
 	}
 
@@ -516,6 +519,7 @@ final class PMXI_Plugin {
 			'tags' => '',
 			'tags_delim' => ',',
 			'categories_delim' => ',',
+			'categories_auto_nested' => 0,
 			'featured_delim' => ',',
 			'atch_delim' => ',',
 			'post_taxonomies' => array(),

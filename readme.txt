@@ -3,9 +3,9 @@ Contributors: soflyy
 Tags: wordpress, xml, csv, datafeed, import
 Requires at least: 3.5
 Tested up to: 3.5.1
-Stable tag: 3.0
+Stable tag: 3.01
 
-WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress. WP All Import has a four step import process and an intuitive drag & drop interface that makes complicated import tasks simple and fast. 
+WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress. 
 
 == Description ==
 
@@ -34,9 +34,10 @@ WP All Import can be used for everything from building a store with an affiliate
 
 * URL and FTP imports are integrated with the recurring/cron imports feature, so WP All Import can periodically re-download the files and add, edit, and delete posts accordingly.
 
+* Execution of Custom PHP Functions on data, i.e. use something like [my_function({xpath/to/a/field[1]})] in your template, to pass the value of {xpath/to/a/field[1]} to my_function and display whatever it returns.
+
 * Pro version customers also get access to our customer portal with documentation and tutorials, and e-mail technical support.
 
-* (custom PHP functions, probably)
 
 [Upgrade to the professional edition of WP All Import.](http://www.wpallimport.com/upgrade-to-pro)
 

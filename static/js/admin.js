@@ -419,6 +419,11 @@
     	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
     });
 
+    $('.taxonomy_auto_nested').live('click', function(){
+    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('td:first').find('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
+    	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
+    });
+    
 	$('.sortable').find('.remove-ico').live('click', function(){
 	 	
 	 	var parent_td = $(this).parents('td:first');

@@ -14,7 +14,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		try{
 			$path = session_save_path(); 
-			if ( ! is_dir($path) or ! is_writable($path)){
+			if ( ! @is_dir($path) or ! @is_writable($path)){
 				@ini_set("session.save_handler", "files");
 				session_save_path(sys_get_temp_dir());	
 			}
@@ -122,22 +122,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			'large_file' => '',
 			'filepath' => '',
 			'root_element' => ''
-		));
-				
-		$this->data['history'] = $history = new PMXI_File_List();
-		$history->setColumns('id', 'name', 'registered_on', 'path')->getBy(NULL, 'id DESC');
-		
-		if ($history->count())
-		{
-			$uploads = wp_upload_dir();			
-			foreach ($history as $file){
-				if (file_exists(PMXI_Plugin::ROOT_DIR . '/history/' . $file['id']) and !file_exists($uploads['basedir']  . '/wpallimport_history/' . $file['id']))
-				{
-					$fdata = @file_get_contents(PMXI_Plugin::ROOT_DIR . '/history/' . $file['id']);								
-					@file_put_contents($uploads['basedir']  . '/wpallimport_history/' . $file['id'], $fdata);										
-				}						
-			}
-		}
+		));						
 
 		if ($this->input->post('is_submitted_continue')) { 
 			if ( ! empty($_SESSION['pmxi_import']['xml'])) {
@@ -291,9 +276,11 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		if ($this->input->post('is_submitted') and ! $this->errors->get_error_codes()) {
 			
-			check_admin_referer('choose-file', '_wpnonce_choose-file');			
+			check_admin_referer('choose-file', '_wpnonce_choose-file');
 
-			$elements_cloud = array();					 								
+			$elements_cloud = array();
+
+			$is_validate = true;
 			
 			if (empty($xml)){
 
@@ -320,9 +307,9 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					      		PMXI_Import_Record::preprocessXml($chunk_xml);	      						      							      					      		
 						      	if ( ! $chunks ){ // save first chunk to the file
 							      	$chunk_path = $wp_uploads['path'] .'/'. wp_unique_filename($wp_uploads['path'], "chunk_".basename($path));
-									if (file_exists($chunk_path)) unlink($chunk_path);				  	
-								    file_put_contents($chunk_path, '<?xml version="1.0" encoding="utf-8"?>'."\n".$chunk_xml);
-								    chmod($chunk_path, 0755);
+									file_put_contents($chunk_path, $file->encoding . "\n" . $chunk_xml);
+									chmod($chunk_path, 0755);
+								    $is_validate = $file->is_validate;
 								}							
 							    $chunks++;
 						    }
@@ -359,7 +346,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				}								   
 			}				
 			
-			if ((empty($post['large_file']) and PMXI_Import_Record::validateXml($xml, $this->errors)) or (!empty($post['large_file']) and !empty($chunks))) {
+			if ((!$is_validate or PMXI_Import_Record::validateXml($xml, $this->errors)) and (empty($post['large_file']) or (!empty($post['large_file']) and !empty($chunks)))) {
 				// xml is valid
 				if (!empty($post['large_file'])){
 					$source['large_import'] = 'Yes';
@@ -375,6 +362,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				$_SESSION['pmxi_import'] = array(
 					'xml' => $xml,
 					'filePath' => $filePath,
+					'xpath' => (!empty($xpath)) ? $xpath : '',
 					'source' => $source,					
 					'large_file' => (!empty($post['large_file'])) ? true : false,
 					'chunk_number' => 1,
@@ -410,7 +398,10 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
 
 			}
-		}
+			else {
+				$this->errors->add('form-validation', __('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@soflyy.com">support@soflyy.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'pmxi_plugin')); 
+			}
+		}		
 		
 		$this->render();
 	}
@@ -450,10 +441,11 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			}
 
 			if ( ! $this->errors->get_error_codes()) {
+
 				$_SESSION['pmxi_import']['xpath'] = $post['xpath'];
 				// counting element selected by xPath
-				if ($_SESSION['pmxi_import']['large_file']){
-					
+				if ($_SESSION['pmxi_import']['large_file']){									
+
 					$_SESSION['pmxi_import']['count'] = 0;
 
 					$this->data['node_list_count'] = 0;
@@ -468,7 +460,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					    while ($xml = $file->read()) {					      						    					    					    	
 					    	
 					    	if (!empty($xml))
-					      	{				
+					      	{					
+					      		$xml = $file->encoding . "\n" . $xml;		      	
 					      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
 								
 						      	$dom = new DOMDocument('1.0', 'UTF-8');															
@@ -497,10 +490,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				wp_redirect(add_query_arg('action', 'template', $this->baseUrl)); die();
 			}
 		} else {
-
-			//$this->shrink_xml_element($this->data['dom']->documentElement);
-
-			if (isset($_SESSION['pmxi_import']['xpath'])) {
+			
+			if (isset($_SESSION['pmxi_import']['xpath']) and $_SESSION['pmxi_import']['large_file']) {
 				$post['xpath'] = $_SESSION['pmxi_import']['xpath'];
 				$this->data['elements'] = $elements = $xpath->query($post['xpath']);
 				if ( ! $elements->length and ! empty($_SESSION['pmxi_import']['update_previous'])) {
@@ -542,17 +533,20 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			$this->errors->add('form-validation', __('No elements selected', 'pmxi_plugin'));
 		} else {			
 			// counting selected elements
-			if ($_SESSION['pmxi_import']['large_file']){ // in large mode				
+			if ($_SESSION['pmxi_import']['large_file']){ // in large mode											
+
+				if ($post['show_element'] == 1) {
+					$_SESSION['pmxi_import']['count'] = $this->data['node_list_count'] = 0;					 
+				}
+				else
+					$this->data['node_list_count'] = $_SESSION['pmxi_import']['count'];
 				
-				$this->data['node_list_count'] = 0;				
-
-				$_SESSION['pmxi_import']['count'] = 0;
-
+							
 				$xpath_elements = explode('[', $post['xpath']);
 				$xpath_parts = explode('/', $xpath_elements[0]);				
 				
 				$_SESSION['pmxi_import']['source']['root_element'] = $xpath_parts[count($xpath_parts) - 1];
-				
+
 				$loop = 1; 
 
 				foreach ($_SESSION['pmxi_import']['local_paths'] as $key => $path) {
@@ -560,28 +554,35 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					$file = new PMXI_Chunk($path, array('element' => $_SESSION['pmxi_import']['source']['root_element'], 'path' => $wp_uploads['path']));								    
 				    // loop through the file until all lines are read				    				    			   				    
 				    while ($xml = $file->read()) {					      						    					    					    	
-				    	
+										    	
 				    	if (!empty($xml))
-				      	{				
-				      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
+				      	{							      		
+				      		$xml = $file->encoding . "\n" . $xml;      						      		
+				      		PMXI_Import_Record::preprocessXml($xml);
 					      					      		
-					      	$dom = new DOMDocument('1.0', 'UTF-8');															
+					      	$dom = new DOMDocument('1.0', 'UTF-8');
 							$old = libxml_use_internal_errors(true);
-							$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
+							$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load
 							libxml_use_internal_errors($old);
 							$xpath = new DOMXPath($dom);
-							if (($this->data['elements'] = $elements = @$xpath->query($post['xpath'])) and $elements->length){ 
-								$_SESSION['pmxi_import']['count']++;
-								$this->data['node_list_count']++;	
-								if ($loop == $post['show_element'] ){ 
-									$_SESSION['pmxi_import']['xml'] = $xml; 
-									$this->data['dom'] = $dom; 
+							if (($this->data['elements'] = $elements = @$xpath->query($post['xpath'])) and $elements->length){
+								
+								if ($post['show_element'] == 1){ 
+									$_SESSION['pmxi_import']['count']++;
+									$this->data['node_list_count']++;
+								}
+
+								if ($loop == $post['show_element'] ){
+									$_SESSION['pmxi_import']['xml'] = $xml;
+									$this->data['dom'] = $dom;
+									if ($post['show_element'] > 1)
+										break;									
 								}
 								else unset($dom, $xpath, $elements);
 								$loop++;
-							}											   
+							}
 					    }
-					}					
+					}
 					unset($file);
 				}
 				if ( ! $this->data['node_list_count']) {
@@ -637,7 +638,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			'content' => '',
 			'name' => '',
 			'is_keep_linebreaks' => 0,
-			'is_leave_html' => 0
+			'is_leave_html' => 0,
+			'fix_characters' => 0
 		);		
 		if ($this->isWizard) {			
 			$this->data['post'] = $post = $this->input->post(
@@ -657,7 +659,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					'title' => $template->title,
 					'content' => $template->content,
 					'is_keep_linebreaks' => $template->is_keep_linebreaks,	
-					'is_leave_html' => $template->is_leave_html,				
+					'is_leave_html' => $template->is_leave_html,
+					'fix_characters' => $template->fix_characters,				
 					'name' => '', // template is always empty
 				);
 				$_SESSION['pmxi_import']['is_loaded_template'] = $load_template;
@@ -740,8 +743,9 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					$history_file = new PMXI_File_Record();
 					$history_file->getBy('id', $history[0]['id']);
 
-					if ($update_previous->large_import == 'Yes'){
+					if ($update_previous->large_import == 'Yes'){						
 						$_SESSION['pmxi_import']['filePath'] = $history_file->path;
+						if (!@file_exists($_SESSION['pmxi_import']['filePath'])) $_SESSION['pmxi_import']['filePath'] = $wp_uploads['basedir']  . '/wpallimport_history/' . $history_file->id;
 						$_SESSION['pmxi_import']['source']['root_element'] = $update_previous->root_element;
 						$_SESSION['pmxi_import']['large_file'] = true;
 						$_SESSION['pmxi_import']['count'] = $update_previous->count;
@@ -768,28 +772,31 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			$loop = 1;			
 			$_SESSION['pmxi_import']['local_paths'] = (!empty($_SESSION['pmxi_import']['local_paths'])) ? $_SESSION['pmxi_import']['local_paths'] : array($_SESSION['pmxi_import']['filePath']);
 			foreach ($_SESSION['pmxi_import']['local_paths'] as $key => $path) {												
-				$file = new PMXI_Chunk($path, array('element' => $_SESSION['pmxi_import']['source']['root_element']));								   
-			    // loop through the file until all lines are read				    				    			   			    
-			    while ($xml = $file->read()) {					      						    					    					    			    	
-			    	if (!empty($xml))
-			      	{				
-			      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
-				      					      		
-				      	$dom = new DOMDocument('1.0', 'UTF-8');															
-						$old = libxml_use_internal_errors(true);
-						$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
-						libxml_use_internal_errors($old);
-						$xpath = new DOMXPath($dom);
-						if (($this->data['elements'] = $elements = @$xpath->query($_SESSION['pmxi_import']['xpath'])) and $elements->length){ 						
-							if ($loop == $this->data['tagno']){ 
-								$_SESSION['pmxi_import']['xml'] = $xml;
-								break; 
-							} else unset($dom, $xpath, $elements);
-							$loop++;
-						}											  					 
-				    }
-				}	
-				unset($file);
+				if (file_exists($path)){
+					$file = new PMXI_Chunk($path, array('element' => $_SESSION['pmxi_import']['source']['root_element']));								   
+				    // loop through the file until all lines are read				    				    			   			    
+				    while ($xml = $file->read()) {					      						    					    					    			    	
+				    	if (!empty($xml))
+				      	{		
+				      		$xml = $file->encoding . "\n" . $xml;		
+				      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
+					      					      		
+					      	$dom = new DOMDocument('1.0', 'UTF-8');															
+							$old = libxml_use_internal_errors(true);
+							$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
+							libxml_use_internal_errors($old);
+							$xpath = new DOMXPath($dom);
+							if (($this->data['elements'] = $elements = @$xpath->query($_SESSION['pmxi_import']['xpath'])) and $elements->length){ 						
+								if ($loop == $this->data['tagno']){ 
+									$_SESSION['pmxi_import']['xml'] = $xml;
+									break; 
+								} else unset($dom, $xpath, $elements);
+								$loop++;
+							}											  					 
+					    }
+					}	
+					unset($file);
+				}
 			}
 		}
 
@@ -805,7 +812,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			'title' => '',
 			'content' => '',
 			'is_keep_linebreaks' => 0,
-			'is_leave_html' => 0
+			'is_leave_html' => 0,
+			'fix_characters' => 0
 		));		
 		$wp_uploads = wp_upload_dir();
 
@@ -817,7 +825,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			    // loop through the file until all lines are read				    				    			   			    
 			    while ($xml = $file->read()) {					      						    					    					    			    	
 			    	if (!empty($xml))
-			      	{				
+			      	{			
+			      		$xml = $file->encoding . "\n" . $xml;			
 			      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
 				      					      		
 				      	$dom = new DOMDocument('1.0', 'UTF-8');															
@@ -849,7 +858,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				if ( ! isset($this->data['title']) or '' == strval(trim(strip_tags($this->data['title'], '<img><input><textarea><iframe><object><embed>')))) {
 					$this->errors->add('xml-parsing', __('<strong>Warning</strong>: resulting post title is empty', 'pmxi_plugin'));
 				}
-				else $this->data['title'] = ($post['is_leave_html']) ?  utf8_encode(html_entity_decode($this->data['title'])) : $this->data['title'];
+				else $this->data['title'] = ($post['fix_characters']) ? utf8_encode(html_entity_decode($this->data['title'])) : (($post['is_leave_html']) ?  html_entity_decode($this->data['title']) : $this->data['title']);
 			}
 		} catch (XmlImportException $e) {
 			$this->errors->add('form-validation', sprintf(__('Error parsing title: %s', 'pmxi_plugin'), $e->getMessage()));
@@ -862,7 +871,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				if ( ! isset($this->data['content']) or '' == strval(trim(strip_tags($this->data['content'], '<img><input><textarea><iframe><object><embed>')))) {
 					$this->errors->add('xml-parsing', __('<strong>Warning</strong>: resulting post content is empty', 'pmxi_plugin'));
 				}
-				else $this->data['content'] = ($post['is_leave_html']) ?  utf8_encode(html_entity_decode($this->data['content'])) : $this->data['content'];
+				else $this->data['content'] = ($post['fix_characters']) ? utf8_encode(html_entity_decode($this->data['content'])) : (($post['is_leave_html']) ?  html_entity_decode($this->data['content']) : $this->data['content']);
 			}
 		} catch (XmlImportException $e) {
 			$this->errors->add('form-validation', sprintf(__('Error parsing content: %s', 'pmxi_plugin'), $e->getMessage()));
@@ -1096,17 +1105,33 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			)
 		);		
 
-		if ( ! PMXI_Plugin::is_ajax()) {
-			
-			$this->render();
-			wp_ob_end_flush_all(); flush();						
+		if ( ! PMXI_Plugin::is_ajax()) {					
 
 			// Save import history
 			if ( $_SESSION['pmxi_import']['chunk_number'] === 1 ){
 				// store import info in database			
-				$import->save();			
+				$import->set(array(
+					'imported' => 0,
+					'created' => 0,
+					'updated' => 0,
+					'skipped' => 0
+				))->save();				
 				
+				do_action( 'pmxi_before_xml_import', $import->id );	
+
 				if ($_SESSION['pmxi_import']['large_file']) $_SESSION['pmxi_import']['update_previous'] = $import->id;
+
+				// unlick previous files
+				$history = new PMXI_File_List();
+				$history->setColumns('id', 'name', 'registered_on', 'path')->getBy(array('import_id' => $import->id), 'id DESC');				
+				if ($history->count()){
+					foreach ($history as $file){						
+						if (@file_exists($file['path']) and $file['path'] != $_SESSION['pmxi_import']['filePath']) @unlink($file['path']);
+						$history_file = new PMXI_File_Record();
+						$history_file->getBy('id', $file['id']);
+						if ( ! $history_file->isEmpty()) $history_file->delete();
+					}
+				}
 
 				if ($save_history){
 					$history_file = new PMXI_File_Record();
@@ -1117,8 +1142,11 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 						'contents' => $_SESSION['pmxi_import']['xml'],
 						'registered_on' => date('Y-m-d H:i:s'),
 					))->save();
-				}												
+				}													
 			}			
+
+			$this->render();
+			wp_ob_end_flush_all(); flush();						
 		}		
 
 		// create chunks 
@@ -1150,7 +1178,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 							if ($new_chunk){
 								$tmpname = $wp_uploads['path']  .'/'. wp_unique_filename($wp_uploads['path'], basename($path));		
 								$c = fopen($tmpname, 'w');
-								fwrite($c, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<".$_SESSION['pmxi_import']['source']['root_element'] ."s>\n");
+								fwrite($c, $file->encoding . "\n" . "<".$_SESSION['pmxi_import']['source']['root_element'] ."s>\n");
 							} 
 							
 							fwrite($c, $xml . "\n");
@@ -1203,6 +1231,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 				if ($_SESSION['pmxi_import']['options']['create_chunks'] and $_SESSION['pmxi_import']['action'] != 'continue'){
 
+					if ($_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] == $_SESSION['pmxi_import']['count']) break;
+
 					ob_start();	
 
 					$xml = file_get_contents($path);										
@@ -1233,6 +1263,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				    	
 				    	if (!empty($xml))
 				      	{
+				      		$xml = $file->encoding . "\n" . $xml;
 				      		PMXI_Import_Record::preprocessXml($xml);
 					      					      		
 					      	$dom = new DOMDocument('1.0', 'UTF-8');
@@ -1248,23 +1279,26 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 								if ( $loop == $_SESSION['pmxi_import']['options']['records_per_request'] - 1 ) exit(ob_get_clean());
 								$loop++;
 							}
-					    }
-					    
-					    if ($_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] == $_SESSION['pmxi_import']['count']){
+					    }					    					    						
+
+					    if (($_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] == $_SESSION['pmxi_import']['count']) and !in_array($import->type, array('ftp'))){
+					    	$_SESSION['pmxi_import']['pointer'] = 0;
 					    	array_shift($_SESSION['pmxi_import']['local_paths']);
-					    	exit(ob_get_clean());	
-					    } 
+					    	exit(ob_get_clean());
+					    } 					    				    									
+					}						
 
-					    $_SESSION['pmxi_import']['pointer'] = 0;									
-
-						in_array($import->type,array('ftp')) and !empty($_SESSION['pmxi_import']['local_paths']) and $logger and call_user_func($logger, sprintf(__('Importing %s', 'pmxi_plugin'), $_SESSION['pmxi_import']['local_paths'][0]));	
-
-					}					
+					if (in_array($import->type, array('ftp'))) {
+						$_SESSION['pmxi_import']['pointer'] = 0;
+				    	array_shift($_SESSION['pmxi_import']['local_paths']);					    	
+				    	if (!empty($_SESSION['pmxi_import']['local_paths'])) {
+				    		$logger and call_user_func($logger, sprintf(__('Importing %s', 'pmxi_plugin'), $_SESSION['pmxi_import']['local_paths'][0]));
+				    	}
+				    	exit(ob_get_clean());	
+				    } 					
 				}
 			}								
-		}
-		
-		do_action( 'pmxi_after_xml_import' );		
+		}			
 		
 		if (! $_SESSION['pmxi_import']['large_file'] or PMXI_Plugin::is_ajax()){
 			
@@ -1273,11 +1307,15 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			if (file_exists($log_file)) unlink($log_file);
 			@file_put_contents($log_file, $_SESSION['pmxi_import']['log']);			
 
+			if (!empty($_SESSION['pmxi_import'])) do_action( 'pmxi_after_xml_import', $import->id );
+
 			// clear import session
 			unset($_SESSION['pmxi_import']); // clear session data (prevent from reimporting the same data on page refresh)		
 
 			// [indicate in header process is complete]
 			$msg = addcslashes(__('Complete', 'pmxi_plugin'), "'\n\r");					
+
+			delete_option('category_children');
 
 			ob_start();
 
@@ -1300,9 +1338,11 @@ echo <<<COMPLETE
 COMPLETE;
 // [/indicate in header process is complete]	
 
-			echo ob_get_clean(); die;
+			echo ob_get_clean(); 			
 
-		}		
+			die;
+
+		}			
 	}
 
 	protected $_sibling_limit = 20;

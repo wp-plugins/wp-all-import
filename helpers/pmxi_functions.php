@@ -154,29 +154,16 @@
 		stream_context_set_params($ctx, array("notification" => "stream_notification_callback"));*/
 		
 		$type = (preg_match('%\W(csv)$%i', basename($filePath))) ? 'csv' : false;
-		$type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
+		if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
 
 		$uploads = wp_upload_dir();
 		$tmpname = wp_unique_filename($uploads['path'], basename($filePath));	
 		$localPath = $uploads['path']  .'/'. $tmpname;		  	   	
 
-	   	get_file_curl($filePath, $localPath);
+		$file = @fopen($filePath, "rb");
 
-	   	if (file_exists($localPath)) {
-	   		
-	   		if (!$type){	   			
-		   		$file = @fopen($localPath, "rb");	   		
-				while (!feof($file)) {
-					$chunk = @fread($file, 1024);					
-					if (strpos($chunk, "<") !== false) $type = 'xml'; else $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file					
-				 	break;		 	
-				}
-				@fclose($file);	
-			}
-	   		
-	   	} else {	
-	   		$file = @fopen($filePath, "rb");	    		
-	   		$fp = @fopen($localPath, 'w');			 
+   		if (is_resource($file)){   			
+   			$fp = @fopen($localPath, 'w');
 		   	$first_chunk = true;
 			while (!feof($file)) {
 				$chunk = @fread($file, 1024);				
@@ -185,8 +172,24 @@
 			 	@fwrite($fp, $chunk);		 	
 			}
 			@fclose($file);
-			@fclose($fp); 								
-		}				
+			@fclose($fp); 	   	
+		}
+
+	   	if (!file_exists($localPath)) {
+	   		
+	   		get_file_curl($filePath, $localPath);
+
+	   		if (!$type){	   			
+		   		$file = @fopen($localPath, "rb");	   		
+				while (!feof($file)) {
+					$chunk = @fread($file, 1024);					
+					if (strpos($chunk, "<?") !== false) $type = 'xml'; else $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file					
+				 	break;		 	
+				}
+				@fclose($file);	
+			}
+	   		
+	   	} 			
 		
 		return ($detect) ? array('type' => $type, 'localPath' => $localPath) : $localPath;
 	}
@@ -203,7 +206,7 @@
 	        $first_chunk = true;
 	        while (!gzeof($file)) {
 	            $chunk = gzread($file, 1024);
-	            if ($first_chunk and strpos($chunk, "<") !== false) { $type = 'xml'; $first_chunk = false; } // if it's a 1st chunk, then chunk <? symbols to detect XML file
+	            if ($first_chunk and strpos($chunk, "<?") !== false) { $type = 'xml'; $first_chunk = false; } // if it's a 1st chunk, then chunk <? symbols to detect XML file
 	            @fwrite($fp, $chunk);
 	        }
 	        gzclose($file);
@@ -211,58 +214,7 @@
 	    @fclose($fp);
 	    $localPath = $uploads['path']  .'/'. $tmpname;
 	    return array('type' => $type, 'localPath' => $localPath);
-	}
-
-	function stream_notification_callback($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
-	    static $filesize = null;
-	    
-	    $msg = '';
-	    switch($notification_code) {
-		    case STREAM_NOTIFY_RESOLVE:
-		    case STREAM_NOTIFY_AUTH_REQUIRED:
-		    case STREAM_NOTIFY_COMPLETED:
-		    case STREAM_NOTIFY_FAILURE:
-		    case STREAM_NOTIFY_AUTH_RESULT:
-		        /* Ignore */
-		        break;
-
-		    case STREAM_NOTIFY_REDIRECTED:
-		        //$msg = "Being redirected to: ". $message;
-		        break;
-
-		    case STREAM_NOTIFY_CONNECT:
-		        //$msg = "Connected...";
-		        break;
-
-		    case STREAM_NOTIFY_FILE_SIZE_IS:
-		        $filesize = $bytes_max;
-		        //$msg = "Filesize: ". $filesize;
-		        break;
-
-		    case STREAM_NOTIFY_MIME_TYPE_IS:
-		        //$msg = "Mime-type: ". $message;
-		        break;
-
-		    case STREAM_NOTIFY_PROGRESS:
-		        if ($bytes_transferred > 0) {
-					echo "<script type='text/javascript'>";
-		            if (!isset($filesize)) {
-						printf("document.getElementById('url_progressbar').innerHTML('Unknown filesize.. %2d kb done..');", $bytes_transferred/1024);
-		            } else {
-						$length = (int)(($bytes_transferred/$filesize)*100);
-						echo "document.getElementById('url_upload_value').style.width = ".$length."%";
-						printf("document.getElementById('url_progressbar').innerHTML('%02d%% (%0".strlen($filesize/1024)."d/%2d kb)');", $length, ($bytes_transferred/1024), $filesize/1024);
-		            }
-		            echo "</script>";
-					echo(str_repeat(' ', 256));
-					if (@ob_get_contents()) {
-						@ob_end_flush();
-					}
-					flush();
-		        }
-		        break;
-	    }	    	    
-	}
+	}	
 
 	function pmxi_strip_tags_content($text, $tags = '', $invert = FALSE) {
 

@@ -46,8 +46,13 @@
 						<input type="checkbox" id="is_keep_linebreaks" name="is_keep_linebreaks" value="1" <?php echo $post['is_keep_linebreaks'] ? 'checked="checked"' : '' ?> style="position:relative; top:-3px;"/>
 						<label for="is_keep_linebreaks"><?php _e('Keep line breaks from XML', 'pmxi_plugin') ?></label> <br>
 						<input type="hidden" name="is_leave_html" value="0" />
-						<input type="checkbox" id="is_leave_html" name="is_leave_html" value="1" <?php echo $post['is_leave_html'] ? 'checked="checked"' : '' ?> style="position:relative; top:-3px;"/>
+						<input type="checkbox" id="is_leave_html" name="is_leave_html" value="1" <?php echo $post['is_leave_html'] ? 'checked="checked"' : '' ?> style="position:relative; top:-3px;" class="switcher"/>
 						<label for="is_leave_html"><?php _e('Decode HTML entities with <b>html_entity_decode</b>', 'pmxi_plugin') ?></label><a class="help" href="#help" original-title="If HTML code is showing up in your posts, use this option. You can also use <br /><br /><i>[html_entity_decode({my/xpath})]</i><br /><br /> or <br /><br /><i>[htmlentities({my/xpath})]</i><br /><br /> to decode or encode HTML in your file.">?</a>
+						<div class="switcher-target-is_leave_html"  style="padding-left:17px;">
+							<input type="hidden" name="fix_characters" value="0" />
+							<input type="checkbox" id="fix_characters" name="fix_characters" value="1" <?php echo $post['fix_characters'] ? 'checked="checked"' : '' ?> style="position:relative; top:-3px;"/>
+							<label for="fix_characters"><?php _e('Auto-fix broken special characters', 'pmxi_plugin') ?></label>
+						</div>
 					</span>
 				</p>
 				<hr>

@@ -209,6 +209,8 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 
 						$local_paths = !empty($local_paths) ? $local_paths : array($filePath);				
 
+						$chunk_founded = false;
+
 						foreach ($local_paths as $key => $path) {
 
 							$file = new PMXI_Chunk($path, array('element' => $item->root_element, 'path' => $uploads['path']));					
@@ -217,30 +219,54 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						    	
 						    	if (!empty($xml))
 						      	{				
-						      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
-							      					      		
-							      	$dom = new DOMDocument('1.0', 'UTF-8');															
-									$old = libxml_use_internal_errors(true);
-									$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
-									libxml_use_internal_errors($old);
-									$xpath = new DOMXPath($dom);
-									if (($this->data['elements'] = $elements = @$xpath->query($item->xpath)) and $elements->length) { 
-										if ( !$chunks) {
-											$chunk_path = $uploads['path'] .'/'. wp_unique_filename($uploads['path'], "chunk_".basename($path));
-											if (file_exists($chunk_path)) unlink($chunk_path);				  	
-										    file_put_contents($chunk_path, '<?xml version="1.0" encoding="utf-8"?>'."\n".$xml);
-										    chmod($chunk_path, 0755);
+						      		if (!empty($action_type) and $action_type == 'continue'){ 
+						      			if ( !$chunk_founded) {											
+						      				$xml = $file->encoding . "\n" . $xml;
+								      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
+									      					      		
+									      	$dom = new DOMDocument('1.0', 'UTF-8');															
+											$old = libxml_use_internal_errors(true);
+											$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
+											libxml_use_internal_errors($old);
+											$xpath = new DOMXPath($dom);
+											if (($elements = @$xpath->query($item->xpath)) and !empty($elements) and !empty($elements->length)) { 												
+												$chunk_path = $uploads['path'] .'/'. wp_unique_filename($uploads['path'], "chunk_".basename($path));											
+												file_put_contents($chunk_path, $xml);
+												chmod($chunk_path, 0755);												
+												$chunk_founded = true;
+											}
+											unset($dom, $xpath, $elements);
+						      			}						      			
+						      			$chunks++;
+						      			if ($chunks == $item->imported){
+											$pointer = $file->pointer;
+											$chunks = $item->count;
+											break;
 										}
-										$chunks++; 
-										
-										if (!empty($action_type) and $action_type == 'continue' and $chunks == $item->imported) $pointer = $file->pointer;
-																					
 									}
-									unset($dom, $xpath, $elements);
+									else{
+							      		$xml = $file->encoding . "\n" . $xml;
+							      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
+								      					      		
+								      	$dom = new DOMDocument('1.0', 'UTF-8');															
+										$old = libxml_use_internal_errors(true);
+										$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
+										libxml_use_internal_errors($old);
+										$xpath = new DOMXPath($dom);
+										if (($elements = @$xpath->query($item->xpath)) and !empty($elements) and !empty($elements->length)) { 
+											if ( !$chunks) {											
+												$chunk_path = $uploads['path'] .'/'. wp_unique_filename($uploads['path'], "chunk_".basename($path));											
+											    file_put_contents($chunk_path, $xml);
+											    chmod($chunk_path, 0755);
+											}											 																																
+											$chunks++;
+										}
+										unset($dom, $xpath, $elements);
+									}
 							    }
 							}	
 							unset($file);		
-
+							
 							!$key and $filePath = $path;					
 						}
 
@@ -268,43 +294,55 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 
 			if ($item->large_import == 'Yes' or PMXI_Import_Record::validateXml($xml, $this->errors)) { // xml is valid		
 				
-				$item->set(array(
-						'processing' => 0,
-						'queue_chunk_number' => 0,
-						'current_post_ids' => ''
-					))->save();				
-
-				// compose data to look like result of wizard steps				
-				$_SESSION['pmxi_import'] = (empty($_SESSION['pmxi_import']['chunk_number'])) ? array(
-					'xml' => (isset($xml)) ? $xml : '',
-					'filePath' => $filePath,
-					'source' => array(
-						'name' => $item->name,
-						'type' => $item->type,						
-						'path' => $item->path,
-						'root_element' => $item->root_element,
-					),
-					'update_previous' => $item->id,
-					'xpath' => $item->xpath,
-					'template' => $item->template,
-					'options' => $item->options,
-					'scheduled' => $item->scheduled,				
-					'current_post_ids' => '',
-					'large_file' => ($item->large_import == 'Yes') ? true : false,
-					'chunk_number' => (!empty($action_type) and $action_type == 'continue') ? $item->imported : 1,
-					'pointer' => $pointer,
-					'log' => '',
-					'created_records' => (!empty($action_type) and $action_type == 'continue') ? $item->created : 0,
-					'updated_records' => (!empty($action_type) and $action_type == 'continue') ? $item->updated : 0,
-					'skipped_records' => (!empty($action_type) and $action_type == 'continue') ? $item->skipped : 0,
-					'warnings' => 0,
-					'errors' => 0,
-					'start_time' => 0,
-					'count' => (isset($chunks)) ? $chunks : 0,
-					'local_paths' => (!empty($local_paths)) ? $local_paths : array(), // ftp import local copies of remote files
-					'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',					
-				) : $_SESSION['pmxi_import'];
+				if ( ! PMXI_Plugin::is_ajax() and empty($_SESSION['pmxi_import']['chunk_number'])){
 				
+					$item->set(array(
+							'processing' => 0,
+							'queue_chunk_number' => 0,
+							'current_post_ids' => ''
+						))->save();
+
+					if (empty($action_type)){
+						$item->set(array(						
+							'imported' => 0,
+							'created' => 0,
+							'updated' => 0,
+							'skipped' => 0
+						))->save();
+					}
+
+					// compose data to look like result of wizard steps				
+					$_SESSION['pmxi_import'] = array(
+						'xml' => (isset($xml)) ? $xml : '',
+						'filePath' => $filePath,
+						'source' => array(
+							'name' => $item->name,
+							'type' => $item->type,						
+							'path' => $item->path,
+							'root_element' => $item->root_element,
+						),
+						'update_previous' => $item->id,
+						'xpath' => $item->xpath,
+						'template' => $item->template,
+						'options' => $item->options,
+						'scheduled' => $item->scheduled,				
+						'current_post_ids' => '',
+						'large_file' => ($item->large_import == 'Yes') ? true : false,
+						'chunk_number' => (!empty($action_type) and $action_type == 'continue') ? $item->imported : 1,
+						'pointer' => $pointer,
+						'log' => '',
+						'created_records' => (!empty($action_type) and $action_type == 'continue') ? $item->created : 0,
+						'updated_records' => (!empty($action_type) and $action_type == 'continue') ? $item->updated : 0,
+						'skipped_records' => (!empty($action_type) and $action_type == 'continue') ? $item->skipped : 0,
+						'warnings' => 0,
+						'errors' => 0,
+						'start_time' => 0,
+						'count' => (isset($chunks)) ? $chunks : 0,
+						'local_paths' => (!empty($local_paths)) ? $local_paths : array(), // ftp import local copies of remote files
+						'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',					
+					);										
+				}
+
 				// deligate operation to other controller
 				$controller = new PMXI_Admin_Import();
 				$controller->data['update_previous'] = $item;

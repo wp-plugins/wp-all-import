@@ -79,7 +79,11 @@ class PMXI_CsvParser
 
     $large_import = false,    
 
-    $xml_path = '';
+    $htmlentities = false,
+
+    $xml_path = '',
+
+    $iteration = 0;
 
     protected
 
@@ -125,7 +129,7 @@ class PMXI_CsvParser
         ini_set( "display_errors", 0);
         ini_set('auto_detect_line_endings', true);
         
-        $file_params = self::analyse_file($filename, 10);
+        $file_params = self::analyse_file($filename, 1);
 
         $this->set_settings(array('delimiter' => $file_params['delimiter']['value'], 'eol' => $file_params['line_ending']['value']));        
 
@@ -851,11 +855,16 @@ class PMXI_CsvParser
     // Fixes the encoding to uf8
     function fixEncoding($in_str)
     {
-      $cur_encoding = mb_detect_encoding($in_str) ;
-      if($cur_encoding == "UTF-8" && mb_check_encoding($in_str,"UTF-8"))
+        if (function_exists('mb_detect_encoding') and function_exists('mb_check_encoding')){
+          $cur_encoding = mb_detect_encoding($in_str) ;
+          if($cur_encoding == "UTF-8" && mb_check_encoding($in_str,"UTF-8"))
+            return $in_str;
+          else
+            return utf8_encode($in_str);
+        }
+
         return $in_str;
-      else
-        return utf8_encode($in_str);
+        
     } // fixEncoding 
 
     /**
@@ -943,44 +952,40 @@ class PMXI_CsvParser
             $tmpname = wp_unique_filename($wp_uploads['path'], str_replace("csv", "xml", basename($this->_filename)));
             $this->xml_path = $wp_uploads['path']  .'/'. $tmpname;
             $fp = fopen($this->xml_path, 'w');
-            fwrite($fp, '<?xml version="1.0" encoding="utf-8"?><data>');
+            fwrite($fp, "<?xml version=\"1.0\" encoding=\"utf-8\"?><data>");
         }
         $create_new_headers = false;
-
+        
         while ($keys = fgetcsv($res, $l, $d, $e)) {
 
             if ($c == 0) {
-                foreach ($keys as $key => $value) {    
-                    $value = trim(strtolower(preg_replace('/^[0-9]{1}/','el_', preg_replace('/[^a-z0-9_]/i', '', $value))));                    
-                    $keys[$key] = (!empty($value)) ? $value : 'undefined'.$key;
-                    if (preg_match('%\W(http:|https:|ftp:)$%i', $value) or is_numeric($value)) {
-                        $create_new_headers = true;
-                        break;
-                    }                    
-                }            
-                $this->headers = $keys;
 
+                foreach ($keys as $key => $value) {    
+                    if (!$create_new_headers and (preg_match('%\W(http:|https:|ftp:)$%i', $value) or is_numeric($value))) $create_new_headers = true;                                                                    
+                    $value = trim(strtolower(preg_replace('/^[0-9]{1}/','el_', preg_replace('/[^a-z0-9_]/i', '', $value))));                    
+                    $keys[$key] = (!empty($value)) ? $value : 'undefined'.$key;                    
+                }            
+                $this->headers = $keys;                                
                 if ($create_new_headers) $this->createHeaders('column');      
 
-            } else {                            
-
+            } else {                                            
                 if (!$this->large_import and empty($_POST['large_file'])) {                    
                     array_push($this->rows, $keys);
                 }
-                else if (!empty($keys[0])){                                   
+                else if (!empty($keys)){                                   
 
                     $chunk = array();
-                                  
-                    foreach ($this->headers as $key => $header) {                                                
-                        $chunk[$header] = $this->fixEncoding($keys[$key]);                       
-                    }                                                                    
                     
+                    foreach ($this->headers as $key => $header) {                                                
+                        $chunk[$header] = $this->fixEncoding(htmlentities($keys[$key]));
+                    }                                                                                                        
+
                     if (!empty($chunk))
-                    {                                        
+                    {                                                                
                         fwrite($fp, "<node>"); 
                         foreach ($chunk as $header => $value) fwrite($fp, "<".$header.">".$value."</".$header.">");                                                                        
-                        fwrite($fp, "</node>");                                                                                
-                    }
+                        fwrite($fp, "</node>");
+                    }                                        
                 }
             }
 
@@ -989,9 +994,25 @@ class PMXI_CsvParser
         fwrite($fp, '</data>');
         fclose($fp);
         fclose($res);
-        $this->removeEmpty();        
+        $this->removeEmpty();      
 
-        return true;
+        /*$errors = array();
+        $xml = file_get_contents($this->xml_path);
+        
+        PMXI_Import_Record::preprocessXml($xml);
+
+        if (PMXI_Import_Record::validateXml($xml, $errors)){
+            return true;            
+        }
+        else{
+            $this->htmlentities = true;     
+            $this->rows = array();
+            $this->iteration++;
+            if ($this->iteration > 1) return true;
+            return $this->parse();
+        } */
+
+        return true;       
     }
 
     /**
@@ -1106,14 +1127,15 @@ class PMXI_CsvParser
        
         // read in file
         $fh = fopen($file, 'r');
-            $contents = fread($fh, ($capture_limit_in_kb * 1024)); // in KB
+            $contents = fgets($fh);
         fclose($fh);
        
         // specify allowed field delimiters
         $delimiters = array(
             'comma'     => ',',
             'semicolon' => ';',            
-            'pipe'         => '|'            
+            'pipe'         => '|',
+            'tabulation' => "\t"            
         );
        
         // specify allowed line endings

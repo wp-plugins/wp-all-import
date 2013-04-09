@@ -13,7 +13,10 @@ $config = array(
 	"max_input_time" => -1,
 	"max_execution_time" => -1,
 	"dismiss" => 0,
+	"dismiss_manage_top" => 0,
+	"dismiss_manage_bottom" => 0,
 	"html_entities" => 0,
 	"utf8_decode" => 0,
-	"cron_job_key" => url_title(rand_char(12))
+	"cron_job_key" => url_title(rand_char(12)),
+	"chunk_size" => 64	
 );

@@ -36,7 +36,7 @@ class PMXI_Chunk {
   public $options = array(
     'path' => './',       // string The path to check for $file in
     'element' => '',      // string The XML element to return
-    'chunkSize' => 4096,    // integer The amount of bytes to retrieve in each chunk
+    'chunkSize' => 1024,    // integer The amount of bytes to retrieve in each chunk
     'type' => 'upload'
   );
   
@@ -54,8 +54,16 @@ class PMXI_Chunk {
    * @access public
    */
   public $pointer = 0;
-  
+
   public $cloud = array();
+
+  public $is_validate = true;
+
+  public $open_counter = 0;
+
+  public $encoding = "";
+
+  public $return_with_encoding = true;
   
   /**
    * handle
@@ -89,10 +97,10 @@ class PMXI_Chunk {
    * @author Dom Hastings
    * @access public
    */
-  public function __construct($file, $options = array(), $pointer = 0) {
+  public function __construct($file, $options = array(), $pointer = 0, $return_with_encoding = true) {
     // merge the options together
     $this->options = array_merge($this->options, (is_array($options) ? $options : array()));
-    
+    $this->return_with_encoding = $return_with_encoding;
     // check that the path ends with a /
     if (substr($this->options['path'], -1) != '/') {
       $this->options['path'] .= '/';
@@ -108,11 +116,13 @@ class PMXI_Chunk {
     if ($this->options['chunkSize'] < 64) {
       $this->options['chunkSize'] = 1024;
     }
+
+    $this->options['chunkSize'] *= PMXI_Plugin::getInstance()->getOption('chunk_size');
     
     $this->pointer = $pointer;
     
     // set the filename
-    $this->file = ($this->options['path'] != './') ? realpath($this->options['path'].$file_base) : $file;
+    $this->file = $file;
     
     // check the file exists
     if (!file_exists($this->file)){
@@ -163,54 +173,77 @@ class PMXI_Chunk {
     }
     
     // initialize the buffer
-    $buffer = false;
-    
+    $buffer = false;      
+
     // if the element is empty, then start auto detect root element tag name
     if (empty($element)) {
       // let the script know we're reading
       $this->reading = true;
       $founded_tags = array();
-      // read in the whole doc, cos we don't know what's wanted
-      while ($this->reading) {
-        $c = fread($this->handle, $this->options['chunkSize']);        
-        if ( preg_match_all("/<\\w+\\s*[^<]*\\s*\/?>/i", $c, $matches, PREG_PATTERN_ORDER) ){   
+      // read in the whole doc, cos we don't know what's wanted          
+      while ($this->reading and (count($founded_tags) < 500)) {
+        $c = fread($this->handle, $this->options['chunkSize']);                
+        if ($this->is_validate) {
+          if (stripos($c, "xmlns") !== false) $this->is_validate = false;
+        }
+        if ( preg_match_all("/<\\w+\\s*[^<|^\n]*\\s*\/?>/i", $c, $matches, PREG_PATTERN_ORDER) ){          
           foreach ($matches[0] as $tag) {
-            $tag = explode(" ",trim(str_replace(array('<','>','/'), '', $tag)));
+            $tag = explode(" ", trim(str_replace(array('<','>','/'), '', $tag)));
             array_push($founded_tags, $tag[0]);
-          }
+          }          
         }
         $this->reading = (!feof($this->handle));
-      }          
+      }
       
     // we must be looking for a specific element
     } 
+    
+    if (empty($this->encoding)) {      
+      fseek($this->handle, 0);
+      $this->reading = true;    
+      // read in the whole doc, cos we don't know what's wanted      
+      while ($this->reading) {
+        $c = fread($this->handle, $this->options['chunkSize']);          
+        $enc = preg_match("/<\?xml.*\?>/i", $c, $enc_matches);
+        if ($enc)
+          $this->encoding = $enc_matches[0];                  
+        $this->reading = false;
+      }      
+    }      
+
+    if (empty($this->encoding)) $this->encoding = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 
     if (empty($element) and !empty($founded_tags)) {      
       
-      $element_counts = array_count_values($founded_tags);            
-
+      $element_counts = array_count_values($founded_tags);                  
+      
       if (!empty($element_counts)){
 
-        $this->cloud = array_slice($element_counts, 0, 2);
+        //$this->cloud = array_slice($element_counts, 0, 2);
 
         foreach ($element_counts as $tag => $count) {    
-          if ($count > 1 and empty($this->options['element'])) {
-            $this->options['element'] = $element = $tag;            
-          }          
-          elseif ($count > 1){
-            $this->cloud[$tag] = $count;    
+          if (strpos($tag, ":") === false){
+            if ($count > 1 and empty($this->options['element'])) {
+              $this->options['element'] = $element = $tag;            
+            }          
+            else{
+              $this->cloud[$tag] = $count;    
+            }
           }
         }
       }
             
-    }    
-      
+    }
+    
     // return it all if element doesn't founded
-    if (empty($element))
-      return false;
-      
-    // we must be looking for a specific element
-    //} 
+    if (empty($element)){
+      if (!empty($element_counts)){
+        $this->options['element'] = $element = array_shift(array_keys($element_counts));
+      }
+      else return false;
+    }                    
+
+    // we must be looking for a specific element    
     
     // initialize the buffer
     $buffer = false;
@@ -226,40 +259,45 @@ class PMXI_Chunk {
     $this->readBuffer = '';
     
     // this is used to ensure all data is read, and to make sure we don't send the start data again by mistake
-    $store = false;           
+    $store = false;   
+
+    $checkOpen = false;        
 
     // seek to the position we need in the file
     fseek($this->handle, $this->pointer);
     
     // start reading
-    while ($this->reading && !feof($this->handle)) {
+    while ($this->reading && !feof($this->handle)) {      
 
       // store the chunk in a temporary variable                        
-      $tmp = fread($this->handle, $this->options['chunkSize']);
-      
+      $tmp = fread($this->handle, $this->options['chunkSize']);            
+
       // update the global buffer
       $this->readBuffer .= $tmp;
       
-      // check for the open string
-      $checkOpen = strpos($tmp, $open." ");
-      if (!$checkOpen) $checkOpen = strpos($tmp, $open.">");
+      if (!$checkOpen){
+        // check for the open string
+        $checkOpen = strpos($tmp, $open." ");
+        if (!$checkOpen) $checkOpen = strpos($tmp, $open.">");
 
-      // if it wasn't in the new buffer
-      if (!$checkOpen && !($store)) {
-        // check the full buffer (in case it was only half in this buffer)
-        $checkOpen = strpos($this->readBuffer, $open." ");
-        if (!$checkOpen) $checkOpen = strpos($this->readBuffer, $open.">");
+        // if it wasn't in the new buffer
+        if (!$checkOpen && !($store)) {
+          // check the full buffer (in case it was only half in this buffer)
+          $checkOpen = strpos($this->readBuffer, $open." ");
+          if (!$checkOpen) $checkOpen = strpos($this->readBuffer, $open.">");
 
-        // if it was in there
-        if ($checkOpen) {
-          // set it to the remainder
-          $checkOpen = $checkOpen % $this->options['chunkSize'];
+          // if it was in there
+          if ($checkOpen) {
+            // set it to the remainder
+            $checkOpen = $checkOpen % $this->options['chunkSize'];
+          }          
         }
-      }        
-      
+      }
+
       // check for the close string
-      $checkClose = strpos($tmp, $close);
-      $withoutcloseelement = false;
+      $checkClose = preg_match_all("/<\/".$element.">/i", $tmp, $closematches, PREG_OFFSET_CAPTURE);
+      $withoutcloseelement = false;          
+
       if (!$checkClose){ 
         $checkClose = (preg_match_all("/\/>\s*".$open."\s*/", $this->readBuffer, $matches)) ? strpos($this->readBuffer, $matches[0][0]) : false;                
         if ($checkClose) 
@@ -269,7 +307,31 @@ class PMXI_Chunk {
             if ($checkClose) 
               $withoutcloseelement = true;*/
         }
-      }
+      }      
+      else{
+        
+        $close_finded = false;
+        $search_pointer = $closematches[0][0][1] - $checkOpen;
+        $checkDuplicateOpen = preg_match_all("/".$open."[ |>]/i", substr($this->readBuffer, $checkOpen, $search_pointer), $matches, PREG_OFFSET_CAPTURE);
+        
+        while (!$close_finded){                                        
+          if ($checkDuplicateOpen > 1 and !empty($closematches[0][$checkDuplicateOpen - 1])){
+            $secondcheckDuplicateOpen = preg_match_all("/".$open."[ |>]/i", substr($this->readBuffer, $checkOpen, $closematches[0][$checkDuplicateOpen - 1][1] - $checkOpen), $matches, PREG_OFFSET_CAPTURE);
+            if ($secondcheckDuplicateOpen == $checkDuplicateOpen){
+              $checkClose = $closematches[0][$checkDuplicateOpen - 1][1];
+              $close_finded = true;
+            }
+            else{
+              $checkClose = false;
+              $checkDuplicateOpen = $secondcheckDuplicateOpen;
+            }
+          }
+          else{
+            $checkClose = $closematches[0][0][1];
+            $close_finded = true;
+          }          
+        }    
+      } 
 
       // if it wasn't in the new buffer
       if (!$checkClose && ($store)) {
@@ -304,7 +366,7 @@ class PMXI_Chunk {
           $checkClose += strlen($close);
         else
           $checkClose += strlen("/>"); // "/>" symbols
-      }
+      }      
       
       // if we've found the opening string and we're not already reading another element
       if ($checkOpen !== false && !($store)) {
@@ -326,8 +388,9 @@ class PMXI_Chunk {
           // update the pointer
           $this->pointer += $this->options['chunkSize'];
           
-          // let the script know we're gonna be storing all the data until we find the close element
-          $store = true;
+          // let the script know we're gonna be storing all the data until we find the close element          
+          $store = true;                    
+
         }
         
       // if we've found the closing element
@@ -345,10 +408,12 @@ class PMXI_Chunk {
       } elseif ($store) {
         // update the buffer
         $buffer .= $tmp;
+
+        $this->open_counter = 0;
         
         // and the pointer
         $this->pointer += $this->options['chunkSize'];
-      }        
+      }
       
     }   
     

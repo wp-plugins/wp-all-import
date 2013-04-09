@@ -963,3 +963,21 @@ table.xml table {
 .pmxi_plugin .upgrade_link{
 	color: #21759B;
 }
+.pmxi_stars{
+	display: inline-block;
+	background: url("../img/stars.png") no-repeat;
+	width: 125px;
+	height: 24px;
+	position: relative;
+	top:10px;
+}
+.updated_bottom{
+	background-color: #FFFFE0;
+	border-color: #E6DB55;
+	margin: 5px 0 15px;
+	padding: 0 0.6em;
+	-moz-border-radius: 3px 3px 3px 3px;
+	border-radius: 3px;
+	border-style: solid;
+	border-width: 1px;
+}
