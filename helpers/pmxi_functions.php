@@ -17,11 +17,12 @@
 		}		
 	}
 
-	function is_empty($var)
-	{ 
-	 	return empty($var);
+	if (!function_exists('is_empty')){	
+		function is_empty($var)
+		{ 
+		 	return empty($var);
+		}
 	}
-
 
 	/**
 	 * Word Limiter
@@ -96,52 +97,109 @@
 		}
 	}
 
-	function url_title($str, $separator = 'dash', $lowercase = FALSE)
-	{
-		if ($separator == 'dash')
+	if ( ! function_exists('url_title')){
+
+		function url_title($str, $separator = 'dash', $lowercase = FALSE)
 		{
-			$search		= '_';
-			$replace	= '-';
+			if ($separator == 'dash')
+			{
+				$search		= '_';
+				$replace	= '-';
+			}
+			else
+			{
+				$search		= '-';
+				$replace	= '_';
+			}
+
+			$trans = array(
+				'&\#\d+?;'				=> '',
+				'&\S+?;'				=> '',
+				'\s+'					=> $replace,
+				'[^a-z0-9\-\._]'		=> '',
+				$replace.'+'			=> $replace,
+				$replace.'$'			=> $replace,
+				'^'.$replace			=> $replace,
+				'\.+$'					=> ''
+			);
+
+			$str = strip_tags($str);
+
+			foreach ($trans as $key => $val)
+			{
+				$str = preg_replace("#".$key."#i", $val, $str);
+			}
+
+			if ($lowercase === TRUE)
+			{
+				$str = strtolower($str);
+			}
+
+			return trim(stripslashes($str));
 		}
-		else
-		{
-			$search		= '-';
-			$replace	= '_';
-		}
-
-		$trans = array(
-			'&\#\d+?;'				=> '',
-			'&\S+?;'				=> '',
-			'\s+'					=> $replace,
-			'[^a-z0-9\-\._]'		=> '',
-			$replace.'+'			=> $replace,
-			$replace.'$'			=> $replace,
-			'^'.$replace			=> $replace,
-			'\.+$'					=> ''
-		);
-
-		$str = strip_tags($str);
-
-		foreach ($trans as $key => $val)
-		{
-			$str = preg_replace("#".$key."#i", $val, $str);
-		}
-
-		if ($lowercase === TRUE)
-		{
-			$str = strtolower($str);
-		}
-
-		return trim(stripslashes($str));
 	}
 
+	if ( ! function_exists('rand_char')){
 
-	function rand_char($length) {
-	  $random = '';
-	  for ($i = 0; $i < $length; $i++) {
-	    $random .= chr(mt_rand(33, 126));
-	  }
-	  return $random;
+		function rand_char($length) {
+		  $random = '';
+		  for ($i = 0; $i < $length; $i++) {
+		    $random .= chr(mt_rand(33, 126));
+		  }
+		  return $random;
+		}
+	}
+
+	if ( ! function_exists('pmxi_get_remote_file_name')){
+
+		function pmxi_get_remote_file_name($filePath){
+			$type = (preg_match('%\W(csv|txt|dat|psv)$%i', basename($filePath))) ? 'csv' : false;
+			if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
+			if (!$type) $type = (preg_match('%\W(zip)$%i', basename($filePath))) ? 'zip' : false;
+			if (!$type) $type = (preg_match('%\W(gz)$%i', basename($filePath))) ? 'gz' : false;
+
+			if (!$type){
+				$response = wp_remote_get($filePath);
+				$headers = wp_remote_retrieve_headers( $response );
+				
+				if (preg_match("/filename=\".*\"/i", $headers['content-disposition'], $matches)){
+					$remote_file_name = str_replace(array('filename=','"'), '', $matches[0]);
+					if (!empty($remote_file_name)){
+						$type = (preg_match('%\W(csv)$%i', basename($remote_file_name))) ? 'csv' : false;
+						if (!$type) $type = (preg_match('%\W(xml)$%i', basename($remote_file_name))) ? 'xml' : false;
+						if (!$type) $type = (preg_match('%\W(zip)$%i', basename($remote_file_name))) ? 'zip' : false;
+						if (!$type) $type = (preg_match('%\W(gz)$%i', basename($remote_file_name))) ? 'gz' : false;					
+					};
+				};						
+			}
+
+			return ($type) ? $type : '';
+		}
+	}
+
+	if ( ! function_exists('pmxi_get_remote_image_ext')){
+
+		function pmxi_get_remote_image_ext($filePath){
+			$ext = pmxi_getExtension($filePath);
+
+			if ("" != $ext) return $ext;
+			$response = wp_remote_get($filePath);
+			$headers = wp_remote_retrieve_headers( $response );
+			$content_type = explode('/',$headers['content-type']);		
+
+			return (!empty($content_type[1])) ? $content_type[1] : '';
+		}
+	}
+
+	if ( ! function_exists('pmxi_getExtension')){
+		function pmxi_getExtension($str) 
+	    {
+	        $i = strrpos($str,".");        
+	        if (!$i) return "";
+	        $l = strlen($str) - $i;        
+	        $ext = substr($str,$i+1,$l);
+	        return ($l <= 4) ? $ext : "";
+		}
 	}
 
 	/**
@@ -149,89 +207,178 @@
 	 * @ $filePath - file URL
 	 * return local path of copied file
 	 */
-	function pmxi_copy_url_file($filePath, $detect = false){
-		/*$ctx = stream_context_create();
-		stream_context_set_params($ctx, array("notification" => "stream_notification_callback"));*/
-		
-		$type = (preg_match('%\W(csv)$%i', basename($filePath))) ? 'csv' : false;
-		if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
+	if ( ! function_exists('pmxi_copy_url_file')){
 
-		$uploads = wp_upload_dir();
-		$tmpname = wp_unique_filename($uploads['path'], basename($filePath));	
-		$localPath = $uploads['path']  .'/'. $tmpname;		  	   	
+		function pmxi_copy_url_file($filePath, $detect = false){
+			/*$ctx = stream_context_create();
+			stream_context_set_params($ctx, array("notification" => "stream_notification_callback"));*/
+			
+			$type = (preg_match('%\W(csv|txt|dat|psv)$%i', basename($filePath))) ? 'csv' : false;
+			if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
 
-		$file = @fopen($filePath, "rb");
+			$uploads = wp_upload_dir();
+			$tmpname = wp_unique_filename($uploads['path'], basename($filePath));	
+			$localPath = $uploads['path']  .'/'. $tmpname;		  	   	
 
-   		if (is_resource($file)){   			
-   			$fp = @fopen($localPath, 'w');
-		   	$first_chunk = true;
-			while (!feof($file)) {
-				$chunk = @fread($file, 1024);				
-				if (!$type and $first_chunk and strpos($chunk, "<") !== false) $type = 'xml'; elseif (!$type and $first_chunk) $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file
-				$first_chunk = false;
-			 	@fwrite($fp, $chunk);		 	
-			}
-			@fclose($file);
-			@fclose($fp); 	   	
-		}
+			$file = @fopen($filePath, "rb");
 
-	   	if (!file_exists($localPath)) {
-	   		
-	   		get_file_curl($filePath, $localPath);
-
-	   		if (!$type){	   			
-		   		$file = @fopen($localPath, "rb");	   		
+	   		if (is_resource($file)){   			
+	   			$fp = @fopen($localPath, 'w');
+			   	$first_chunk = true;
 				while (!feof($file)) {
-					$chunk = @fread($file, 1024);					
-					if (strpos($chunk, "<?") !== false) $type = 'xml'; else $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file					
-				 	break;		 	
+					$chunk = @fread($file, 1024);				
+					if (!$type and $first_chunk and strpos($chunk, "<") !== false) $type = 'xml'; elseif (!$type and $first_chunk) $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file
+					$first_chunk = false;
+				 	@fwrite($fp, $chunk);		 	
 				}
-				@fclose($file);	
+				@fclose($file);
+				@fclose($fp); 	   	
 			}
-	   		
-	   	} 			
-		
-		return ($detect) ? array('type' => $type, 'localPath' => $localPath) : $localPath;
+
+		   	if (!file_exists($localPath)) {
+		   		
+		   		get_file_curl($filePath, $localPath);
+
+		   		if (!$type){	   			
+			   		$file = @fopen($localPath, "rb");	   		
+					while (!feof($file)) {
+						$chunk = @fread($file, 1024);					
+						if (strpos($chunk, "<?") !== false) $type = 'xml'; else $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file					
+					 	break;		 	
+					}
+					@fclose($file);	
+				}
+		   		
+		   	} 			
+			
+			return ($detect) ? array('type' => $type, 'localPath' => $localPath) : $localPath;
+		}
 	}
 
-	function pmxi_gzfile_get_contents($filename, $use_include_path = 0) {
+	if ( ! function_exists('pmxi_gzfile_get_contents')){
+		function pmxi_gzfile_get_contents($filename, $use_include_path = 0) {
 
-		$type = 'csv';
-		$uploads = wp_upload_dir();
-		$tmpname = wp_unique_filename($uploads['path'], basename($filename));
-		$fp = @fopen($uploads['path']  .'/'. $tmpname, 'w');
+			$type = 'csv';
+			$uploads = wp_upload_dir();
+			$tmpname = wp_unique_filename($uploads['path'], basename($filename));
+			$fp = @fopen($uploads['path']  .'/'. $tmpname, 'w');
 
-	    $file = @gzopen($filename, 'rb', $use_include_path);
-	    if ($file) {
-	        $first_chunk = true;
-	        while (!gzeof($file)) {
-	            $chunk = gzread($file, 1024);
-	            if ($first_chunk and strpos($chunk, "<?") !== false) { $type = 'xml'; $first_chunk = false; } // if it's a 1st chunk, then chunk <? symbols to detect XML file
-	            @fwrite($fp, $chunk);
-	        }
-	        gzclose($file);
-	    }
-	    @fclose($fp);
-	    $localPath = $uploads['path']  .'/'. $tmpname;
-	    return array('type' => $type, 'localPath' => $localPath);
-	}	
+		    $file = @gzopen($filename, 'rb', $use_include_path);
+		    if ($file) {
+		        $first_chunk = true;
+		        while (!gzeof($file)) {
+		            $chunk = gzread($file, 1024);
+		            if ($first_chunk and strpos($chunk, "<?") !== false) { $type = 'xml'; $first_chunk = false; } // if it's a 1st chunk, then chunk <? symbols to detect XML file
+		            @fwrite($fp, $chunk);
+		        }
+		        gzclose($file);
+		    }
+		    @fclose($fp);
+		    $localPath = $uploads['path']  .'/'. $tmpname;
+		    return array('type' => $type, 'localPath' => $localPath);
+		}
+	}
 
-	function pmxi_strip_tags_content($text, $tags = '', $invert = FALSE) {
+	if ( ! function_exists('stream_notification_callback')){
 
-	  preg_match_all('/<(.+?)[\s]*\/?[\s]*>/si', trim($tags), $tags);
-	  $tags = array_unique($tags[1]);
-	   
-	  if(is_array($tags) AND count($tags) > 0) {
-	    if($invert == FALSE) {
-	      return preg_replace('@<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>.*?</\1>@si', '', $text);
-	    }
-	    else {
-	      return preg_replace('@<('. implode('|', $tags) .')\b.*?>.*?</\1>@si', '', $text);
-	    }
-	  }
-	  elseif($invert == FALSE) {
-	    return preg_replace('@<(\w+)\b.*?>.*?</\1>@si', '', $text);
-	  }
-	  return $text;
-	} 
+		function stream_notification_callback($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
+		    static $filesize = null;
+		    
+		    $logger = create_function('$m', 'echo "$m\\n"; flush();');
+
+		    $msg = '';
+		    switch($notification_code) {
+			    case STREAM_NOTIFY_RESOLVE:
+			    case STREAM_NOTIFY_AUTH_REQUIRED:
+			    case STREAM_NOTIFY_COMPLETED:
+			    case STREAM_NOTIFY_FAILURE:
+			    case STREAM_NOTIFY_AUTH_RESULT:
+			        /* Ignore */
+			        break;
+
+			    case STREAM_NOTIFY_REDIRECTED:
+			        //$msg = "Being redirected to: ". $message;
+			        break;
+
+			    case STREAM_NOTIFY_CONNECT:
+			        //$msg = "Connected...";
+			        break;
+
+			    case STREAM_NOTIFY_FILE_SIZE_IS:
+			        $filesize = $bytes_max;
+			        //$msg = "Filesize: ". $filesize;
+			        break;
+
+			    case STREAM_NOTIFY_MIME_TYPE_IS:
+			        //$msg = "Mime-type: ". $message;
+			        break;
+
+			    case STREAM_NOTIFY_PROGRESS:
+			        if ($bytes_transferred > 0) {
+						/*$m = "<script type='text/javascript'>";
+			            if (!isset($filesize)) {
+							$m .= "document.getElementById('url_progressbar').innerHTML('Unknown filesize.. ".($bytes_transferred/1024)."d kb done..');";
+			            } else {
+							$length = (int)(($bytes_transferred/$filesize)*100);
+							$m .= "document.getElementById('url_upload_value').style.width = ".$length."%";
+							$m .= "document.getElementById('url_progressbar').innerHTML('".$length."% (".($bytes_transferred/1024)."/".($filesize/1024)." kb)');";
+			            }
+			            $m .= "</script>";*/
+
+			            //$logger and call_user_func($logger, sprintf(__('%s', 'pmxi_plugin'), ($bytes_transferred/1024)));							
+
+						/*echo(str_repeat(' ', 256));
+						if (@ob_get_contents()) {
+							@ob_end_flush();
+						}
+						flush();*/
+			        }
+			        break;
+		    }	    	    
+		}
+	}
+
+	if ( ! function_exists('pmxi_strip_tags_content')){
+
+		function pmxi_strip_tags_content($text, $tags = '', $invert = FALSE) {
+
+		  preg_match_all('/<(.+?)[\s]*\/?[\s]*>/si', trim($tags), $tags);
+		  $tags = array_unique($tags[1]);
+		   
+		  if(is_array($tags) AND count($tags) > 0) {
+		    if($invert == FALSE) {
+		      return preg_replace('@<(?!(?:'. implode('|', $tags) .')\b)(\w+)\b.*?>.*?</\1>@si', '', $text);
+		    }
+		    else {
+		      return preg_replace('@<('. implode('|', $tags) .')\b.*?>.*?</\1>@si', '', $text);
+		    }
+		  }
+		  elseif($invert == FALSE) {
+		    return preg_replace('@<(\w+)\b.*?>.*?</\1>@si', '', $text);
+		  }
+		  return $text;
+		} 
+	}
+
+	/*	
+	* $value = {property/type[1]}
+	* Would return Rent if $value is 1, $Buy if $value is 2, Unavailable if $value is 3.
+	*/
+	if ( ! function_exists('wpai_util_map')){
+
+		function wpai_util_map($orig, $change, $value) {
+			
+			$orig_array = explode(',', $orig);
+
+			if ( empty($orig_array) ) return "";
+
+			$change_array = explode(',', $change);
+
+			if ( empty($change_array) or count($orig_array) != count($change_array)) return "";
+
+			return str_replace($orig_array, $change_array, $value);
+			
+		}
+	}
+
 

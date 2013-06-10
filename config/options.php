@@ -18,5 +18,6 @@ $config = array(
 	"html_entities" => 0,
 	"utf8_decode" => 0,
 	"cron_job_key" => url_title(rand_char(12)),
-	"chunk_size" => 64	
+	"chunk_size" => 64,
+	"pingbacks" => 1
 );

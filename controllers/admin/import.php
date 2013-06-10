@@ -78,6 +78,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		libxml_use_internal_errors($old);
 		if ('element' == $action) return true;
 		if ('evaluate' == $action) return true;
+		if ('evaluate_variations' == $action) return true;
 
 		// step #3: template
 		$xpath = new DOMXPath($dom);
@@ -305,13 +306,14 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					    	if (!empty($chunk_xml))
 					      	{				
 					      		PMXI_Import_Record::preprocessXml($chunk_xml);	      						      							      					      		
-						      	if ( ! $chunks ){ // save first chunk to the file
+						      	if ( !empty($chunk_xml) ){ // save first chunk to the file
 							      	$chunk_path = $wp_uploads['path'] .'/'. wp_unique_filename($wp_uploads['path'], "chunk_".basename($path));
 									file_put_contents($chunk_path, $file->encoding . "\n" . $chunk_xml);
 									chmod($chunk_path, 0755);
 								    $is_validate = $file->is_validate;
-								}							
-							    $chunks++;
+								    $chunks++;
+								    break;
+								}														    
 						    }
 						}	
 						if ( ! $key ){
@@ -625,6 +627,61 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			$this->error();
 		}
 	}
+
+	/**
+	 * Helper to evaluate xpath and return matching elements as direct paths for javascript side to highlight them
+	 */
+	public function evaluate_variations()
+	{
+		if ( ! PMXI_Plugin::getInstance()->getAdminCurrentScreen()->is_ajax) { // call is only valid when send with ajax
+			wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
+		}
+
+		$xpath = new DOMXPath($this->data['dom']);
+		$post = $this->input->post(array('xpath' => '', 'show_element' => 1, 'root_element' => $_SESSION['pmxi_import']['source']['root_element'], 'tagno' => 0));
+		$wp_uploads = wp_upload_dir();
+
+		$this->data['tagno'] = max(intval($this->input->getpost('tagno', 1)), 0);
+
+		if ('' == $post['xpath']) {
+			$this->errors->add('form-validation', __('No elements selected', 'pmxi_plugin'));
+		} else {			
+			$post['xpath'] = '/' . $_SESSION['pmxi_import']['source']['root_element'] . '/'.  ltrim(trim(str_replace("[*]","",$post['xpath']),'{}'), '/');
+			
+			// in default mode
+			$this->data['variation_elements'] = $elements = @ $xpath->query($post['xpath']); // prevent parsing warning to be displayed
+			$this->data['variation_list_count'] = $elements->length;
+			if (FALSE === $elements) {
+				$this->errors->add('form-validation', __('Invalid XPath expression', 'pmxi_plugin'));
+			} elseif ( ! $elements->length) {
+				$this->errors->add('form-validation', __('No matching variations found for XPath specified', 'pmxi_plugin'));
+			} else {
+				foreach ($elements as $el) {
+					if ( ! $el instanceof DOMElement) {
+						$this->errors->add('form-validation', __('XPath must match only elements', 'pmxi_plugin'));
+						break;
+					};
+				}
+			}			
+		}
+		if ( ! $this->errors->get_error_codes()) {
+			
+			$xpath = new DOMXPath($this->data['dom']);
+			$this->data['variation_elements'] = $elements = @ $xpath->query($post['xpath']); // prevent parsing warning to be displayed			
+			$paths = array(); $this->data['paths'] =& $paths;
+			if (PMXI_Plugin::getInstance()->getOption('highlight_limit') and $elements->length <= PMXI_Plugin::getInstance()->getOption('highlight_limit')) {
+				foreach ($elements as $el) {
+					if ( ! $el instanceof DOMElement) continue;
+					
+					$p = $this->get_xml_path($el, $xpath) and $paths[] = $p;
+				}
+			}
+
+			$this->render();
+		} else {
+			$this->error();
+		}
+	}
 	
 	/**
 	 * Step #3: Choose template
@@ -917,10 +974,17 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				}
 			}
 			
-			$post = $this->input->post(
-				(isset($_SESSION['pmxi_import']['options']) ? $_SESSION['pmxi_import']['options'] : array())
-				+ $default
-			);
+			if ( class_exists('PMWI_Plugin') )
+				$post = $this->input->post(
+					(isset($_SESSION['pmxi_import']['options']) ? $_SESSION['pmxi_import']['options'] : array())
+					+ $default
+					+ PMWI_Plugin::get_default_import_options()
+				);
+			else 
+				$post = $this->input->post(
+					(isset($_SESSION['pmxi_import']['options']) ? $_SESSION['pmxi_import']['options'] : array())
+					+ $default
+				);
 
 			$scheduled = $this->input->post(array(
 				'is_scheduled' => ! empty($_SESSION['pmxi_import']['scheduled']),
@@ -928,11 +992,18 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			));
 	
 		} else {
-			$this->data['source_type'] = $this->data['import']->type;
-			$post = $this->input->post(
-				$this->data['import']->options
-				+ $default
-			);
+			$this->data['source_type'] = $this->data['import']->type;			
+			if ( class_exists('PMWI_Plugin') )
+				$post = $this->input->post(
+					$this->data['import']->options
+					+ $default
+					+ PMWI_Plugin::get_default_import_options()
+				);
+			else
+				$post = $this->input->post(
+					$this->data['import']->options
+					+ $default
+				);
 			$scheduled = $this->input->post(array(
 				'is_scheduled' => ! empty($this->data['import']->scheduled),
 				'scheduled_period' => ! empty($this->data['import']->scheduled) ? $this->data['import']->scheduled : '0 0 * * *', // daily by default
@@ -948,26 +1019,50 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		$keys->setTable(PMXI_Plugin::getInstance()->getWPPrefix() . 'postmeta');
 		$keys->setColumns('meta_id', 'meta_key')->getBy(NULL, "meta_id", NULL, NULL, "meta_key");
 		
-		if (($load_options = $this->input->post('load_options'))) { // init form with template selected
-			$this->data['load_options'] = true;
+		$load_template = $this->input->post('load_template');
+		if ($load_template) { // init form with template selected			 			
+			$_SESSION['pmxi_import']['is_loaded_template'] = $load_template;
 			$template = new PMXI_Template_Record();
-			if ( ! $template->getById($this->data['is_loaded_template'])->isEmpty()) {								
+			if ( ! $template->getById($load_template)->isEmpty()) {					
 				$post = (!empty($template->options) ? $template->options : array()) + $default;
 				$scheduled = array(
 					'is_scheduled' => ! empty($template->scheduled),
 					'scheduled_period' => ! empty($template->scheduled) ? $template->scheduled : '0 0 * * *', // daily by default
-				);
+				);				
 			}
-			
-		} elseif (($reset_options = $this->input->post('reset_options'))){
-			$post = $default;
+		} elseif ($load_template == -1){
+			$_SESSION['pmxi_import']['is_loaded_template'] = 0;
+
+			$post = $default;				
 			$scheduled = $this->input->post(array(
 				'is_scheduled' => ! empty($post['scheduled']),
 				'scheduled_period' => ! empty($post['scheduled']) ? $post['scheduled_period'] : '0 0 * * *', // daily by default
 			));
+
 		} elseif ($this->input->post('is_submitted')) {
 			check_admin_referer('options', '_wpnonce_options');		
-						
+			
+			if ( $post['type'] == "post" and $post['custom_type'] == "product" and class_exists('PMWI_Plugin')){
+				// remove entires where both custom_name and custom_value are empty 
+				$not_empty = array_flip(array_values(array_merge(array_keys(array_filter($post['attribute_name'], 'strlen')), array_keys(array_filter($post['attribute_value'], 'strlen')))));
+
+				$post['attribute_name'] = array_intersect_key($post['attribute_name'], $not_empty);
+				$post['attribute_value'] = array_intersect_key($post['attribute_value'], $not_empty);
+
+				// validate
+				if (array_keys(array_filter($post['attribute_name'], 'strlen')) != array_keys(array_filter($post['attribute_value'], 'strlen'))) {
+					$this->errors->add('form-validation', __('Both name and value must be set for all woocommerce attributes', 'pmxi_plugin'));
+				} else {
+					foreach ($post['attribute_name'] as $attribute_name) {
+						$this->_validate_template($attribute_name, __('Attribute Field Name', 'pmxi_plugin'));
+					}
+					foreach ($post['attribute_value'] as $custom_value) {
+						$this->_validate_template($custom_value, __('Attribute Field Value', 'pmxi_plugin'));
+					}
+				}
+				
+			}
+
 			if ('page' == $post['type'] and ! preg_match('%^(-?\d+)?$%', $post['order'])) {
 				$this->errors->add('form-validation', __('Order must be an integer number', 'pmxi_plugin'));
 			}
@@ -1022,21 +1117,16 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					$_SESSION['pmxi_import']['options'] = $post;
 					$_SESSION['pmxi_import']['scheduled'] = $scheduled['is_scheduled'] ? $scheduled['scheduled_period'] : '';
 
-					// Update template options
-					if (!empty($_SESSION['pmxi_import']['saved_template']))  {
+					if ( $this->input->post('name')) { // save template in database
 						$template = new PMXI_Template_Record();
-						$template->getById($_SESSION['pmxi_import']['saved_template'])->set(array(
-																								'options' => $_SESSION['pmxi_import']['options'],
-																								'scheduled' => $_SESSION['pmxi_import']['scheduled']))->update();
+						
+						$template->getByName($this->input->post('name'))->set(array(
+							'name' => $this->input->post('name'),
+							'options' => $post,
+							'scheduled' => (($scheduled['is_scheduled']) ? $scheduled['scheduled_period'] : '')
+						))->save();						
 					}
-					elseif (!empty($_SESSION['pmxi_import']['is_loaded_template']))
-					{
-						$template = new PMXI_Template_Record();
-						$template->getById($_SESSION['pmxi_import']['is_loaded_template'])->set(array(
-																								'options' => $_SESSION['pmxi_import']['options'],
-																								'scheduled' => $_SESSION['pmxi_import']['scheduled']))->update();
-					}
-
+					
 					if ( ! $this->input->post('save_only')) { 						
 						wp_redirect(add_query_arg('action', 'process', $this->baseUrl)); die();
 					} else {
@@ -1068,18 +1158,17 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				} else {
 
 					$this->data['import']->set('options', $post)->set( array( 'scheduled' => $scheduled['is_scheduled'] ? $scheduled['scheduled_period'] : '', 'friendly_name' => $this->data['post']['friendly_name'] ) )->save();
-					$template = new PMXI_Template_Record();
-
-					if (!$template->getByName($this->data['import']->template['name'])->isEmpty()){
-						$template->set(array(
-											'options' => $post,
-											'scheduled' => ($scheduled['is_scheduled'] ? $scheduled['scheduled_period'] : '')))->update();
-					}
+					
 					wp_redirect(add_query_arg(array('page' => 'pmxi-admin-manage', 'pmlc_nt' => urlencode(__('Options updated', 'pmxi_plugin'))) + array_intersect_key($_GET, array_flip($this->baseUrlParamNames)), admin_url('admin.php'))); die();
 				} 
 			}
-		}			
-		
+		}						
+
+		if ( $post['type'] == "product" and class_exists('PMWI_Plugin'))
+		{
+			! empty($post['attribute_name']) or $post['attribute_name'] = array('') and $post['attribute_value'] = array('');
+		}
+
 		$this->render();
 	}
 

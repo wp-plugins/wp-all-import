@@ -534,7 +534,7 @@ table.xml table {
 .pmxi_plugin .remove-ico{
 	background: url("../img/ico-remove.png") no-repeat;
 	top:1px;
-	right:-4px;
+	right:-8px;
 	position: absolute;
 }
 
@@ -755,7 +755,7 @@ table.xml table {
 }
 .pmxi_plugin .post_taxonomy{	
 	margin-bottom: 15px;
-	overflow: hidden;
+	/*overflow: hidden;*/
 	padding-bottom: 15px;
 }
 .pmxi_plugin .post_taxonomy .delim{
@@ -763,7 +763,7 @@ table.xml table {
 }
 .pmxi_plugin .post_taxonomy .delim .add-new-ico{
 	float: right;
-	margin-right: 35px;
+	margin-right: 10%;
 	margin-top: 5px;
 }
 .pmxi_plugin .post_taxonomy ol.ui-sortable{
@@ -780,7 +780,7 @@ table.xml table {
 	background: url("../img/ico-remove.png") no-repeat scroll 0 0 transparent;
 	height: 16px;
 	position: absolute;
-	right: -10px;
+	right: 20px;
 	width: 16px;
 }
 .pmxi_plugin .switcher-target-is_keep_former_posts{
@@ -958,7 +958,7 @@ table.xml table {
 }
 .pmxi_plugin .drag-element .widefat{
 	margin-left: 1%;
-	width: 90%;
+	width: 85%;
 }
 .pmxi_plugin .upgrade_link{
 	color: #21759B;
@@ -980,4 +980,18 @@ table.xml table {
 	border-radius: 3px;
 	border-style: solid;
 	border-width: 1px;
+}
+.pmxi_plugin .load_options{
+	height: 0;
+	line-height: 0;
+	margin: 0;
+	padding: 0;
+	position: relative;
+	right: 10px;
+	text-align: right;
+	top: -35px;
+	width: 100%;
+}
+.form-field textarea{
+	width:80%;
 }

@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description:  The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs. Free lite edition.
-Version: 3.0.1
+Version: 3.01
 Author: Soflyy
 */
 /**
@@ -23,6 +23,10 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  * @var string
  */
 define('PMXI_PREFIX', 'pmxi_');
+
+define('PMXI_VERSION', '3.01');
+
+define('PMXI_EDITION', 'free');
 
 /**
  * Main plugin file, Introduces MVC pattern
@@ -461,9 +465,12 @@ final class PMXI_Plugin {
 		$created = false;
 		$updated = false;
 		$skipped = false;
+		$fix_characters = false;
+		$feed_type = false;
 
 		// Check if field exists
 		foreach ($tablefields as $tablefield) {
+			if ('feed_type' == $tablefield->Field) $feed_type = true;
 			if ('large_import' == $tablefield->Field) $large_import = true;
 			if ('root_element' == $tablefield->Field) $root_element = true;
 			if ('processing' == $tablefield->Field) $processing = true;
@@ -476,34 +483,45 @@ final class PMXI_Plugin {
 			if ('imported' == $tablefield->Field) $imported = true;
 			if ('created' == $tablefield->Field) $created = true;
 			if ('updated' == $tablefield->Field) $updated = true;
-			if ('skipped' == $tablefield->Field) $skipped = true;
+			if ('skipped' == $tablefield->Field) $skipped = true;			
 		}
+		if ($feed_type) $wpdb->query("ALTER TABLE {$table} CHANGE `feed_type` `feed_type` ENUM( 'xml', 'csv', 'zip', 'gz', '' ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '';");					
+		if (!$feed_type) $wpdb->query("ALTER TABLE {$table} ADD `feed_type` ENUM( 'xml','csv','zip','gz','' ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '';");
 		if (!$large_import) $wpdb->query("ALTER TABLE {$table} ADD `large_import` ENUM( 'Yes', 'No' ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'No';");
-		if (!$root_element) $wpdb->query("ALTER TABLE {$table} ADD `root_element` VARCHAR(255) DEFAULT '';");
-		if (!$processing) $wpdb->query("ALTER TABLE {$table} ADD `processing` BOOL NOT NULL DEFAULT '0';");
-		if (!$triggered) $wpdb->query("ALTER TABLE {$table} ADD `triggered` BOOL NOT NULL DEFAULT '0';");
-		if (!$queue_chunk_number) $wpdb->query("ALTER TABLE {$table} ADD `queue_chunk_number` BIGINT(20) NOT NULL DEFAULT '0';");
-		if (!$current_post_ids) $wpdb->query("ALTER TABLE {$table} ADD `current_post_ids` TEXT NULL DEFAULT '';");
+		if (!$root_element) $wpdb->query("ALTER TABLE {$table} ADD `root_element` VARCHAR(255) NOT NULL DEFAULT '';");
+		if (!$processing) $wpdb->query("ALTER TABLE {$table} ADD `processing` BOOL NOT NULL DEFAULT 0;");
+		if (!$triggered) $wpdb->query("ALTER TABLE {$table} ADD `triggered` BOOL NOT NULL DEFAULT 0;");
+		if (!$queue_chunk_number) $wpdb->query("ALTER TABLE {$table} ADD `queue_chunk_number` BIGINT(20) NOT NULL DEFAULT 0;");
+		if (!$current_post_ids) $wpdb->query("ALTER TABLE {$table} ADD `current_post_ids` TEXT;");
 		if (!$first_import) $wpdb->query("ALTER TABLE {$table} ADD `first_import` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;");
-		if (!$count) $wpdb->query("ALTER TABLE {$table} ADD `count` BIGINT(20) NOT NULL DEFAULT '0';");
-		if (!$imported) $wpdb->query("ALTER TABLE {$table} ADD `imported` BIGINT(20) NOT NULL DEFAULT '0';");
-		if (!$created) $wpdb->query("ALTER TABLE {$table} ADD `created` BIGINT(20) NOT NULL DEFAULT '0';");
-		if (!$updated) $wpdb->query("ALTER TABLE {$table} ADD `updated` BIGINT(20) NOT NULL DEFAULT '0';");
-		if (!$skipped) $wpdb->query("ALTER TABLE {$table} ADD `skipped` BIGINT(20) NOT NULL DEFAULT '0';");
+		if (!$count) $wpdb->query("ALTER TABLE {$table} ADD `count` BIGINT(20) NOT NULL DEFAULT 0;");
+		if (!$imported) $wpdb->query("ALTER TABLE {$table} ADD `imported` BIGINT(20) NOT NULL DEFAULT 0;");
+		if (!$created) $wpdb->query("ALTER TABLE {$table} ADD `created` BIGINT(20) NOT NULL DEFAULT 0;");
+		if (!$updated) $wpdb->query("ALTER TABLE {$table} ADD `updated` BIGINT(20) NOT NULL DEFAULT 0;");
+		if (!$skipped) $wpdb->query("ALTER TABLE {$table} ADD `skipped` BIGINT(20) NOT NULL DEFAULT 0;");
 		if (!$friendly_name) $wpdb->query("ALTER TABLE {$table} ADD `friendly_name` VARCHAR(255) NOT NULL DEFAULT '';");
 
 		$table = $this->getTablePrefix() . 'templates';
 		global $wpdb;
 		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
 		$is_leave_html = false;
-		$fix_characters = false;
 		// Check if field exists
 		foreach ($tablefields as $tablefield) {
 			if ('is_leave_html' == $tablefield->Field) $is_leave_html = true;
 			if ('fix_characters' == $tablefield->Field) $fix_characters = true;
 		}
-		if (!$is_leave_html) $wpdb->query("ALTER TABLE {$table} ADD `is_leave_html` TINYINT( 1 ) NOT NULL DEFAULT '0';");
-		if (!$fix_characters) $wpdb->query("ALTER TABLE {$table} ADD `fix_characters` TINYINT( 1 ) NOT NULL DEFAULT '0';");
+		if (!$is_leave_html) $wpdb->query("ALTER TABLE {$table} ADD `is_leave_html` TINYINT( 1 ) NOT NULL DEFAULT 0;");
+		if (!$fix_characters) $wpdb->query("ALTER TABLE {$table} ADD `fix_characters` TINYINT( 1 ) NOT NULL DEFAULT 0;");
+
+		$table = $this->getTablePrefix() . 'posts';
+		global $wpdb;
+		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
+		$product_key = false;
+		// Check if field exists
+		foreach ($tablefields as $tablefield) {
+			if ('product_key' == $tablefield->Field) $product_key = true;			
+		}
+		if (!$product_key) $wpdb->query("ALTER TABLE {$table} ADD `product_key` TEXT NOT NULL DEFAULT '';");
 
 	}
 

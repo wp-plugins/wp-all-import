@@ -321,6 +321,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 							'path' => $item->path,
 							'root_element' => $item->root_element,
 						),
+						'feed_type' => $item->feed_type,
 						'update_previous' => $item->id,
 						'xpath' => $item->xpath,
 						'template' => $item->template,

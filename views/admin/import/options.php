@@ -14,7 +14,7 @@
 					?>
 		            <li id="item_<?php echo $i; ?>">
 		            	<div class="drag-element">
-		            		<input type="checkbox" class="assign_post" <?php if ($child_cat->assign): ?>checked="checked"<?php endif; ?> title="<?php _e('Assign post to the taxonomy.','pmxi_plugin');?>"/>
+		            		<input type="checkbox" class="assign_post" <?php if ($child_cat->assign): ?>checked="checked"<?php endif; ?> title="<?php _e('Assign post to the taxonomy.','pmxi_plugin');?>"/>		            		
 		            		<input class="widefat" type="text" value="<?php echo esc_attr($child_cat->xpath); ?>"/>
 		            	</div>
 		            	<a href="javascript:void(0);" class="icon-item remove-ico"></a>
@@ -39,38 +39,42 @@
 		<?php _e('Edit Import Options', 'pmxi_plugin') ?>
 	<?php endif ?>
 </h2>
-<h3>Click the appropriate tab to choose the type of posts to create.</h3>
+<h3><?php _e('Click the appropriate tab to choose the type of posts to create.', 'pmxi_plugin');?></h3>
 
-<?php if ($this->errors->get_error_codes()): ?>
-	<?php $this->error() ?>
-<?php endif ?>
+<div class="ajax-console">
+	<?php if ($this->errors->get_error_codes()): ?>
+		<?php $this->error() ?>
+	<?php endif ?>
+</div>
+
 <table class="layout">
 <tr>
 	<td class="left">
-		<?php if ($this->isWizard): ?>
-			<?php if ($is_loaded_template && !$load_options): ?>
-				<form class="options <?php echo ! $this->isWizard ? 'edit' : '' ?>" method="post">
-					<span class="load-options">
-						Load Options...&nbsp;<input type="checkbox" name="load_options" /><a class="help" href="#help" original-title="Load options from selected template.">?</a>
-					</span>
-				</form>
-				<?php elseif ($is_loaded_template): ?>
-				<form class="options <?php echo ! $this->isWizard ? 'edit' : '' ?>" method="post">
-					<span class="load-options">
-						Reset Options...&nbsp;<input type="checkbox" name="reset_options" /><a class="help" href="#help" original-title="Reset options.">?</a>
-					</span>
-				</form>
-			<?php endif; ?>
-		<?php endif; ?>
+		<?php $templates = new PMXI_Template_List() ?>
+		<form class="load_options options <?php echo ! $this->isWizard ? 'edit' : '' ?>" method="post">
+			<div class="load-template">
+				<span><?php _e('Load existing template:','pmxi_plugin');?> </span>
+				<select name="load_template">
+					<option value=""><?php _e('Load Template...', 'pmxi_plugin') ?></option>
+					<?php foreach ($templates->getBy()->convertRecords() as $t): ?>
+						<option value="<?php echo $t->id ?>"><?php echo $t->name ?></option>
+					<?php endforeach ?>
+					<option value="-1"><?php _e('Reset...', 'pmxi_plugin') ?></option>
+				</select>
+			</div>
+		</form>
 		<div id="pmxi_tabs">
 		    <ul>
 		        <li><a href="#tabs-1">Posts</a></li>
-		        <li><a href="#tabs-2">Pages</a></li>
-				<?php if (count($custom_types)): ?>
-					<?php foreach ($custom_types as $key => $ct): ?>
-						<li><a href="#tabs-<?php echo $key; ?>"><?php echo $ct->labels->name ?></a></li>
-					<?php endforeach ?>
-				<?php endif ?>
+		        <li><a href="#tabs-2">Pages</a></li>				
+				<!-- WooCommerce Add-On -->
+				<?php
+					if (class_exists('PMWI_Plugin')):
+					?>
+						<li><a href="#tabs-woo-product">WooCommerce Products</a></li>
+					<?php
+					endif;
+				?>
 		    </ul>
 
 		    <!-- Post Options -->
@@ -141,41 +145,34 @@
 					<?php include( 'options/_buttons_template.php' ); ?>
 
 				</form>
-			</div>
+			</div>			
 
-			<!-- Custom Post Types -->
-
-			<?php if (count($custom_types)): ?>
-				<?php foreach ($custom_types as $key => $ct): ?>
-					<div id="tabs-<?php echo $key;?>">
-
-						<center>
-
-							<h3>Please upgrade to the professional edition of WP All Import to import to Custom Post Types.</h3>
-
-							<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-post-types&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
-
-							<hr />
-
-						</center>
-
-
+			<!-- WooCommerce Add-On -->
+			<?php
+				if (class_exists('PMWI_Plugin')):
+				?>
+					<div id="tabs-woo-product">
 						<form class="options <?php echo ! $this->isWizard ? 'edit' : '' ?>" method="post">
-							<input type="hidden" name="custom_type" value="post"/>
+							<input type="hidden" name="custom_type" value="product"/>
 							<input type="hidden" name="type" value="post"/>
 							<div class="post-type-options">
 								<table class="form-table" style="max-width:none;">
 									<?php
-										$post_type = $entry = $key;
+																				
+										$post_type = $entry = 'product';		
 
 										include( 'options/_main_options_template.php' );
-										include( 'options/_taxonomies_template.php' );
-										include( 'options/_categories_template.php' );
+										
+										$woo_controller = new PMWI_Admin_Import();										
+										$woo_controller->index();
+										
+										include( 'options/_taxonomies_template.php' );										
 										include( 'options/_custom_fields_template.php' );
 										include( 'options/_featured_template.php' );
 										include( 'options/_author_template.php' );
 										include( 'options/_reimport_template.php' );
 										include( 'options/_scheduling_template.php' );
+
 									?>
 								</table>
 							</div>
@@ -183,10 +180,10 @@
 							<?php include( 'options/_buttons_template.php' ); ?>
 
 						</form>
-
-					</div>
-				<?php endforeach ?>
-			<?php endif ?>
+					</div>					
+				<?php
+				endif;
+			?>
 		</div>
 	</td>
 	<?php if ($this->isWizard or $this->isTemplateEdit): ?>

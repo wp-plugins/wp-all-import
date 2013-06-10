@@ -17,7 +17,7 @@ function pmxi_admin_notices() {
 	}	
 
 	// notify user
-	if (!PMXI_Plugin::getInstance()->getOption('dismiss') and strpos($_SERVER['REQUEST_URI'], 'plugins.php') !== false and strpos($_SERVER['REQUEST_URI'], 'pmxi-admin') === false) {
+	if (!PMXI_Plugin::getInstance()->getOption('dismiss') and strpos($_SERVER['REQUEST_URI'], 'pmxi-admin') !== false) {
 		?>
 		<div class="updated"><p>
 			<?php printf(

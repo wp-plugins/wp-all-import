@@ -115,7 +115,7 @@
 	}).filter(':checked').click();
 	
 	// template form: auto submit when `load template` list value is picked
-	$('form.template').find('select[name="load_template"]').change(function () {
+	$('form.template, form.options').find('select[name="load_template"]').change(function () {
 		$(this).parents('form').submit();
 	});	
 	// template form: preview button
@@ -227,7 +227,8 @@
 				lineHeight: 1,
 				opacity: 0,
 				cursor: 'pointer',
-				borderRadius: 0
+				borderRadius: 0,
+				zIndex:99
 			}).appendTo(document.body).mousedown(function (e) {
 				if (_dbl) return;
 				var _x = e.pageX - $drag.offset().left;
@@ -374,6 +375,9 @@
 					var $indicator = $('<span />').insertBefore($tag);
 					$tag.replaceWith(data);
 					$indicator.next().tag().prevObject.remove();
+					if ($('#variations_xpath').length){
+						$('#variations_xpath').data('checkedValue', '').change();
+					}
 				}, 'html');
 				return false;
 			});
@@ -423,7 +427,7 @@
     	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('td:first').find('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
     	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
     });
-    
+
 	$('.sortable').find('.remove-ico').live('click', function(){
 	 	
 	 	var parent_td = $(this).parents('td:first');
@@ -452,6 +456,13 @@
 			if ($(this).parents('td:first').find('input:first').val() == '') $(this).val('');
 		});
 		if ($(this).attr('name') == 'btn_save_only') $('.save_only').val('1');
+
+		$('input[name^=in_variations], input[name^=is_visible], input[name^=is_taxonomy], input[name^=create_taxonomy_in_not_exists], input[name^=variable_create_taxonomy_in_not_exists], input[name^=variable_in_variations], input[name^=variable_is_visible], input[name^=variable_is_taxonomy]').each(function(){
+	    	if ( ! $(this).is(':checked') && ! $(this).parents('.form-field:first').hasClass('template')){	    		
+	    		$(this).val('0').attr('checked','checked');
+	    	}
+	    });
+
 		$(this).parents('form:first').submit();
 	});
 
@@ -492,7 +503,7 @@
 			silverlight_xap_url : plugin_url + '/static/js/plupload/plupload.silverlight.xap',
 		
 			multipart: false,
-			max_file_size: '500mb',
+			max_file_size: '1000mb',
 			chunk_size: '1mb',			
 			drop_element: 'plupload-ui'
 		});

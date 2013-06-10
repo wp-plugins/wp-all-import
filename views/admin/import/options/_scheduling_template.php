@@ -2,13 +2,13 @@
 	<tr>
 		<td colspan="3">
 			<fieldset class="optionsset">
-				<legend>Scheduling</legend>
+				<legend><?php _e('Scheduling','pmxi_plugin');?></legend>
 				<div class="input">
 					<input type="hidden" name="is_scheduled" value="0" />
-					<input type="checkbox" id="is_scheduled_<?php echo $entry; ?>" class="switcher" name="is_scheduled" value="1" <?php echo $scheduled['is_scheduled'] ? 'checked="checked"': '' ?> <?php echo ($post_type != "post") ? 'disabled="disabled"' : '';?>/>
+					<input type="checkbox" id="is_scheduled_<?php echo $entry; ?>" class="switcher" name="is_scheduled" value="1" <?php echo $scheduled['is_scheduled'] ? 'checked="checked"': '' ?>/>
 					<label for="is_scheduled_<?php echo $entry; ?>"><?php _e('Schedule import using WordPress Scheduling Logic', 'pmxi_plugin') ?> <a href="#help" class="help" title="<?php _e('Using this is not recommended. Unless you are importing a very small file, use cron jobs instead.', 'pmxi_plugin') ?>">?</a></label>
 					<span class="switcher-target-is_scheduled_<?php echo $entry; ?>" style="vertical-align:middle">
-						<select name="scheduled_period" <?php echo ($post_type != "post") ? 'disabled="disabled"' : '';?>>
+						<select name="scheduled_period">
 							<?php foreach (array(
 									'*/5 * * * *' => __('every 5 min'),
 									'*/10 * * * *' => __('every 10 min'),
@@ -29,7 +29,7 @@
 					<br /><br />
 
 					<p>
-						<b>This import can be also be scheduled using cron jobs.</b> Save the import, visit the <i>Manage Imports</i> page, and click the <i>Cron Scheduling</i> link to set up cron scheduling. Using WordPress scheduling logic is not recommended for large files.
+						<?php _e('<b>This import can be also be scheduled using cron jobs.</b> Save the import, visit the <i>Manage Imports</i> page, and click the <i>Cron Scheduling</i> link to set up cron scheduling. Using WordPress scheduling logic is not recommended for large files.','pmxi_plugin');?>
 					</p>
 
 				</div>

@@ -3,21 +3,33 @@ if ( ! function_exists('get_file_curl')):
 
 	function get_file_curl($url, $fullpath, $to_variable = false) {
 
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		$rawdata = curl_exec_follow($ch);
-	    
-	    $result = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		$rawdata = wp_remote_retrieve_body( wp_remote_get($url) );
 
-		curl_close ($ch);
+		if (empty($rawdata)){			
+			$ch = curl_init($url);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			$rawdata = curl_exec_follow($ch);
+		    
+		    $result = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-	    if(file_exists($fullpath)) unlink($fullpath);
-	    
-	    $fp = fopen($fullpath,'w');	    
-	    fwrite($fp, $rawdata);
-	    fclose($fp); 
+			curl_close ($ch);
 
-	    return ($result == 200) ? (($to_variable) ? $rawdata : true) : false;
+			if (!@file_put_contents($fullpath, $rawdata)){
+				$fp = fopen($fullpath,'w');	    
+			    fwrite($fp, $rawdata);
+			    fclose($fp);			
+			}	    
+
+		    return ($result == 200) ? (($to_variable) ? $rawdata : true) : false;
+		}	    
+
+		if (!@file_put_contents($fullpath, $rawdata)){
+			$fp = fopen($fullpath,'w');	    
+		    fwrite($fp, $rawdata);
+		    fclose($fp);			
+		}	    
+
+	    return ($to_variable) ? $rawdata : true;
 	}
 
 endif;

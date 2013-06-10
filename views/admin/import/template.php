@@ -11,18 +11,18 @@
 		<?php $this->error() ?>
 	<?php endif ?>
 
-	<h3>Drag-and-drop an element from the right to the left to build your template</h3>
+	<h3><?php _e('Drag-and-drop an element from the right to the left to build your template','pmxi_plugin');?></h3>
 
 	<table class="layout">
 		<tr>
 			<td class="left">
-				<h3>Post Title</h3>
+				<h3><?php _e('Post Title','pmxi_plugin');?></h3>
 				<div style="width:100%">
 					<input id="title" class="widefat" type="text" name="title" value="<?php echo esc_attr($post['title']) ?>" />
 				</div>
 
 				<h3>
-					Post Content
+					<?php _e('Post Content','pmxi_plugin');?>
 				</h3>
 				<div id="poststuff">
 					<div id="<?php echo user_can_richedit() ? 'postdivrich' : 'postdiv'; ?>" class="postarea">
@@ -60,13 +60,13 @@
 					<?php wp_nonce_field('template', '_wpnonce_template'); ?>
 					<input type="hidden" name="is_submitted" value="1" />
 					<div class="input">
-						<input type="checkbox" id="save_template_as" name="save_template_as" value="1" <?php echo $post['save_template_as'] ? 'checked="checked"' : '' ?> style="position:relative; top:-2px;"/> <label for="save_template_as">Save template as:</label> &nbsp;<input type="text" name="name" title="<?php _e('Save Template As...', 'pmxi_plugin') ?>" style="vertical-align:middle; font-size:13px;" value="<?php echo esc_attr($post['name']) ?>" />
+						<input type="checkbox" id="save_template_as" name="save_template_as" value="1" <?php echo $post['save_template_as'] ? 'checked="checked"' : '' ?> style="position:relative; top:-2px;"/> <label for="save_template_as"><?php _e('Save template as:','pmxi_plugin');?></label> &nbsp;<input type="text" name="name" title="<?php _e('Save Template As...', 'pmxi_plugin') ?>" style="vertical-align:middle; font-size:13px;" value="<?php echo esc_attr($post['name']) ?>" />
 					</div>
 				</p>
 
 				<?php $templates = new PMXI_Template_List() ?>
 				<div class="load-template">
-					<span>Load existing template: </span>
+					<span><?php _e('Load existing template:','pmxi_plugin');?> </span>
 					<select name="load_template">
 						<option value=""><?php _e('Load Template...', 'pmxi_plugin') ?></option>
 						<?php foreach ($templates->getBy()->convertRecords() as $t): ?>

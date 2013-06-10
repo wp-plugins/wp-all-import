@@ -58,6 +58,11 @@
 
 <h3><?php _e('Import Settings', 'pmxi_plugin') ?></h3>
 <div><?php printf(__('Chunk maximum size %s (Kb)', 'pmxi_plugin'), '<input type="text" name="chunk_size" value="' . esc_attr($post['chunk_size']) . '"/>') ?></div>
+<p>
+	<input type="hidden" name="pingbacks" value="0"/>
+	<?php printf(__('Enable WP_IMPORTING %s', 'pmxi_plugin'), '<input type="checkbox" name="pingbacks" value="1"  style="position:relative; top:-2px;" '. (($post['pingbacks']) ? 'checked="checked"' : '') .'/>') ?>
+	<a href="#help" class="help" title="<?php _e('Avoid triggering pingback.', 'pmxi_plugin') ?>">?</a>
+</p>
 <p class="submit-buttons">
 	<?php wp_nonce_field('edit-settings', '_wpnonce_edit-settings') ?>
 	<input type="hidden" name="is_settings_submitted" value="1" />

@@ -4,11 +4,11 @@
 	<p id="process_notice"><?php _e('Importing may take some time. Please do not close your browser or refresh the page until the process is complete.', 'pmxi_plugin') ?></p>
 	<?php _e('<div id="processbar"><div></div><span id="import_progress"><span id="left_progress">Time Elapsed <span id="then">00:00:00</span></span><span id="center_progress"> Created 0 / Updated 0 </span><span id="right_progress">0%</span></span></div>', 'pmxi_plugin'); ?>	
 	<div id="logbar">
-		<a href="javascript:void(0);" id="view_log">View Log</a><span id="download_log_separator"> | </span> <a href="javascript:void(0);" id="download_log">Download Log</a>
-		<p>Warnings (<span id="warnings">0</span>), Errors (<span id="errors">0</span>)</p>
+		<a href="javascript:void(0);" id="view_log"><?php _e('View Log','pmxi_plugin');?></a><span id="download_log_separator"> | </span> <a href="javascript:void(0);" id="download_log"><?php _e('Download Log','pmxi_plugin');?></a>
+		<p><?php _e('Warnings','pmxi_plugin');?> (<span id="warnings">0</span>), <?php _e('Errors','pmxi_plugin');?> (<span id="errors">0</span>)</p>
 	</div>
 	<fieldset id="logwrapper" <?php if ($_SESSION['pmxi_import']['large_file']): ?> style="display:none;" <?php endif; ?>>
-		<legend>Log</legend>
+		<legend><?php _e('Log','pmxi_plugin');?></legend>
 		<div id="loglist">
 			
 		</div>

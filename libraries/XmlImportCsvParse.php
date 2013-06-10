@@ -959,16 +959,20 @@ class PMXI_CsvParser
         while ($keys = fgetcsv($res, $l, $d, $e)) {
 
             if ($c == 0) {
-
+                $buf_keys = $keys;
                 foreach ($keys as $key => $value) {    
                     if (!$create_new_headers and (preg_match('%\W(http:|https:|ftp:)$%i', $value) or is_numeric($value))) $create_new_headers = true;                                                                    
                     $value = trim(strtolower(preg_replace('/^[0-9]{1}/','el_', preg_replace('/[^a-z0-9_]/i', '', $value))));                    
                     $keys[$key] = (!empty($value)) ? $value : 'undefined'.$key;                    
                 }            
                 $this->headers = $keys;                                
-                if ($create_new_headers) $this->createHeaders('column');      
+                if ($create_new_headers){ 
+                    $this->createHeaders('column');      
+                    $keys = $buf_keys;
+                }
+            } 
 
-            } else {                                            
+            if ($c or $create_new_headers) {                                            
                 if (!$this->large_import and empty($_POST['large_file'])) {                    
                     array_push($this->rows, $keys);
                 }
