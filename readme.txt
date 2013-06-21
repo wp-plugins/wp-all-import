@@ -1,4 +1,4 @@
-=== WP All Import - Import any XML or CSV File to WordPress ===
+=== Import any XML or CSV File to WordPress ===
 Contributors: soflyy
 Tags: wordpress, xml, csv, datafeed, import
 Requires at least: 3.5
