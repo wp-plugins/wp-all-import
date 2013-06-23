@@ -47,6 +47,15 @@ Upgrade to the professional edition of WP All Import for premium support.
 
 E-mail: support@soflyy.com
 
+== Import To WooCommerce ==
+
+Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocommerce-xml-csv-product-import/) Check out our WooCommerce add-on.
+
+[WooCommerce XML & CSV Import Pro Version](http://www.wpallimport.com/woocommerce-product-import)
+
+E-mail: support@soflyy.com
+
+
 == Installation ==
 
 Either: -
