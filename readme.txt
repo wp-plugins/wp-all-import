@@ -38,8 +38,9 @@ WP All Import can be used for everything from building a store with an affiliate
 
 * Pro version customers also get access to our customer portal with documentation and tutorials, and e-mail technical support.
 
-
 [Upgrade to the professional edition of WP All Import.](http://www.wpallimport.com/upgrade-to-pro)
+
+Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocommerce-xml-csv-product-import/) Check out our WooCommerce add-on.
 
 == Premium Support ==
 Upgrade to the professional edition of WP All Import for premium support.
