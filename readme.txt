@@ -53,8 +53,6 @@ Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocom
 
 [WooCommerce XML & CSV Import Pro Version](http://www.wpallimport.com/woocommerce-product-import)
 
-E-mail: support@soflyy.com
-
 
 == Installation ==
 
