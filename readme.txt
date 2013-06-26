@@ -20,7 +20,7 @@ WP All Import can be used for everything from building a store with an affiliate
 = WP All Import Professional Edition =
 [youtube http://www.youtube.com/watch?v=7KSz1wxQ9f8 /]
 
-*WP All Import Pro* is a $199 upgrade that adds the following features to the free version of WP All Import:
+*WP All Import Pro* is a $99 upgrade that adds the following features to the free version of WP All Import:
 
 * Import to Custom Post Types - commonly used to import to Automotiv, OpenHouse, Listings, and WooCommerce, as well as any other theme or plugin that makes use of Custom Post Types.
 
@@ -65,7 +65,7 @@ Either: -
 == Frequently Asked Questions ==
 
 *What Size Files Can WP All Import Handle?*
-With the release of WP All Import version 3, WP All Import can now handle files of any size and any number of records, as long as the web hosting provider can too. Typically, WP All Import can comfortably import files of 100Mb and larger in most shared hosting environments (HostGator, etc). Please see this page for moredetails.
+With the release of WP All Import version 3, WP All Import can now handle files of any size and any number of records, as long as the web hosting provider can too. Typically, WP All Import can comfortably import files of 200Mb and larger in most shared hosting environments (HostGator, etc). Please see this page for more details: http://www.wpallimport.com/how-big
 
 *What are the benefits of the $99 professional version?*
 Support for Custom Post Types, Custom Taxonomies, Custom Fields, cron jobs/recurring imports, download and importing of images to the post media gallery, and URL/FTP server uploads.
