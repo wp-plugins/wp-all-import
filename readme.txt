@@ -18,7 +18,7 @@ There are no special requirements that the elements in your file must be laid ou
 WP All Import can be used for everything from building a store with an affiliate datafeed to displaying live stock quotes or sports scores to building a real estate portal.
 
 = WP All Import Professional Edition =
-[youtube http://www.youtube.com/watch?v=7KSz1wxQ9f8 /]
+[youtube http://www.youtube.com/watch?v=3LfbN7uWcTA /]
 
 *WP All Import Pro* is a $99 upgrade that adds the following features to the free version of WP All Import:
 
