@@ -5,7 +5,7 @@
 	<?php endif ?>
 </div>
 <div id="current_xml">
-	<?php $this->render_xml_element($elements->item( ($_POST['show_element'] and !$_SESSION['pmxi_import']['large_file']) ? $_POST['show_element'] - 1 : 0 ), false, '//'); ?>
+	<?php $this->render_xml_element($elements->item( ($_POST['show_element'] and !PMXI_Plugin::$session->data['pmxi_import']['large_file']) ? $_POST['show_element'] - 1 : 0 ), false, '//'); ?>
 </div>
 <script type="text/javascript">
 (function($){	

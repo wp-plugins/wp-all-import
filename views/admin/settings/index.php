@@ -59,6 +59,11 @@
 <h3><?php _e('Import Settings', 'pmxi_plugin') ?></h3>
 <div><?php printf(__('Chunk maximum size %s (Kb)', 'pmxi_plugin'), '<input type="text" name="chunk_size" value="' . esc_attr($post['chunk_size']) . '"/>') ?></div>
 <p>
+	<input type="hidden" name="legacy_special_character_handling" value="0"/>
+	<?php printf(__('<label for="legacy_special_character_handling">Use legacy special character handling</label> %s', 'pmxi_plugin'), '<input type="checkbox" name="legacy_special_character_handling" id="legacy_special_character_handling" value="1"  style="position:relative; top:-2px;" '. (($post['legacy_special_character_handling']) ? 'checked="checked"' : '') .'/>') ?>
+	<a href="#help" class="help" title="<?php _e('By default wpallimport uses htmlspecialchars() to encode html tags in csv feeds. If this option is enabled that wpallimport will use htmlentities() function.', 'pmxi_plugin') ?>">?</a>
+</p>
+<p>
 	<input type="hidden" name="pingbacks" value="0"/>
 	<?php printf(__('Enable WP_IMPORTING %s', 'pmxi_plugin'), '<input type="checkbox" name="pingbacks" value="1"  style="position:relative; top:-2px;" '. (($post['pingbacks']) ? 'checked="checked"' : '') .'/>') ?>
 	<a href="#help" class="help" title="<?php _e('Avoid triggering pingback.', 'pmxi_plugin') ?>">?</a>

@@ -5,7 +5,7 @@ if (!function_exists('import_custom_meta_box')){
 		<div id="postcustomstuff">					
 			<table id="list-table">			
 				<tbody class="list:meta" id="the-list">						
-					<?php if (!empty($_SESSION['pmxi_import']['options']['custom_name'])): foreach ($_SESSION['pmxi_import']['options']['custom_name'] as $i => $name): ?>
+					<?php if (!empty(PMXI_Plugin::$session->data['pmxi_import']['options']['custom_name'])): foreach (PMXI_Plugin::$session->data['pmxi_import']['options']['custom_name'] as $i => $name): ?>
 						<tr>
 							<td class="left">
 								<label class="screen-reader-text">Key</label>
@@ -14,7 +14,7 @@ if (!function_exists('import_custom_meta_box')){
 							</td>
 							<td>
 								<label class="screen-reader-text">Value</label>
-								<textarea name="custom_value[]" rows="2" cols="30" class="widefat"><?php echo esc_html($_SESSION['pmxi_import']['options']['custom_value'][$i]) ?></textarea>
+								<textarea name="custom_value[]" rows="2" cols="30" class="widefat"><?php echo esc_html(PMXI_Plugin::$session->data['pmxi_import']['options']['custom_value'][$i]) ?></textarea>
 							</td>
 						</tr>						
 					<?php endforeach; endif; ?>

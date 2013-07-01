@@ -12,6 +12,7 @@ require_once dirname(__FILE__) . '/ast/XmlImportAstInteger.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstFloat.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstString.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstXPath.php';
+require_once dirname(__FILE__) . '/ast/XmlImportAstFunction.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstWith.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstForeach.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstIf.php';
@@ -102,7 +103,11 @@ class XmlImportTemplateCodeGenerator
     {
        $filename = tempnam(XmlImportConfig::getInstance()->getCacheDirectory(), 'xim');
     }
-	
+	  if ( ! $filename or ! is_writable($filename) ){
+      $uploads  = wp_upload_dir();
+      $filename = $uploads['path'] . '/' . wp_unique_filename($uploads['path']);
+    }
+    
     file_put_contents($filename, $result);
     return $filename;
   }
@@ -240,6 +245,10 @@ class XmlImportTemplateCodeGenerator
           $result = $variables[$expression->getValue()];                              
         }
         break;
+
+      case 'XmlImportAstFunction':
+        $result = $this->generateForFunction($expression);
+		    break;
   	  
       case 'XmlImportAstMath':
           $result = $this->generateForMath($expression);
@@ -251,7 +260,29 @@ class XmlImportTemplateCodeGenerator
     }
     return $result;
   }
- 
+
+  /**
+   * Generates code for a function
+   *
+   * @param XmlImportAstFunction $function
+   * @return string
+   */
+  private function generateForFunction(XmlImportAstFunction $function)
+  {
+    $result = $function->getName() . '(';
+    $arguments = $function->getArguments();
+    
+    for($i = 0; $i < count($arguments); $i++)
+    {		      
+      $result .= $this->generateForExpression($arguments[$i], true);
+      if ($i < (count($arguments) - 1))
+        $result .= ', ';
+    }
+    $result .= ')';
+	
+    return $result;
+  }
+  
   /**
    * Generates code for a function
    *

@@ -1,7 +1,7 @@
 <tr>
 	<td colspan="3">
 		<fieldset class="optionsset">
-			<legend>Record Matching</legend>
+			<legend><?php _e('Record Matching','pmxi_plugin');?></legend>
 			<div class="input" style="margin-bottom:15px;">
 				<input type="radio" id="auto_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="auto" <?php echo 'manual' != $post['duplicate_matching'] ? 'checked="checked"': '' ?> />
 				<label for="auto_matching_<?php echo $entry; ?>"><?php _e('Automatic Record Matching', 'pmxi_plugin' )?></label><br>
@@ -24,7 +24,7 @@
 						<label for="duplicate_indicator_content_<?php echo $entry; ?>"><?php _e('content', 'pmxi_plugin' )?></label><br>
 						<input type="radio" id="duplicate_indicator_custom_field_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?> />
 						<label for="duplicate_indicator_custom_field_<?php echo $entry; ?>"><?php _e('custom field', 'pmxi_plugin' )?></label><br>
-						<span class="switcher-target-duplicate_indicator_custom_field_<?php echo $entry; ?>" style="vertical-align:middle" style="padding-left:17px;">
+						<span class="switcher-target-duplicate_indicator_custom_field_<?php echo $entry; ?>" style="vertical-align:middle; padding-left:17px;">
 							<?php _e('Name', 'pmxi_plugin') ?>
 							<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" /><br>
 							<?php _e('Value', 'pmxi_plugin') ?>
@@ -54,6 +54,20 @@
 				</div>
 			</div>
 			<div class="input">
+				<input type="hidden" name="is_update_missing_cf" value="0" />
+				<input type="checkbox" id="is_update_missing_cf_<?php echo $entry; ?>" name="is_update_missing_cf" value="1" <?php echo $post['is_update_missing_cf'] ? 'checked="checked"': '' ?> class="switcher"/>
+				<label for="is_update_missing_cf_<?php echo $entry; ?>"><?php _e('Instead of Deleting Missing Records, Set Custom Field', 'pmxi_plugin') ?></label>
+				<a href="#help" class="help" title="<?php _e('Check this option if you want to update posts custom fields from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>
+			</div>			
+			<div class="switcher-target-is_update_missing_cf_<?php echo $entry; ?>" style="padding-left:17px;">
+				<div class="input">
+					<?php _e('Name', 'pmxi_plugin') ?>
+					<input type="text" name="update_missing_cf_name" value="<?php echo esc_attr($post['update_missing_cf_name']) ?>" /><br>
+					<?php _e('Value', 'pmxi_plugin') ?>
+					<input type="text" name="update_missing_cf_value" value="<?php echo esc_attr($post['update_missing_cf_value']) ?>" />									
+				</div>
+			</div>
+			<div class="input">
 				<input type="radio" id="is_keep_former_posts_<?php echo $entry; ?>" name="is_keep_former_posts" value="yes" <?php echo "yes" == $post['is_keep_former_posts'] ? 'checked="checked"': '' ?> class="switcher" />
 				<label for="is_keep_former_posts_<?php echo $entry; ?>"><?php _e('Do not update already existing records', 'pmxi_plugin') ?></label> <br>
 				<input type="radio" id="is_not_keep_former_posts_<?php echo $entry; ?>" name="is_keep_former_posts" value="no" <?php echo "yes" != $post['is_keep_former_posts'] ? 'checked="checked"': '' ?> class="switcher" />
@@ -69,37 +83,49 @@
 						<input type="hidden" name="is_keep_title" value="0" />
 						<input type="checkbox" id="is_keep_title_<?php echo $entry; ?>" name="is_keep_title" value="1" <?php echo $post['is_keep_title'] ? 'checked="checked"': '' ?> />
 						<label for="is_keep_title_<?php echo $entry; ?>"><?php _e('Keep title', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you do not want previously imported posts to change their titles.', 'pmxi_plugin') ?>">?</a>
+
 					</div>
 					<div class="input">
 						<input type="hidden" name="is_keep_excerpt" value="0" />
 						<input type="checkbox" id="is_keep_excerpt_<?php echo $entry; ?>" name="is_keep_excerpt" value="1" <?php echo $post['is_keep_excerpt'] ? 'checked="checked"': '' ?> />
 						<label for="is_keep_excerpt_<?php echo $entry; ?>"><?php _e('Keep excerpt', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you do not want previously imported posts to change their excerpts.', 'pmxi_plugin') ?>">?</a>
 					</div>
 					<div class="input">
 						<input type="hidden" name="is_keep_dates" value="0" />
 						<input type="checkbox" id="is_keep_dates_<?php echo $entry; ?>" name="is_keep_dates" value="1" <?php echo $post['is_keep_dates'] ? 'checked="checked"': '' ?> />
 						<label for="is_keep_dates_<?php echo $entry; ?>"><?php _e('Keep dates', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you do not want previously imported posts to change their publish dates.', 'pmxi_plugin') ?>">?</a>
 					</div>
 					<div class="input">
 						<input type="hidden" name="is_keep_menu_order" value="0" />
 						<input type="checkbox" id="is_keep_menu_order_<?php echo $entry; ?>" name="is_keep_menu_order" value="1" <?php echo $post['is_keep_menu_order'] ? 'checked="checked"': '' ?> />
 						<label for="is_keep_menu_order_<?php echo $entry; ?>"><?php _e('Keep menu order', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you do not want previously imported posts to change their menu order.', 'pmxi_plugin') ?>">?</a>
+					</div>
+					<div class="input">
+						<input type="hidden" name="is_keep_parent" value="0" />
+						<input type="checkbox" id="is_keep_parent_<?php echo $entry; ?>" name="is_keep_parent" value="1" <?php echo $post['is_keep_parent'] ? 'checked="checked"': '' ?> />
+						<label for="is_keep_parent_<?php echo $entry; ?>"><?php _e('Keep parent post', 'pmxi_plugin') ?></label>
 					</div>
 					<div class="input">
 						<input type="hidden" name="is_keep_content" value="0" />
 						<input type="checkbox" id="is_keep_content_<?php echo $entry; ?>" name="is_keep_content" value="1" <?php echo $post['is_keep_content'] ? 'checked="checked"': '' ?> />
 						<label for="is_keep_content_<?php echo $entry; ?>"><?php _e('Keep content', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you do not want previously imported posts to change their content.', 'pmxi_plugin') ?>">?</a>
 					</div>
 					<div class="input">
 						<input type="hidden" name="is_keep_categories" value="0" />
-						<input type="checkbox" id="is_keep_categories_<?php echo $entry; ?>" name="is_keep_categories" value="1" <?php echo $post['is_keep_categories'] ? 'checked="checked"': '' ?> />
+						<input type="checkbox" id="is_keep_categories_<?php echo $entry; ?>" name="is_keep_categories" value="1" class="switcher" <?php echo $post['is_keep_categories'] ? 'checked="checked"': '' ?> />
 						<label for="is_keep_categories_<?php echo $entry; ?>"><?php _e('Keep categories, tags and taxonomies', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you do not want previously imported posts to change their category, tag and custom taxonomies associations upon reimport.', 'pmxi_plugin') ?>">?</a>
+						<div class="switcher-target-is_keep_categories_<?php echo $entry; ?>" style="padding-left:17px;">
+							<div class="input" style="margin-bottom:3px;">
+								<input type="hidden" name="is_add_newest_categories" value="0" />
+								<input type="checkbox" id="is_add_newest_categories_<?php echo $entry; ?>" name="is_add_newest_categories" value="1" <?php echo $post['is_add_newest_categories'] ? 'checked="checked"': '' ?> />
+								<label for="is_add_newest_categories_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Add new categories and taxonomies', 'pmxi_plugin') ?></label>
+							</div>
+						</div>
+					</div>
+					<div class="input">
+						<input type="hidden" name="is_keep_attachments_on_update" value="0" />
+						<input type="checkbox" id="is_keep_attachments_on_update_<?php echo $entry; ?>" name="is_keep_attachments_on_update" value="1" <?php echo $post['is_keep_attachments_on_update'] ? 'checked="checked"': '' ?> />
+						<label for="is_keep_attachments_on_update_<?php echo $entry; ?>"><?php _e('Keep attachments', 'pmxi_plugin') ?></label>
 					</div>
 					<div class="input">
 						<input type="hidden" name="is_keep_images" value="0" />
@@ -115,7 +141,7 @@
 					</div>
 					<div class="input">
 						<input type="hidden" name="keep_custom_fields" value="0" />
-						<input type="checkbox" id="keep_custom_fields_<?php echo $entry; ?>" name="keep_custom_fields" value="1" <?php echo $post['keep_custom_fields'] ? 'checked="checked"': '' ?>  class="switcher switcher-reversed" />
+						<input type="checkbox" id="keep_custom_fields_<?php echo $entry; ?>" name="keep_custom_fields" value="1" <?php echo $post['keep_custom_fields'] ? 'checked="checked"': '' ?>  class="switcher switcher-reversed"/>
 						<label for="keep_custom_fields_<?php echo $entry; ?>"><?php _e('Keep custom fields', 'pmxi_plugin') ?></label>
 						<a href="#help" class="help" title="<?php _e('If Keep Custom Fields box is checked, it will keep all Custom Fields, and add any new Custom Fields specified in Custom Fields section, as long as they do not overwrite existing fields. If \'Only keep this Custom Fields\' is specified, it will only keep the specified fields.', 'pmxi_plugin') ?>">?</a>
 					</div>

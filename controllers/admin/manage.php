@@ -10,8 +10,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		parent::init();
 		
 		if ('update' == PMXI_Plugin::getInstance()->getAdminCurrentScreen()->action) {
-			$this->isInline = true;
-			if ( ! session_id()) session_start(); // prevent session initialization throw a notification in inline mode of delegated plugin 
+			$this->isInline = true;			
 		}
 	}
 	
@@ -55,7 +54,9 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			'current' => $pagenum,
 		));
 		
-		unset($_SESSION['pmxi_import']);
+		//unset(PMXI_Plugin::$session['pmxi_import']);
+
+		pmxi_session_unset();
 
 		$this->render();
 	}
@@ -93,7 +94,8 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			wp_redirect($this->baseUrl); die();
 		}				
 		
-		unset($_SESSION['pmxi_import']);
+		//unset(PMXI_Plugin::$session['pmxi_import']);
+		pmxi_session_unset();
 
 		if ($this->input->post('is_confirmed')) {
 
@@ -101,7 +103,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		
 			$uploads = wp_upload_dir();			
 
-			if ($item->large_import == 'No' or ($item->large_import == 'Yes' and empty($_SESSION['pmxi_import']['chunk_number']))) {			
+			if ($item->large_import == 'No' or ($item->large_import == 'Yes' and empty(PMXI_Plugin::$session->data['pmxi_import']['chunk_number']))) {			
 				
 				if ( in_array($item->type, array('upload')) ) { // if import type NOT URL
 
@@ -290,11 +292,11 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 				}					
 			}
 			
-			if (!empty($_SESSION['pmxi_import']['xml'])) $xml = $_SESSION['pmxi_import']['xml'];
+			//if (!empty(PMXI_Plugin::$session['pmxi_import']['xml'])) $xml = PMXI_Plugin::$session['pmxi_import']['xml'];
 
 			if ($item->large_import == 'Yes' or PMXI_Import_Record::validateXml($xml, $this->errors)) { // xml is valid		
 				
-				if ( ! PMXI_Plugin::is_ajax() and empty($_SESSION['pmxi_import']['chunk_number'])){
+				if ( ! PMXI_Plugin::is_ajax() and empty(PMXI_Plugin::$session->data['pmxi_import']['chunk_number'])){
 				
 					$item->set(array(
 							'processing' => 0,
@@ -312,8 +314,8 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 					}
 
 					// compose data to look like result of wizard steps				
-					$_SESSION['pmxi_import'] = array(
-						'xml' => (isset($xml)) ? $xml : '',
+					PMXI_Plugin::$session['pmxi_import'] = array(
+						//'xml' => (isset($xml)) ? $xml : '',
 						'filePath' => $filePath,
 						'source' => array(
 							'name' => $item->name,
@@ -342,6 +344,9 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						'local_paths' => (!empty($local_paths)) ? $local_paths : array(), // ftp import local copies of remote files
 						'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',					
 					);										
+					
+					pmxi_session_commit();
+					
 				}
 
 				// deligate operation to other controller

@@ -7,7 +7,7 @@
 		<a href="javascript:void(0);" id="view_log"><?php _e('View Log','pmxi_plugin');?></a><span id="download_log_separator"> | </span> <a href="javascript:void(0);" id="download_log"><?php _e('Download Log','pmxi_plugin');?></a>
 		<p><?php _e('Warnings','pmxi_plugin');?> (<span id="warnings">0</span>), <?php _e('Errors','pmxi_plugin');?> (<span id="errors">0</span>)</p>
 	</div>
-	<fieldset id="logwrapper" <?php if ($_SESSION['pmxi_import']['large_file']): ?> style="display:none;" <?php endif; ?>>
+	<fieldset id="logwrapper" <?php if (PMXI_Plugin::$session->data['pmxi_import']['large_file']): ?> style="display:none;" <?php endif; ?>>
 		<legend><?php _e('Log','pmxi_plugin');?></legend>
 		<div id="loglist">
 			
@@ -69,7 +69,7 @@
 				// fill log bar									
 				$('.progress-msg').each(function(i){ 
 					if ( ! $(this).find('.import_process_bar').length){
-						<?php if ($_SESSION['pmxi_import']['large_file']): ?>
+						<?php if (PMXI_Plugin::$session->data['pmxi_import']['large_file']): ?>
 							if ($('#loglist').find('p').length > 100) $('#loglist').html('');
 						<?php endif; ?>
 						$('#loglist').append('<p ' + ((odd) ? 'class="odd"' : 'class="even"') + '>' + $(this).html() + '</p>');						
@@ -91,7 +91,7 @@
 //]]>
 </script>
 
-<?php if ($_SESSION['pmxi_import']['large_file']): ?>
+<?php if (PMXI_Plugin::$session->data['pmxi_import']['large_file']): ?>
 	
 	<script type="text/javascript">
 		//<![CDATA[

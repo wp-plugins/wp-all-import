@@ -139,7 +139,7 @@ abstract class PMXI_Model extends ArrayObject {
 				$key = $mtch[1];
 				if (is_array($val) and (empty($mtch[2]) or 'IN' == strtoupper($mtch[4]))) {
 					$op = empty($mtch[2]) ? 'IN' : strtoupper(trim($mtch[2]));
-					$where[] = $this->wpdb->prepare("$key $op (" . implode(', ', array_fill(0, count($val), "%s")) . ")", $val);
+					if (count($val)) $where[] = $this->wpdb->prepare("$key $op (" . implode(', ', array_fill(0, count($val), "%s")) . ")", $val);
 				} else {
 					$op = empty($mtch[2]) ? '=' : strtoupper(trim($mtch[2]));
 					$where[] = $this->wpdb->prepare("$key $op %s", $val);

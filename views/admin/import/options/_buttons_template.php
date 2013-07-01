@@ -3,7 +3,7 @@
 	<label for="save_import_as"><?php _e('Friendly Name','pmxi_plugin');?></label> <input type="text" name="friendly_name" title="<?php _e('Save friendly name...', 'pmxi_plugin') ?>" style="vertical-align:middle; font-size:11px; background:#fff !important;" value="<?php echo esc_attr($post['friendly_name']) ?>" />
 </div>
 <br>
-<?php if ($_SESSION['pmxi_import']['large_file'] or (!empty($import) and $import->large_import == 'Yes')):?>
+<?php if (PMXI_Plugin::$session->data['pmxi_import']['large_file'] or (!empty($import) and $import->large_import == 'Yes')):?>
 <div class="input">
 	<label for="records_per_request"><?php _e('Records Per Iteration', 'pmxi_plugin');?></label> <input type="text" name="records_per_request" style="vertical-align:middle; font-size:11px; background:#fff !important; width: 40px;" value="<?php echo esc_attr($post['records_per_request']) ?>" />
 	<a href="#help" class="help" title="<?php _e('Your feed was detected as a &quot;large&quot; file. The import process will be executed via AJAX requests. To make import process faster you can increase the number of records imported per iteration. Higher numbers put more strain on your server but make the import process take less time. 10 is a very safe number. To speed up the process, try 100 or more, especially if your import settings are simple and you are not downloading images.', 'pmxi_plugin') ?>">?</a>

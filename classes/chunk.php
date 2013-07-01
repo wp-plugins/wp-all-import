@@ -184,9 +184,11 @@ class PMXI_Chunk {
 
         if ( preg_match_all("/<\\w+\\s*[^<|^\n]*\\s*\/?>/i", $c, $matches, PREG_PATTERN_ORDER) ){          
           foreach ($matches[0] as $tag) {
-            $tag = explode(" ", trim(str_replace(array('<','>','/'), '', $tag)));
-            array_push($founded_tags, $tag[0]);
-          }          
+            if (strpos($tag, "<br") === false) {
+              $tag = explode(" ", trim(str_replace(array('<','>','/'), '', $tag)));
+              array_push($founded_tags, $tag[0]);
+            }
+          }         
         }
         $this->reading = (!@feof($this->handle));
       }
@@ -314,15 +316,17 @@ class PMXI_Chunk {
 
       // check for the close string
       $checkClose = preg_match_all("/<\/".$element.">/i", $tmp, $closematches, PREG_OFFSET_CAPTURE);
-      $withoutcloseelement = false;          
+      $withoutcloseelement = (preg_match("%<".$element."(^<)*\/>%", $tmp, $matches)) ? strpos($tmp, $matches[0]) : false;
+
+      if ($withoutcloseelement and $checkClose and $closematches[0][0][1] > $withoutcloseelement) $checkClose = false;       
 
       if (!$checkClose){ 
-        $checkClose = (preg_match("%<".$element."\s{1,}[^<]*\/>%i", $tmp, $matches)) ? strpos($tmp, $matches[0]) : false;                
+        $checkClose = (preg_match("%<".$element."(^<)*\/>%", $tmp, $matches)) ? strpos($tmp, $matches[0]) : false;
         
         if ($checkClose !== false) 
           $withoutcloseelement = true;
         else{
-          $checkClose = (preg_match_all("%<".$element."\s{1,}[^<]*\/>%i", $this->readBuffer, $matches)) ? strpos($this->readBuffer, $matches[0][count($matches[0]) - 1]) : false;
+          $checkClose = (preg_match_all("%<".$element."(^<)*\/>%", $this->readBuffer, $matches)) ? strpos($this->readBuffer, $matches[0][count($matches[0]) - 1]) : false;
           if ($checkClose !== false) {
             $withoutcloseelement = true;
             $matches[0] = $matches[0][count($matches[0]) - 1];
@@ -429,6 +433,10 @@ class PMXI_Chunk {
       // pull out colons from end tags
       // (<\/\w+):(\w+>)
       $pattern = '/(<\/\w+):(\w+>)/i';
+      $replacement = '$1_$2';
+      $feed = preg_replace($pattern, $replacement, $feed);
+      // pull out colons from attributes
+      $pattern = '/(\s+\w+):(\w+[=]{1})/i';
       $replacement = '$1_$2';
       $feed = preg_replace($pattern, $replacement, $feed);
       return $feed;

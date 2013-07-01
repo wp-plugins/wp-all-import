@@ -72,6 +72,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 		// If import process NOT in large file mode the save history file
 
 		$avoid_pingbacks = PMXI_Plugin::getInstance()->getOption('pingbacks');
+		$legacy_handling = PMXI_Plugin::getInstance()->getOption('legacy_special_character_handling');
 
 		if ( $avoid_pingbacks and ! defined( 'WP_IMPORTING' ) ) define( 'WP_IMPORTING', true );		
 
@@ -94,19 +95,23 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 			if ($this->large_import == 'Yes' and !empty($records)){
 
-				$_SESSION['pmxi_import']['count'] = count($records);								
+				PMXI_Plugin::$session['pmxi_import']['count'] = count($records);								
 
-				$records_count = $_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] + $_SESSION['pmxi_import']['skipped_records'] + $_SESSION['pmxi_import']['errors'];
+				$records_count = $this->created + $this->updated + $this->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'];
 
-				if (!in_array($chunk, $records) and (!$this->options['create_chunks'] or $is_cron)){
+				if (!in_array($chunk, $records)){
+					$this->set(array(
+						'skipped' => $this->skipped + 1
+					))->save();
+					PMXI_Plugin::$session['pmxi_import']['skipped_records'] = $this->skipped;
 					$logger and call_user_func($logger, __('<b>SKIPPED</b>: by specified records option', 'pmxi_plugin'));
-					$_SESSION['pmxi_import']['warnings']++;
+					PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 					// Time Elapsed
 					if ( ! $is_cron ){						
-						$progress_msg = '<p class="import_process_bar"> Created ' . $_SESSION['pmxi_import']['created_records'] . ' / Updated ' . $_SESSION['pmxi_import']['updated_records'] . ' of '. $_SESSION['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/$_SESSION['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  $_SESSION['pmxi_import']['warnings'] . '</span><span class="errors_count">' . $_SESSION['pmxi_import']['errors'] . '</span>';
+						$progress_msg = '<p class="import_process_bar"> Created ' . $this->created . ' / Updated ' . $this->updated . ' of '. PMXI_Plugin::$session->data['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/PMXI_Plugin::$session['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  PMXI_Plugin::$session['pmxi_import']['warnings'] . '</span><span class="errors_count">' . PMXI_Plugin::$session['pmxi_import']['errors'] . '</span>';
 						$logger and call_user_func($logger, $progress_msg);
 					}
-					$_SESSION['pmxi_import']['chunk_number']++;
+					PMXI_Plugin::$session['pmxi_import']['chunk_number'] = PMXI_Plugin::$session->data['pmxi_import']['chunk_number']++;
 					return;
 				}
 				else $records = array();
@@ -116,7 +121,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			
 			($chunk == 1 or (empty($this->large_import) or $this->large_import == 'No')) and $logger and call_user_func($logger, __('Composing titles...', 'pmxi_plugin'));
 			$titles = XmlImportParser::factory($xml, $this->xpath, $this->template['title'], $file)->parse($records); $tmp_files[] = $file;
-			if ($this->large_import != 'Yes') $_SESSION['pmxi_import']['count'] = count($titles);
+			if ($this->large_import != 'Yes') PMXI_Plugin::$session['pmxi_import']['count'] = count($titles);
 
 			($chunk == 1 or (empty($this->large_import) or $this->large_import == 'No')) and $logger and call_user_func($logger, __('Composing excerpts...', 'pmxi_plugin'));			
 			$post_excerpt = array();
@@ -167,7 +172,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					$time = strtotime($d);
 					if (FALSE === $time) {
 						in_array($d, $warned) or $logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: unrecognized date format `%s`, assigning current date', 'pmxi_plugin'), $warned[] = $d));
-						$_SESSION['pmxi_import']['warnings']++;
+						PMXI_Plugin::$session['pmxi_import']['warnings']++;
 						$time = time();
 					}
 					$dates[$i] = date('Y-m-d H:i:s', $time);
@@ -180,13 +185,13 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					$time_start = strtotime($dates_start[$i]);
 					if (FALSE === $time_start) {
 						in_array($dates_start[$i], $warned) or $logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: unrecognized date format `%s`, assigning current date', 'pmxi_plugin'), $warned[] = $dates_start[$i]));
-						$_SESSION['pmxi_import']['warnings']++;
+						PMXI_Plugin::$session['pmxi_import']['warnings']++;
 						$time_start = time();
 					}
 					$time_end = strtotime($dates_end[$i]);
 					if (FALSE === $time_end) {
 						in_array($dates_end[$i], $warned) or $logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: unrecognized date format `%s`, assigning current date', 'pmxi_plugin'), $warned[] = $dates_end[$i]));
-						$_SESSION['pmxi_import']['warnings']++;
+						PMXI_Plugin::$session['pmxi_import']['warnings']++;
 						$time_end = time();
 					}					
 					$dates[$i] = date('Y-m-d H:i:s', mt_rand($time_start, $time_end));
@@ -278,7 +283,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					count($titles) and $cats = array_fill(0, count($titles), '');
 				}
 				
-			}			
+			}				
 			// [/posts categories]					
 
 			// [custom taxonomies]
@@ -293,8 +298,9 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			}
 
 			if (!empty($this->options[$taxonomies_param]) and is_array($this->options[$taxonomies_param])): foreach ($this->options[$taxonomies_param] as $tx_name => $tx_template) if ('' != $tx_template) {
-				$tx = get_taxonomy($tx_name);				
-				if (in_array($taxonomies_object_type, $tx->object_type)) {
+				$tx = get_taxonomy($tx_name);		
+				
+				if (!empty($tx->object_type) and in_array($taxonomies_object_type, $tx->object_type)) {
 					($chunk == 1 or (empty($this->large_import) or $this->large_import == 'No')) and $logger and call_user_func($logger, sprintf(__('Composing terms for `%s` taxonomy...', 'pmxi_plugin'), $tx->labels->name));
 					$txes = array();
 					
@@ -363,7 +369,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			if ( ! (($uploads = wp_upload_dir()) && false === $uploads['error'])) {
 				$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': ' . $uploads['error']);
 				$logger and call_user_func($logger, __('<b>WARNING</b>: No featured images will be created', 'pmxi_plugin'));				
-				$_SESSION['pmxi_import']['warnings']++;				
+				PMXI_Plugin::$session['pmxi_import']['warnings']++;				
 			} else {
 				($chunk == 1 or (empty($this->large_import) or $this->large_import == 'No')) and $logger and call_user_func($logger, __('Composing URLs for featured images...', 'pmxi_plugin'));
 				$featured_images = array();				
@@ -391,13 +397,23 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 				} else {
 					count($titles) and $featured_images = array_fill(0, count($titles), '');
 				}
+			}
+
+			// Composing images suffix
+			($chunk == 1 or (empty($this->large_import) or $this->large_import == 'No')) and $this->options['auto_rename_images'] and $logger and call_user_func($logger, __('Composing images suffix...', 'pmxi_plugin'));			
+			$auto_rename_images = array();
+			if ( $this->options['auto_rename_images'] and ! empty($this->options['auto_rename_images_suffix'])){
+				$auto_rename_images = XmlImportParser::factory($xml, $this->xpath, $this->options['auto_rename_images_suffix'], $file)->parse($records); $tmp_files[] = $file;
+			}
+			else{
+				count($titles) and $auto_rename_images = array_fill(0, count($titles), '');
 			}	
 
 			// serialized attachments
 			if ( ! (($uploads = wp_upload_dir()) && false === $uploads['error'])) {
 				$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': ' . $uploads['error']);				
 				$logger and call_user_func($logger, __('<b>WARNING</b>: No attachments will be created', 'pmxi_plugin')); 				
-				$_SESSION['pmxi_import']['warnings']++;
+				PMXI_Plugin::$session['pmxi_import']['warnings']++;
 			} else {
 				($chunk == 1 or (empty($this->large_import) or $this->large_import == 'No')) and $logger and call_user_func($logger, __('Composing URLs for attachments files...', 'pmxi_plugin'));
 				$attachments = array();
@@ -450,41 +466,19 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			$current_post_ids = array();
 			foreach ($titles as $i => $void) {					
 
-				if (!empty($chunk_records) and $this->large_import == 'Yes' and $this->options['create_chunks'] and !$is_cron and !in_array($_SESSION['pmxi_import']['chunk_number'], $chunk_records)) {
-					$_SESSION['pmxi_import']['skipped_records']++;
-					$_SESSION['pmxi_import']['chunk_number']++;
-
-					$logger and call_user_func($logger, __('<b>SKIPPED</b>: by specified records option', 'pmxi_plugin'));
-					$_SESSION['pmxi_import']['warnings']++;
-					// Time Elapsed
-					if ( ! $is_cron ){
-						$records_count = $_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] + $_SESSION['pmxi_import']['skipped_records'] + $_SESSION['pmxi_import']['errors'];
-						$progress_msg = '<p class="import_process_bar"> Created ' . $_SESSION['pmxi_import']['created_records'] . ' / Updated ' . $_SESSION['pmxi_import']['updated_records'] . ' of '. $_SESSION['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/$_SESSION['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  $_SESSION['pmxi_import']['warnings'] . '</span><span class="errors_count">' . $_SESSION['pmxi_import']['errors'] . '</span>';
-						$logger and call_user_func($logger, $progress_msg);
-					}						
-					$this->set(array(
-						'imported' => $this->imported + 1,	
-						'created'  => $_SESSION['pmxi_import']['created_records'],
-						'updated'  => $_SESSION['pmxi_import']['updated_records']				
-					))->save();					
-					continue;
-				} 								
-
 				if (empty($titles[$i])) {
 					if (class_exists('PMWI_Plugin') and !empty($single_product_parent_ID[$i])){
 						$titles[$i] = $single_product_parent_ID[$i] . ' Product Variation';
 					}
-					else{					
-						$logger and call_user_func($logger, __('<b>SKIPPED</b>: by empty title', 'pmxi_plugin'));
-						$_SESSION['pmxi_import']['skipped_records']++;
-						$_SESSION['pmxi_import']['chunk_number']++;	
-						$_SESSION['pmxi_import']['warnings']++;
-						$this->set(array(
-							'imported' => $this->imported + 1,	
-							'created'  => $_SESSION['pmxi_import']['created_records'],
-							'updated'  => $_SESSION['pmxi_import']['updated_records']				
-						))->save();					
-						continue;									
+					else{
+						$logger and call_user_func($logger, __('<b>SKIPPED</b>: by empty title', 'pmxi_plugin'));						
+						PMXI_Plugin::$session['pmxi_import']['chunk_number'] = PMXI_Plugin::$session->data['pmxi_import']['chunk_number']++;	
+						PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+						$this->set(array(							
+							'skipped' => $this->skipped + 1
+						))->save();				
+						PMXI_Plugin::$session['pmxi_import']['skipped_records'] = $this->skipped;	
+						continue;										
 					}
 				}
 						
@@ -493,10 +487,10 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					'post_status' => $this->options['status'],
 					'comment_status' => $this->options['comment_status'],
 					'ping_status' => $this->options['ping_status'],
-					'post_title' => ($this->template['fix_characters']) ? utf8_encode(html_entity_decode($titles[$i])) : (($this->template['is_leave_html']) ? html_entity_decode($titles[$i]) : $titles[$i]),
-					'post_excerpt' => ($this->template['fix_characters']) ? utf8_encode(html_entity_decode($post_excerpt[$i])) : (($this->template['is_leave_html']) ? html_entity_decode($post_excerpt[$i]) : $post_excerpt[$i]),
+					'post_title' => ($this->template['fix_characters']) ? utf8_encode(( ! $legacy_handling) ? html_entity_decode($titles[$i]) : htmlspecialchars_decode($titles[$i])) : (($this->template['is_leave_html']) ? (( ! $legacy_handling) ? html_entity_decode($titles[$i]) : htmlspecialchars_decode($titles[$i])) : $titles[$i]),
+					'post_excerpt' => ($this->template['fix_characters']) ? utf8_encode(( ! $legacy_handling) ? html_entity_decode($post_excerpt[$i]) : htmlspecialchars_decode($post_excerpt[$i])) : (($this->template['is_leave_html']) ? (( ! $legacy_handling) ? html_entity_decode($post_excerpt[$i]) : htmlspecialchars_decode($post_excerpt[$i])) : $post_excerpt[$i]),
 					'post_name' => $post_slug[$i],
-					'post_content' => ($this->template['fix_characters']) ? utf8_encode(html_entity_decode($contents[$i])) : (($this->template['is_leave_html']) ? html_entity_decode($contents[$i]) : $contents[$i]),
+					'post_content' => ($this->template['fix_characters']) ? utf8_encode(( ! $legacy_handling) ? html_entity_decode($contents[$i]) : htmlspecialchars_decode($contents[$i])) : (($this->template['is_leave_html']) ? (( ! $legacy_handling) ? html_entity_decode($contents[$i]) : htmlspecialchars_decode($contents[$i])) : $contents[$i]),
 					'post_date' => $dates[$i],
 					'post_date_gmt' => get_gmt_from_date($dates[$i]),
 					'post_author' => $post_author[$i] ,
@@ -555,14 +549,13 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 				if ($post_to_update){
 					// Do not update already existing records option selected
 					if ("yes" == $this->options['is_keep_former_posts']) {
-						$current_post_ids[] = $_SESSION['pmxi_import']['current_post_ids'][]  = $post_to_update_id;
-						if ($is_cron){
-							$tmp_array = (!empty($this->current_post_ids)) ? json_decode($this->current_post_ids, true) : array();
-							$tmp_array[] = $post_to_update_id;
-							$this->set(array(
-								'current_post_ids' => json_encode($tmp_array)
-							))->save();
-						}	
+												
+						$tmp_array = (!empty($this->current_post_ids)) ? json_decode($this->current_post_ids, true) : array();
+						$tmp_array[] = $post_to_update_id;
+						$this->set(array(
+							'current_post_ids' => json_encode($tmp_array)
+						))->save();
+											
 						// Do not update product variations
 						if ($post_type == "product" and class_exists('PMWI_Plugin')){
 							
@@ -576,47 +569,51 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 							if ( $children ) {
 								foreach ( $children as $child ) {
-									$current_post_ids[] = $_SESSION['pmxi_import']['current_post_ids'][]  = $child;
-									if ($is_cron){
-										$tmp_array = (!empty($this->current_post_ids)) ? json_decode($this->current_post_ids, true) : array();
-										$tmp_array[] = $child;
-										$this->set(array(
-											'current_post_ids' => json_encode($tmp_array)
-										))->save();
-									}
+									
+									$tmp_array = (!empty($this->current_post_ids)) ? json_decode($this->current_post_ids, true) : array();
+									$tmp_array[] = $child;
+									$this->set(array(
+										'current_post_ids' => json_encode($tmp_array)
+									))->save();
+									
 								}
 							}
-						}				
-						$_SESSION['pmxi_import']['skipped_records']++;		
+						}
+						$this->set(array(
+							'skipped' => $this->skipped + 1
+						))->save();
+						PMXI_Plugin::$session['pmxi_import']['skipped_records'] = $this->skipped;	
 						$logger and call_user_func($logger, sprintf(__('<b>SKIPPED</b>: Previously imported record found for `%s`', 'pmxi_plugin'), $articleData['post_title']));
-						$_SESSION['pmxi_import']['warnings']++;
+						PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 						if ( ! $is_cron ){
-							$records_count = $_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] + $_SESSION['pmxi_import']['skipped_records'] + $_SESSION['pmxi_import']['errors'];
-							$progress_msg = '<p class="import_process_bar"> Created ' . $_SESSION['pmxi_import']['created_records'] . ' / Updated ' . $_SESSION['pmxi_import']['updated_records'] . ' of '. $_SESSION['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/$_SESSION['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  $_SESSION['pmxi_import']['warnings'] . '</span><span class="errors_count">' . $_SESSION['pmxi_import']['errors'] . '</span>';
+							$records_count = $this->created + $this->updated + $this->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'];
+							$progress_msg = '<p class="import_process_bar"> ' . __('Created', 'pmxi_plugin') . ' ' . $this->created . ' / ' . __('Updated','pmxi_plugin') . ' ' . $this->updated . ' of '. PMXI_Plugin::$session->data['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/PMXI_Plugin::$session->data['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  PMXI_Plugin::$session->data['pmxi_import']['warnings'] . '</span><span class="errors_count">' . PMXI_Plugin::$session->data['pmxi_import']['errors'] . '</span>';
 							$logger and call_user_func($logger, $progress_msg);
 						}					
-						$_SESSION['pmxi_import']['chunk_number']++;
+						PMXI_Plugin::$session['pmxi_import']['chunk_number']++;
 						continue;
-					}
+					}					
+
 					$articleData['ID'] = $post_to_update_id;
 					// preserve date of already existing article when duplicate is found					
 					if ($this->options['is_keep_categories']) { // preserve categories and tags of already existing article if corresponding setting is specified
 						$cats_list = get_the_category($articleData['ID']);
+						$existing_cats = array();
 						if (is_wp_error($cats_list)) {
 							$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Unable to get current categories for article #%d, updating with those read from XML file', 'pmxi_plugin'), $articleData['ID']));
-							$_SESSION['pmxi_import']['warnings']++;
+							PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 						} else {
 							$cats_new = array();
 							foreach ($cats_list as $c) {
-								$cats_new[] = $c->cat_ID;
+								$cats_new[] = $c->slug;
 							}
-							$cats[$i] = $cats_new;
+							$existing_cats[$i] = $cats_new;							
 						}
 						
 						$tags_list = get_the_tags($articleData['ID']);
 						if (is_wp_error($tags_list)) {
 							$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Unable to get current tags for article #%d, updating with those read from XML file', 'pmxi_plugin'), $articleData['ID']));
-							$_SESSION['pmxi_import']['warnings']++;
+							PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 						} else {
 							$tags_new = array();
 							if ($tags_list) foreach ($tags_list as $t) {
@@ -624,20 +621,20 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 							}
 							$articleData['tags_input'] = implode(', ', $tags_new);
 						}
-						
+						$existing_taxonomies = array();
 						foreach (array_keys($taxonomies) as $tx_name) {
 							$txes_list = get_the_terms($articleData['ID'], $tx_name);
 							if (is_wp_error($txes_list)) {
 								$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Unable to get current taxonomies for article #%d, updating with those read from XML file', 'pmxi_plugin'), $articleData['ID']));
-								$_SESSION['pmxi_import']['warnings']++;
+								PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 							} else {
 								$txes_new = array();
 								if (!empty($txes_list)):
 									foreach ($txes_list as $t) {
-										$txes_new[] = $t->name;
+										$txes_new[] = $t->slug;
 									}
 								endif;
-								$taxonomies[$tx_name][$i] = $txes_new;
+								$existing_taxonomies[$tx_name][$i] = $txes_new;								
 							}
 						}
 					}						
@@ -660,10 +657,14 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					if ($this->options['is_keep_menu_order']){ 
 						$articleData['menu_order'] = $post_to_update->menu_order;
 					}
+					if ($this->options['is_keep_parent']){ 
+						$articleData['post_parent'] = $post_to_update->post_parent;
+					}
 					// handle obsolete attachments (i.e. delete or keep) according to import settings
-					if ( ! $this->options['is_keep_images'] and ! $this->options['no_create_featured_image']){ 						
+					if ( ! $this->options['is_keep_images'] and ! $this->options['is_keep_attachments_on_update'] and ! $this->options['no_create_featured_image'] ){ 						
 						wp_delete_attachments($articleData['ID']);
 					}
+
 				}
 				elseif ( ! $postRecord->isEmpty() ){
 					
@@ -674,14 +675,18 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 				
 				// no new records are created. it will only update posts it finds matching duplicates for
 				if ($this->options['not_create_records'] and empty($articleData['ID'])){ 
-					$_SESSION['pmxi_import']['skipped_records']++;		
+					PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+					$this->set(array(
+						'skipped' => $this->skipped + 1
+					))->save();
+					PMXI_Plugin::$session['pmxi_import']['skipped_records'] = $this->skipped;
 					$logger and call_user_func($logger, sprintf(__('<b>SKIPPED</b>: by "Not add new records" option for `%s`', 'pmxi_plugin'), $articleData['post_title']));
 					if ( ! $is_cron ){
-						$records_count = $_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] + $_SESSION['pmxi_import']['skipped_records'] + $_SESSION['pmxi_import']['errors'];
-						$progress_msg = '<p class="import_process_bar"> Created ' . $_SESSION['pmxi_import']['created_records'] . ' / Updated ' . $_SESSION['pmxi_import']['updated_records'] . ' of '. $_SESSION['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/$_SESSION['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  $_SESSION['pmxi_import']['warnings'] . '</span><span class="errors_count">' . $_SESSION['pmxi_import']['errors'] . '</span>';
+						$records_count = $this->created + $this->updated + $this->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'];
+						$progress_msg = '<p class="import_process_bar"> '. __('Created','pmxi_plugin') . ' ' . $this->created . ' / ' . __('Updated','pmxi_plugin') . ' ' . $this->updated . ' of '. PMXI_Plugin::$session->data['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/PMXI_Plugin::$session->data['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  PMXI_Plugin::$session->data['pmxi_import']['warnings'] . '</span><span class="errors_count">' . PMXI_Plugin::$session->data['pmxi_import']['errors'] . '</span>';
 						$logger and call_user_func($logger, $progress_msg);
 					}					
-					$_SESSION['pmxi_import']['chunk_number']++;					
+					PMXI_Plugin::$session['pmxi_import']['chunk_number'] = PMXI_Plugin::$session->data['pmxi_import']['chunk_number']++;					
 					continue;
 				}
 
@@ -750,7 +755,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 										$dest->insert();
 									} else {
 										$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Unable to create cloaked link for %s', 'pmxi_plugin'), $url));
-										$_SESSION['pmxi_import']['warnings']++;
+										PMXI_Plugin::$session['pmxi_import']['warnings']++;
 										$link = NULL;
 									}
 								}
@@ -767,25 +772,24 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 				if (is_wp_error($pid)) {
 					$logger and call_user_func($logger, __('<b>ERROR</b>', 'pmxi_plugin') . ': ' . $pid->get_error_message());
-					$_SESSION['pmxi_import']['errors']++;
+					PMXI_Plugin::$session['pmxi_import']['errors'] = PMXI_Plugin::$session->data['pmxi_import']['errors']++;
 				} else {										
 
-					$current_post_ids[] = $_SESSION['pmxi_import']['current_post_ids'][] = $pid;
-					if ($is_cron){
-						$tmp_array = (!empty($this->current_post_ids)) ? json_decode($this->current_post_ids, true) : array();
-						$tmp_array[] = $pid;
-						$this->set(array(
-							'current_post_ids' => json_encode($tmp_array)
-						))->save();
-					}
+					$tmp_array = (!empty($this->current_post_ids)) ? json_decode($this->current_post_ids, true) : array();
+					$tmp_array[] = $pid;
+					$this->set(array(
+						'current_post_ids' => json_encode($tmp_array)
+					))->save();
+					
 					if ("manual" != $this->options['duplicate_matching'] or empty($articleData['ID'])){						
 						// associate post with import
 						$postRecord->isEmpty() and $postRecord->set(array(
 							'post_id' => $pid,
 							'import_id' => $this->id,
-							'unique_key' => $unique_keys[$i]							
+							'unique_key' => $unique_keys[$i],
+							'product_key' => (class_exists('PMWI_Plugin')) ? $single_product_ID[$i] : ''
 						))->insert();
-					}																			
+					}																		
 
 					// Woocommerce add-on
 					if ( $post_type == "product" and class_exists('PMWI_Plugin')){
@@ -798,102 +802,120 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 					// [featured image]
 					if ( ! empty($uploads) and false === $uploads['error'] and !empty($featured_images[$i]) and (empty($articleData['ID']) or empty($this->options['is_keep_images']))) {
+						
+						require_once(ABSPATH . 'wp-admin/includes/image.php');
+						
+						if ( ! is_array($featured_images[$i]) ) $featured_images[$i] = array($featured_images[$i]);
+						$post_thumbnail = false;	
+						$success_images = false;	
+						$gallery_attachment_ids = array();											
+						foreach ($featured_images[$i] as $featured_image)
+						{							
+							$imgs = str_getcsv($featured_image, $this->options['featured_delim']);						
+							if (!empty($imgs)) {								
+								foreach ($imgs as $img_url) { if (empty($img_url)) continue;									
+									$create_image = false;
+									$download_image = true;
+									if (base64_decode($img_url, true) !== false){
+										$img = @imagecreatefromstring(base64_decode($img_url));									    
+									    if($img)
+									    {	
+									    	$image_filename = md5(time()) . '.jpg';
+									    	$image_filepath = $uploads['path'] . '/' . $image_filename;
+									    	imagejpeg($img, $image_filepath);
+									    	if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
+												$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'pmxi_plugin'), $image_filepath));
+												PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+											} else {
+												$create_image = true;											
+											}	
+									    } 
+									} 
+									else {
 
-						if ( $this->options['no_create_featured_image'] and has_post_thumbnail($pid) ){ 
-							// do not download files if "no create featured image" is checked
-							$logger and call_user_func($logger, sprintf(__('<b>Featured image SKIPPED</b>: The featured image is always exists fot the %s', 'pmxi_plugin'), $articleData['post_title']));							
-						}
-						else{
-							require_once(ABSPATH . 'wp-admin/includes/image.php');
-							
-							if ( ! is_array($featured_images[$i]) ) $featured_images[$i] = array($featured_images[$i]);
-							$post_thumbnail = false;	
-							$success_images = false;	
-							$gallery_attachment_ids = array();											
-							foreach ($featured_images[$i] as $featured_image)
-							{							
-								$imgs = str_getcsv($featured_image, $this->options['featured_delim']);						
-								if (!empty($imgs)) {								
-									foreach ($imgs as $img_url) { if (empty($img_url)) continue;									
-										$create_image = false;
-										if (base64_decode($img_url, true) !== false){
-											$img = @imagecreatefromstring(base64_decode($img_url));									    
-										    if($img)
-										    {	
-										    	$image_filename = md5(time()) . '.jpg';
-										    	$image_filepath = $uploads['path'] . '/' . $image_filename;
-										    	imagejpeg($img, $image_filepath);
-										    	if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
-													$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'pmxi_plugin'), $image_filepath));
-													$_SESSION['pmxi_import']['warnings']++;
-												} else {
-													$create_image = true;											
-												}	
-										    } 
-										} 
-										else {
+										$img_ext = pmxi_get_remote_image_ext($img_url);
+										
+										$image_name = (($this->options['auto_rename_images'] and "" != $auto_rename_images[$i]) ? url_title($auto_rename_images[$i] . '_' . (($this->options['images_name'] != 'auto') ? basename($img_url) : uniqid())) : (($this->options['images_name'] != 'auto') ? basename($img_url) : uniqid())) . (("" != $img_ext and $this->options['images_name'] == 'auto') ? '.'.$img_ext : '');	
+										$image_filename = wp_unique_filename($uploads['path'], $image_name);
+										$image_filepath = $uploads['path'] . '/' . url_title($image_filename);
 
-											$img_ext = pmxi_get_remote_image_ext($img_url);
-											
-											$image_filename = wp_unique_filename($uploads['path'], (($this->options['auto_rename_images'] and "" != $auto_rename_images[$i]) ? url_title($auto_rename_images[$i]) : uniqid()) . (("" != $img_ext) ? '.'.$img_ext : ''));
-											$image_filepath = $uploads['path'] . '/' . url_title($image_filename);
+										// keep existing and add newest images
+										if ( $this->options['no_create_featured_image'] ){ 																																											
+											$attachment_imgs = get_posts( array(
+												'post_type' => 'attachment',
+												'posts_per_page' => -1,
+												'post_parent' => $pid,												
+											) );
+
+											if ( $attachment_imgs ) {
+												foreach ( $attachment_imgs as $attachment_img ) {													
+													if ($attachment_img->guid == $uploads['url'] . '/' . $image_name){
+														$download_image = false;														
+														$logger and call_user_func($logger, sprintf(__('<b>Image SKIPPED</b>: The image %s is always exists for the %s', 'pmxi_plugin'), basename($attachment_img->guid), $articleData['post_title']));							
+													}
+												}
+												
+											}
+										}
+
+										if ($download_image){
 
 											$img_url = str_replace(" ", "%20", trim($img_url));
 
 											if ( ! get_file_curl($img_url, $image_filepath) and ! @file_put_contents($image_filepath, @file_get_contents($img_url))) {										
 												$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s cannot be saved locally as %s', 'pmxi_plugin'), $img_url, $image_filepath));
-												$_SESSION['pmxi_import']['warnings']++;
+												PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 												unlink($image_filepath); // delete file since failed upload may result in empty file created										
 											} elseif( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
 												$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'pmxi_plugin'), $img_url));
-												$_SESSION['pmxi_import']['warnings']++;
+												PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 											} else {
 												$create_image = true;											
-											}	
-										}									
-
-										if ($create_image){
-											$attachment = array(
-												'post_mime_type' => image_type_to_mime_type($image_info[2]),
-												'guid' => $uploads['url'] . '/' . $image_filename,
-												'post_title' => $image_filename,
-												'post_content' => '',
-											);
-											if (($image_meta = wp_read_image_metadata($image_filepath))) {
-												if (trim($image_meta['title']) && ! is_numeric(sanitize_title($image_meta['title'])))
-													$attachment['post_title'] = $image_meta['title'];
-												if (trim($image_meta['caption']))
-													$attachment['post_content'] = $image_meta['caption'];
 											}
-											$attid = wp_insert_attachment($attachment, $image_filepath, $pid);
-											if (is_wp_error($attid)) {
-												$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': ' . $pid->get_error_message());
-												$_SESSION['pmxi_import']['warnings']++;
-											} else {
-												// you must first include the image.php file
-												// for the function wp_generate_attachment_metadata() to work
-												require_once(ABSPATH . 'wp-admin/includes/image.php');
-												wp_update_attachment_metadata($attid, wp_generate_attachment_metadata($attid, $image_filepath));												
-												$success_images = true;
-												if ( ! $post_thumbnail ) { 												
-													if ( ! $this->options['no_create_featured_image'] or ! has_post_thumbnail($pid)){ 
-														set_post_thumbnail($pid, $attid); 
-														$post_thumbnail = true; 
-													}
-													else $gallery_attachment_ids[] = $attid;
-												}
-												else $gallery_attachment_ids[] = $attid;												
-											}
-										}																	
+										}	
 									}									
-								}
+
+									if ($create_image){
+										$attachment = array(
+											'post_mime_type' => image_type_to_mime_type($image_info[2]),
+											'guid' => $uploads['url'] . '/' . $image_filename,
+											'post_title' => $image_filename,
+											'post_content' => '',
+										);
+										if (($image_meta = wp_read_image_metadata($image_filepath))) {
+											if (trim($image_meta['title']) && ! is_numeric(sanitize_title($image_meta['title'])))
+												$attachment['post_title'] = $image_meta['title'];
+											if (trim($image_meta['caption']))
+												$attachment['post_content'] = $image_meta['caption'];
+										}
+										$attid = wp_insert_attachment($attachment, $image_filepath, $pid);
+										if (is_wp_error($attid)) {
+											$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': ' . $pid->get_error_message());
+											PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+										} else {
+											// you must first include the image.php file
+											// for the function wp_generate_attachment_metadata() to work
+											require_once(ABSPATH . 'wp-admin/includes/image.php');
+											wp_update_attachment_metadata($attid, wp_generate_attachment_metadata($attid, $image_filepath));												
+											$success_images = true;
+											if ( ! $post_thumbnail ) { 												
+												if ( ! $this->options['no_create_featured_image'] or ! has_post_thumbnail($pid)){ 
+													set_post_thumbnail($pid, $attid); 
+													$post_thumbnail = true; 
+												}
+												else $gallery_attachment_ids[] = $attid;
+											}
+											else $gallery_attachment_ids[] = $attid;												
+										}
+									}																	
+								}									
 							}
-							// Set product gallery images
-							if ( $post_type == "product" and class_exists('PMWI_Plugin') and !empty($gallery_attachment_ids))
-								update_post_meta($pid, '_product_image_gallery', implode(',', $gallery_attachment_ids));
-							// Create entry as Draft if no images are downloaded successfully
-							if ( ! $success_images and "yes" == $this->options['create_draft'] ) wp_update_post(array('ID' => $pid, 'post_status' => 'draft'));
 						}
+						// Set product gallery images
+						if ( $post_type == "product" and class_exists('PMWI_Plugin') and !empty($gallery_attachment_ids))
+							update_post_meta($pid, '_product_image_gallery', implode(',', $gallery_attachment_ids));
+						// Create entry as Draft if no images are downloaded successfully
+						if ( ! $success_images and "yes" == $this->options['create_draft'] ) wp_update_post(array('ID' => $pid, 'post_status' => 'draft'));						
 					}
 					// [/featured image]
 					
@@ -916,17 +938,17 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 									$attachment_filename = wp_unique_filename($uploads['path'], basename(parse_url(trim($atch_url), PHP_URL_PATH)));										
 									$attachment_filepath = $uploads['path'] . '/' . url_title($attachment_filename);
 																		
-									if ( ! file_put_contents($attachment_filepath, @file_get_contents(trim($atch_url))) and ! get_file_curl(trim($atch_url), $attachment_filepath)) {												
+									if ( ! get_file_curl(trim($atch_url), $attachment_filepath) and ! @file_put_contents($attachment_filepath, @file_get_contents(trim($atch_url)))) {												
 										$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Attachment file %s cannot be saved locally as %s', 'pmxi_plugin'), trim($atch_url), $attachment_filepath));
-										$_SESSION['pmxi_import']['warnings']++;
+										PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 										unlink($attachment_filepath); // delete file since failed upload may result in empty file created												
 									} elseif( ! $wp_filetype = wp_check_filetype(basename($attachment_filename), null )) {
 										$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Can\'t detect attachment file type %s', 'pmxi_plugin'), trim($atch_url)));
-										$_SESSION['pmxi_import']['warnings']++;
+										PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 									} else {
 
 										$attachment_data = array(
-										    'guid' => $uploads['baseurl'] . _wp_relative_upload_path( $attachment_filepath ), 
+										    'guid' => $uploads['baseurl'] . '/' . _wp_relative_upload_path( $attachment_filepath ), 
 										    'post_mime_type' => $wp_filetype['type'],
 										    'post_title' => preg_replace('/\.[^.]+$/', '', basename($attachment_filepath)),
 										    'post_content' => '',
@@ -936,7 +958,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 										if (is_wp_error($attach_id)) {
 											$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': ' . $pid->get_error_message());
-											$_SESSION['pmxi_import']['warnings']++;
+											PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 										} else {
 											wp_update_attachment_metadata($attach_id, wp_generate_attachment_metadata($attach_id, $attachment_filepath));											
 										}										
@@ -948,141 +970,185 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					// [/attachments]	
 
 					// [custom taxonomies]
-					foreach ($taxonomies as $tx_name => $txes) {
+					if (!empty($taxonomies)){
+						
+						foreach ($taxonomies as $tx_name => $txes) {
+							
+							if ( empty($articleData['ID']) or !$this->options['is_keep_categories'] or ( $this->options['is_keep_categories'] and $this->options['is_add_newest_categories'] ) ){
 
-						$assign_taxes = array();
+								$assign_taxes = array();
 
-						// create term if not exists						
-						foreach ($txes[$i] as $key => $single_tax) {	
-							if (is_array($single_tax)){								
-
-								$parent_id = (!empty($single_tax['parent'])) ? $this->recursion_taxes($single_tax['parent'], $tx_name, $txes[$i], $key) : '';
-
-								$term = term_exists( trim(htmlspecialchars($single_tax['name'])), $tx_name, $parent_id );																
-
-								if ( empty($term) and !is_wp_error($term) ){																		
-									$term_attr = array('parent'=> (!empty($parent_id)) ? $parent_id : 0);									
-									$term = wp_insert_term(
-										$single_tax['name'], // the term 
-									  	$tx_name, // the taxonomy
-									  	$term_attr
-									);									
+								if ($this->options['is_add_newest_categories'] and !empty($existing_taxonomies[$tx_name][$i])){
+									$assign_taxes = $existing_taxonomies[$tx_name][$i];	
+									unset($existing_taxonomies[$tx_name][$i]);
 								}
-								
-								if ( is_wp_error($term) ){									
-									$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: `%s`', 'pmxi_plugin'), $term->get_error_message()));
-									$_SESSION['pmxi_import']['warnings']++;
+
+								// create term if not exists						
+								foreach ($txes[$i] as $key => $single_tax) {	
+									if (is_array($single_tax)){								
+
+										$parent_id = (!empty($single_tax['parent'])) ? $this->recursion_taxes($single_tax['parent'], $tx_name, $txes[$i], $key) : '';
+
+										$term = term_exists( trim(htmlspecialchars($single_tax['name'])), $tx_name, $parent_id );																
+
+										if ( empty($term) and !is_wp_error($term) ){																		
+											$term_attr = array('parent'=> (!empty($parent_id)) ? $parent_id : 0);									
+											$term = wp_insert_term(
+												$single_tax['name'], // the term 
+											  	$tx_name, // the taxonomy
+											  	$term_attr
+											);									
+										}
+										
+										if ( is_wp_error($term) ){									
+											$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: `%s`', 'pmxi_plugin'), $term->get_error_message()));
+											PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+										}
+										elseif (!empty($term)) {
+											$cat_id = $term['term_id'];
+											if ($cat_id and $single_tax['assign']) 
+											{
+												$term = get_term_by('id', $cat_id, $tx_name);
+												$assign_taxes[] = $term->slug;		
+											}									
+										}									
+									}
+								}						
+								// associate taxes with post
+								$term_ids = wp_set_object_terms($pid, $assign_taxes, $tx_name);
+								if (is_wp_error($term_ids)) {
+									$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': '.$term_ids->get_error_message());
+									PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 								}
-								elseif (!empty($term)) {
-									$cat_id = $term['term_id'];
-									if ($cat_id and $single_tax['assign']) 
-									{
-										$term = get_term_by('id', $cat_id, $tx_name);
-										$assign_taxes[] = $term->slug;		
-									}									
-								}									
 							}
 						}
-						
-						// associate taxes with post
-						$term_ids = wp_set_object_terms($pid, $assign_taxes, $tx_name);
-						if (is_wp_error($term_ids)) {
-							$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': '.$term_ids->get_error_message());
-							$_SESSION['pmxi_import']['warnings']++;
+						if (!empty($existing_taxonomies) and $this->options['is_keep_categories'] and $this->options['is_add_newest_categories']) {
+							foreach ($existing_taxonomies as $tx_name => $txes) {
+								if (!empty($txes[$i])){
+									$term_ids = wp_set_object_terms($pid, $txes[$i], $tx_name);
+									if (is_wp_error($term_ids)) {
+										$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': '.$term_ids->get_error_message());
+										PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+									}
+								}
+							}
 						}
-					}
+					}	
 					// [/custom taxonomies]									
 					
 					// [categories]
-					if (!empty($cats[$i])){
+					if (!empty($cats[$i])) {
+					
+						if ( empty($articleData['ID']) or !$this->options['is_keep_categories'] or ( $this->options['is_keep_categories'] and $this->options['is_add_newest_categories'] ) ){
 
-						if ( ! $this->options['is_keep_categories']) wp_set_object_terms( $pid, NULL, 'category' );
+							wp_set_object_terms( $pid, NULL, 'category' );
 
-						$assign_cats = array();
-						// create categories if it's doesn't exists						
-						foreach ($cats[$i] as $key => $single_cat) {												
+							$assign_cats = array();
 
-							if (is_array($single_cat)){								
-
-								$parent_id = (!empty($single_cat['parent'])) ? $this->recursion_taxes($single_cat['parent'], 'category', $cats[$i], $key) : '';
-
-								$term = term_exists( trim(htmlspecialchars($single_cat['name'])), 'category', $parent_id );																
-
-								if ( empty($term) and !is_wp_error($term) ){																		
-									$term_attr = array('parent'=> (!empty($parent_id)) ? $parent_id : 0);									
-									$term = wp_insert_term(
-										$single_cat['name'], // the term 
-									  	'category', // the taxonomy
-									  	$term_attr
-									);									
-								}
-								
-								if ( is_wp_error($term) ){									
-									$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: `%s`', 'pmxi_plugin'), $term->get_error_message()));
-									$_SESSION['pmxi_import']['warnings']++;
-								}
-								elseif ( !empty($term) ) {
-									$cat_id = $term['term_id'];
-									if ($cat_id and $single_cat['assign']) 
-									{
-										$term = get_term_by('id', $cat_id, 'category');
-										$assign_cats[] = $term->slug;		
-									}									
-								}									
+							if ($this->options['is_add_newest_categories'] and !empty($existing_cats[$i])){
+								$assign_cats = $existing_cats[$i];	
+								unset($existing_cats[$i]);
 							}
-						}	
 
-						// associate categories with post
-						$cats_ids = wp_set_object_terms($pid, $assign_cats, 'category');
+							// create categories if it's doesn't exists						
+							foreach ($cats[$i] as $key => $single_cat) {												
+
+								if (is_array($single_cat)){								
+
+									$parent_id = (!empty($single_cat['parent'])) ? $this->recursion_taxes($single_cat['parent'], 'category', $cats[$i], $key) : '';
+
+									$term = term_exists( trim(htmlspecialchars($single_cat['name'])), 'category', $parent_id );																
+
+									if ( empty($term) and !is_wp_error($term) ){																		
+										$term_attr = array('parent'=> (!empty($parent_id)) ? $parent_id : 0);									
+										$term = wp_insert_term(
+											$single_cat['name'], // the term 
+										  	'category', // the taxonomy
+										  	$term_attr
+										);									
+									}
+									
+									if ( is_wp_error($term) ){									
+										$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: `%s`', 'pmxi_plugin'), $term->get_error_message()));
+										PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+									}
+									elseif ( ! empty($term) ) {
+										$cat_id = $term['term_id'];
+										if ($cat_id and $single_cat['assign']) 
+										{
+											$term = get_term_by('id', $cat_id, 'category');
+											if ( ! in_array($term->slug, $assign_cats)) $assign_cats[] = $term->slug;		
+										}									
+									}									
+								}
+							}	
+
+							// associate categories with post
+							$cats_ids = wp_set_object_terms($pid, $assign_cats, 'category');
+							if (is_wp_error($cats_ids)) {
+								$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': '.$cats_ids->get_error_message());
+								PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
+							}
+						}
+					}
+					
+					if (!empty($existing_cats[$i]) and $this->options['is_keep_categories']) {												
+						$cats_ids = wp_set_object_terms($pid, $existing_cats[$i], 'category');
+						
 						if (is_wp_error($cats_ids)) {
 							$logger and call_user_func($logger, __('<b>WARNING</b>', 'pmxi_plugin') . ': '.$cats_ids->get_error_message());
-							$_SESSION['pmxi_import']['warnings']++;
+							PMXI_Plugin::$session['pmxi_import']['warnings'] = PMXI_Plugin::$session->data['pmxi_import']['warnings']++;
 						}
 					}
 					// [/categories]
 
 					if (empty($articleData['ID'])) {
-						$_SESSION['pmxi_import']['created_records']++;																									
+						PMXI_Plugin::$session['pmxi_import']['created_records'] = $this->created + 1;																								
 						$logger and call_user_func($logger, sprintf(__('`%s` post created successfully', 'pmxi_plugin'), $articleData['post_title']));
 					} else {
-						$_SESSION['pmxi_import']['updated_records']++;										
+						PMXI_Plugin::$session['pmxi_import']['updated_records'] = $this->updated + 1;									
 						$logger and call_user_func($logger, sprintf(__('`%s` post updated successfully', 'pmxi_plugin'), $articleData['post_title']));
 					}
-
+					
 					do_action( 'pmxi_saved_post', $pid); // hook that was triggered immediately after post saved
+					
+					if ($this->large_import == 'Yes' and $chunk){
+						$this->set(array(
+							'imported' => $this->imported + 1,	
+							'created'  => (empty($articleData['ID'])) ? $this->created + 1 : $this->created,
+							'updated'  => (empty($articleData['ID'])) ? $this->updated : $this->updated + 1			
+						))->save();
+						PMXI_Plugin::$session['pmxi_import']['chunk_number'] = PMXI_Plugin::$session->data['pmxi_import']['chunk_number']++;
+					}	
 					
 					$records_count = 0;
 
 					// Time Elapsed
 					if ( ! $is_cron){												
 						
-						if ($this->large_import == 'No') $_SESSION['pmxi_import']['count'] = count($titles);
+						if ($this->large_import == 'No') PMXI_Plugin::$session['pmxi_import']['count'] = count($titles);
 						
-						$records_count = $_SESSION['pmxi_import']['created_records'] + $_SESSION['pmxi_import']['updated_records'] + $_SESSION['pmxi_import']['skipped_records'] + $_SESSION['pmxi_import']['errors'];
+						$records_count = $this->created + $this->updated + $this->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'];
 
-						$progress_msg = '<p class="import_process_bar"> Created ' . $_SESSION['pmxi_import']['created_records'] . ' / Updated ' . $_SESSION['pmxi_import']['updated_records'] . ' of '. $_SESSION['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/$_SESSION['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  $_SESSION['pmxi_import']['warnings'] . '</span><span class="errors_count">' . $_SESSION['pmxi_import']['errors'] . '</span>';
+						$progress_msg = '<p class="import_process_bar"> '.__('Created','pmxi_plugin'). ' ' . $this->created . ' / '.__('Updated','pmxi_plugin') . ' ' . $this->updated . ' of '. PMXI_Plugin::$session->data['pmxi_import']['count'].' records.</p><span class="import_percent">' . ceil(($records_count/PMXI_Plugin::$session->data['pmxi_import']['count']) * 100) . '</span><span class="warnings_count">' .  PMXI_Plugin::$session->data['pmxi_import']['warnings'] . '</span><span class="errors_count">' . PMXI_Plugin::$session->data['pmxi_import']['errors'] . '</span>';
 						$logger and call_user_func($logger, $progress_msg);
 					}
 					
-				}
-				
-				if ($this->large_import == 'Yes' and $chunk){
-					$this->set(array(
-						'imported' => $this->imported + 1,	
-						'created'  => $_SESSION['pmxi_import']['created_records'],
-						'updated'  => $_SESSION['pmxi_import']['updated_records']				
-					))->save();
-					$_SESSION['pmxi_import']['chunk_number']++;
-				}				
+				}									
 
 				wp_cache_flush();
-			}			
-			if (!$is_cron and ($records_count == $_SESSION['pmxi_import']['count'] + $_SESSION['pmxi_import']['skipped_records']) and ! empty($this->options['is_delete_missing'])) { // delete posts which are not in current import set				
+			}	
+			
+			$is_import_complete = ($records_count == PMXI_Plugin::$session->data['pmxi_import']['count']);
+
+			if ( ! $is_cron and $is_import_complete and ! empty($this->options['is_delete_missing'])) { // delete posts which are not in current import set
+
 				$logger and call_user_func($logger, 'Removing previously imported posts which are no longer actual...');
 				$postList = new PMXI_Post_List();				
-				
+				$current_post_ids = (empty($this->current_post_ids)) ? array() : json_decode($this->current_post_ids, true);	
+
 				$missing_ids = array();
-				foreach ($postList->getBy(array('import_id' => $this->id, 'post_id NOT IN' => $_SESSION['pmxi_import']['current_post_ids'])) as $missingPost) {
+				foreach ($postList->getBy(array('import_id' => $this->id, 'post_id NOT IN' => $current_post_ids)) as $missingPost) {
 					empty($this->options['is_keep_attachments']) and wp_delete_attachments($missingPost['post_id']);
 					$missing_ids[] = $missingPost['post_id'];
 					
@@ -1105,29 +1171,61 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					$this->wpdb->query( 
 						$this->wpdb->prepare($sql, '')
 					);
+				}				
+
+			}
+
+			// Set out of stock status for missing records [Woocommerce add-on option]
+			if ( ! $is_cron and $is_import_complete and empty($this->options['is_delete_missing']) and $post_type == "product" and class_exists('PMWI_Plugin') and !empty($this->options['missing_records_stock_status'])) {
+
+				$logger and call_user_func($logger, 'Update stock status previously imported posts which are no longer actual...');
+				$postList = new PMXI_Post_List();				
+				$current_post_ids = (empty($this->current_post_ids)) ? array() : json_decode($this->current_post_ids, true);	
+				foreach ($postList->getBy(array('import_id' => $this->id, 'post_id NOT IN' => $current_post_ids)) as $missingPost) {
+					update_post_meta( $missingPost['post_id'], '_stock_status', 'outofstock' );
+					update_post_meta( $missingPost['post_id'], '_stock', 0 );
+				}
+
+			}
+
+			if ( ! $is_cron and $is_import_complete and empty($this->options['is_delete_missing']) and $this->options['is_update_missing_cf'] ) {
+				
+				$logger and call_user_func($logger, 'Update custom fields previously imported posts which are no longer actual...');
+				$postList = new PMXI_Post_List();											
+				$current_post_ids = (empty($this->current_post_ids)) ? array() : json_decode($this->current_post_ids, true);	
+				foreach ($postList->getBy(array('import_id' => $this->id, 'post_id NOT IN' => $current_post_ids)) as $missingPost) {
+					update_post_meta( $missingPost['post_id'], $this->options['update_missing_cf_name'], $this->options['update_missing_cf_value'] );
 				}
 
 			}
 			
 		} catch (XmlImportException $e) {
 			$logger and call_user_func($logger, __('<b>ERROR</b>', 'pmxi_plugin') . ': ' . $e->getMessage());
-			$_SESSION['pmxi_import']['errors']++;	
+			PMXI_Plugin::$session['pmxi_import']['errors'] = PMXI_Plugin::$session->data['pmxi_import']['errors']++;	
 		}		
 
 		$this->set('registered_on', date('Y-m-d H:i:s'))->save(); // specify execution is successful
 		
-		!$is_cron and ($records_count == $_SESSION['pmxi_import']['count'] + $_SESSION['pmxi_import']['skipped_records']) and $logger and call_user_func($logger, __('Cleaning temporary data...', 'pmxi_plugin'));
+		!$is_cron and $is_import_complete and $logger and call_user_func($logger, __('Cleaning temporary data...', 'pmxi_plugin'));
 		foreach ($tmp_files as $file) { // remove all temporary files created
 			unlink($file);
 		}
 		
-		if (($is_cron or $records_count == $_SESSION['pmxi_import']['count'] + $_SESSION['pmxi_import']['skipped_records']) and $this->options['is_delete_source']) {
+		if (($is_cron or $is_import_complete) and $this->options['is_delete_source']) {
 			$logger and call_user_func($logger, __('Deleting source XML file...', 'pmxi_plugin'));
 			if ( ! @unlink($this->path)) {
 				$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: Unable to remove %s', 'pmxi_plugin'), $this->path));
 			}
 		}
-		!$is_cron and ($records_count == $_SESSION['pmxi_import']['count'] + $_SESSION['pmxi_import']['skipped_records']) and $logger and call_user_func($logger, 'Done');
+		if ( ! $is_cron and $is_import_complete ){
+			$this->set(array(
+				'processing' => 0,
+				'triggered' => 0,
+				'queue_chunk_number' => 0,
+				'current_post_ids' => ''
+			))->save();
+			$logger and call_user_func($logger, 'Done');			
+		}
 		
 		remove_filter('user_has_cap', array($this, '_filter_has_cap_unfiltered_html')); kses_init(); // return any filtering rules back if they has been disabled for import procedure
 		
