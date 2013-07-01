@@ -382,3 +382,36 @@
 	}
 
 
+	/* Session */
+
+	/**
+	 * Return the current session status.
+	 *
+	 * @return int
+	 */
+	function pmxi_session_status() {
+		
+		PMXI_Plugin::$session = PMXI_Session::get_instance();
+
+		if ( PMXI_Plugin::$session->session_started() ) {
+			return PHP_SESSION_ACTIVE;
+		}
+
+		return PHP_SESSION_NONE;
+	}
+
+	/**
+	 * Unset all session variables.
+	 */
+	function pmxi_session_unset() {
+		PMXI_Plugin::$session = PMXI_Session::get_instance();
+
+		PMXI_Plugin::$session->reset();
+	}
+
+	/**
+	 * Alias of wp_session_write_close()
+	 */
+	function pmxi_session_commit() {		
+		pmxi_shutdown();
+	}

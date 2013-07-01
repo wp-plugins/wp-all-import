@@ -956,6 +956,8 @@ class PMXI_CsvParser
         }
         $create_new_headers = false;
         
+        $legacy_special_character_handling = PMXI_Plugin::getInstance()->getOption('legacy_special_character_handling');
+
         while ($keys = fgetcsv($res, $l, $d, $e)) {
 
             if ($c == 0) {
@@ -981,8 +983,8 @@ class PMXI_CsvParser
                     $chunk = array();
                     
                     foreach ($this->headers as $key => $header) {                                                
-                        $chunk[$header] = $this->fixEncoding(htmlentities($keys[$key]));
-                    }                                                                                                        
+                        $chunk[$header] = $this->fixEncoding( ($legacy_special_character_handling) ? htmlspecialchars($keys[$key]) : htmlentities($keys[$key]));
+                    }
 
                     if (!empty($chunk))
                     {                                                                

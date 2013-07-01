@@ -39,7 +39,7 @@ $.fn.wplupload  = function($options) {
 		
 		$up.init();				
 		
-		$up.bind('Error', function(up, err) {						
+		$up.bind('Error', function(up, err) {									
 			$('#upload_process').html(err.message);
 		});
 		
@@ -76,7 +76,10 @@ $.fn.wplupload  = function($options) {
 
 			if (r.OK) {					
 
+			} else if (r.error != undefined && '' != r.error.message) {
+				$('#progressbar').html(r.error.message);
 			}
+			
 		});
 		
 		$up.bind('UploadComplete', function(up) {
@@ -106,7 +109,8 @@ $.fn.wplupload  = function($options) {
 function _parseJSON(r) {
 	var obj;
 	try {
-		obj = $.parseJSON(r);	
+		var matches = r.match(/{.*}/);		
+		obj = $.parseJSON(matches[0]);
 	} catch (e) {		
 		obj = { OK : 0 };	
 	}	

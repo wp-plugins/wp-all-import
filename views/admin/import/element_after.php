@@ -31,7 +31,7 @@
 				<p><?php _e('Current XPath:','pmxi_plugin');?></p>
 				<div>
 					<input type="text" name="xpath" value="<?php echo esc_attr($post['xpath']) ?>" style="max-width:none;" />					
-					<input type="hidden" id="root_element" name="root_element" value="<?php echo $_SESSION['pmxi_import']['source']['root_element']; ?>"/>
+					<input type="hidden" id="root_element" name="root_element" value="<?php echo PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']; ?>"/>
 					<?php
 					if (!empty($elements_cloud)){
 						?>
@@ -43,7 +43,7 @@
 						echo implode(', ', $root_elements);
 					}
 					?>
-					&nbsp; <br/><br/>or <a href="javascript:void(0);" rel="<?php echo esc_attr($post['xpath']) ?>" root="<?php echo $_SESSION['pmxi_import']['source']['root_element']; ?>" id="get_default_xpath"><?php _e('get default xPath','pmxi_plugin');?></a>
+					&nbsp; <br/><br/>or <a href="javascript:void(0);" rel="<?php echo esc_attr($post['xpath']) ?>" root="<?php echo PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']; ?>" id="get_default_xpath"><?php _e('get default xPath','pmxi_plugin');?></a>
 				</div> <br><br>				
 				<a href="http://www.w3schools.com/xpath/default.asp" target='_blank'><?php _e('XPath Tutorial','pmxi_plugin');?></a> - <?php _e('For further help','pmxi_plugin');?>, <a href="http://www.wpallimport.com/support" target='_blank'><?php _e('contact us','pmxi_plugin');?></a>.
 			</fieldset>

@@ -6,6 +6,10 @@ Description:  The most powerful solution for importing XML and CSV files to Word
 Version: 3.0.2
 Author: Soflyy
 */
+
+if( ! defined( 'PMXI_SESSION_COOKIE' ) )
+	define( 'PMXI_SESSION_COOKIE', '_pmxi_session' );
+
 /**
  * Plugin root dir with forward slashes as directory separator regardless of actuall DIRECTORY_SEPARATOR value
  * @var string
@@ -73,6 +77,8 @@ final class PMXI_Plugin {
 	 */
 	const LARGE_SIZE = 0; // all files will importing in large import mode
 
+	public static $session;		
+	
 	/**
 	 * Return singletone instance
 	 * @return PMXI_Plugin
@@ -222,6 +228,23 @@ final class PMXI_Plugin {
 
 		// register admin page pre-dispatcher
 		add_action('admin_init', array($this, '__adminInit'));
+
+		global $wpdb;
+
+		if (function_exists('is_multisite') && is_multisite()) {
+	        // check if it is a network activation - if so, run the activation function for each blog id
+	        if (isset($_GET['networkwide']) && ($_GET['networkwide'] == 1)) {
+	            $old_blog = $wpdb->blogid;
+	            // Get all blog ids
+	            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+	            foreach ($blogids as $blog_id) {
+	                switch_to_blog($blog_id);
+	                $this->__add_feed_type_fix(); // feature to version 2.22
+	            }
+	            switch_to_blog($old_blog);		            
+            	return;
+	        }
+	    }
 
 		$this->__add_feed_type_fix(); // feature to version 2.22
 
@@ -402,12 +425,36 @@ final class PMXI_Plugin {
 		// create/update required database tables
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		require self::ROOT_DIR . '/schema.php';
+		global $wpdb;
+
+		if (function_exists('is_multisite') && is_multisite()) {
+	        // check if it is a network activation - if so, run the activation function for each blog id	        
+	        if (isset($_GET['networkwide']) && ($_GET['networkwide'] == 1)) {
+	            $old_blog = $wpdb->blogid;
+	            // Get all blog ids
+	            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+	            foreach ($blogids as $blog_id) {
+	                switch_to_blog($blog_id);
+	                require self::ROOT_DIR . '/schema.php';
+	                dbDelta($plugin_queries);
+	                $this->__ver_1_04_transition_fix();
+
+					// sync data between plugin tables and wordpress (mostly for the case when plugin is reactivated)
+					
+					$post = new PMXI_Post_Record();
+					$wpdb->query('DELETE FROM ' . $post->getTable() . ' WHERE post_id NOT IN (SELECT ID FROM ' . $wpdb->posts . ')');
+	            }
+	            switch_to_blog($old_blog);
+	            return;	         
+	        }	         
+	    }
+
 		dbDelta($plugin_queries);
 
 		$this->__ver_1_04_transition_fix();
 
 		// sync data between plugin tables and wordpress (mostly for the case when plugin is reactivated)
-		global $wpdb;
+		
 		$post = new PMXI_Post_Record();
 		$wpdb->query('DELETE FROM ' . $post->getTable() . ' WHERE post_id NOT IN (SELECT ID FROM ' . $wpdb->posts . ')');
 
@@ -595,6 +642,12 @@ final class PMXI_Plugin {
 			'custom_duplicate_value' => '',
 			'duplicate_matching' => 'auto',
 			'create_chunks' => 0,
+			'update_missing_cf_name' => '',
+			'update_missing_cf_value' => '',
+			'auto_rename_images' => 0,
+			'auto_rename_images_suffix' => '',
+			'images_name' => 'auto',
+			'is_add_newest_categories' => 0
 		);
 	}
 
