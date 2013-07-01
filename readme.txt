@@ -1,9 +1,9 @@
-=== WP All Import - Import any XML or CSV File to WordPress ===
+=== Import any XML or CSV File to WordPress ===
 Contributors: soflyy
 Tags: wordpress, xml, csv, datafeed, import
 Requires at least: 3.5
-Tested up to: 3.5.1
-Stable tag: 3.0.2
+Tested up to: 3.5.2
+Stable tag: 3.0.3
 
 WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress. 
 
@@ -18,9 +18,9 @@ There are no special requirements that the elements in your file must be laid ou
 WP All Import can be used for everything from building a store with an affiliate datafeed to displaying live stock quotes or sports scores to building a real estate portal.
 
 = WP All Import Professional Edition =
-[youtube http://www.youtube.com/watch?v=7KSz1wxQ9f8 /]
+[youtube http://www.youtube.com/watch?v=3LfbN7uWcTA /]
 
-*WP All Import Pro* is a $199 upgrade that adds the following features to the free version of WP All Import:
+*WP All Import Pro* is a $99 upgrade that adds the following features to the free version of WP All Import:
 
 * Import to Custom Post Types - commonly used to import to Automotiv, OpenHouse, Listings, and WooCommerce, as well as any other theme or plugin that makes use of Custom Post Types.
 
@@ -38,13 +38,21 @@ WP All Import can be used for everything from building a store with an affiliate
 
 * Pro version customers also get access to our customer portal with documentation and tutorials, and e-mail technical support.
 
-
 [Upgrade to the professional edition of WP All Import.](http://www.wpallimport.com/upgrade-to-pro)
+
+Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocommerce-xml-csv-product-import/) Check out our WooCommerce add-on.
 
 == Premium Support ==
 Upgrade to the professional edition of WP All Import for premium support.
 
 E-mail: support@soflyy.com
+
+== Import To WooCommerce ==
+
+Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocommerce-xml-csv-product-import/) Check out our WooCommerce add-on.
+
+[WooCommerce XML & CSV Import Pro Version](http://www.wpallimport.com/woocommerce-product-import)
+
 
 == Installation ==
 
@@ -57,7 +65,7 @@ Either: -
 == Frequently Asked Questions ==
 
 *What Size Files Can WP All Import Handle?*
-With the release of WP All Import version 3, WP All Import can now handle files of any size and any number of records, as long as the web hosting provider can too. Typically, WP All Import can comfortably import files of 100Mb and larger in most shared hosting environments (HostGator, etc). Please see this page for moredetails.
+With the release of WP All Import version 3, WP All Import can now handle files of any size and any number of records, as long as the web hosting provider can too. Typically, WP All Import can comfortably import files of 200Mb and larger in most shared hosting environments (HostGator, etc). Please see this page for more details: http://www.wpallimport.com/how-big
 
 *What are the benefits of the $99 professional version?*
 Support for Custom Post Types, Custom Taxonomies, Custom Fields, cron jobs/recurring imports, download and importing of images to the post media gallery, and URL/FTP server uploads.
@@ -76,6 +84,12 @@ Does it work with special character encoding like Hebrew, Arabic, Chinese, etc?
 4. Manage imports.
 
 == Changelog ==
+
+= 3.0.3 = 
+* Now using enhanced session functionality
+
+= 3.0.2 = 
+* Added support for the WooCommerce add-on
 
 = 3.0 = 
 * Free edition of 3.0 pro release
