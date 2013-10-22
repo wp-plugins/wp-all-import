@@ -65,7 +65,7 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 		wp_enqueue_script('jquery-browserplus-min', 'http://bp.yahooapis.com/2.4.21/browserplus-min.js', array('jquery'));
 		wp_enqueue_script('full-plupload', PMXI_ROOT_URL . '/static/js/plupload/plupload.full.js', array('jquery-browserplus-min'));
 		wp_enqueue_script('jquery-plupload', PMXI_ROOT_URL . '/static/js/plupload/wplupload.js', array('full-plupload', 'jquery'));		
-		
+
 		wp_enqueue_script('pmxi-admin-script', PMXI_ROOT_URL . '/static/js/admin.js', array('jquery', 'jquery-ui-dialog', 'jquery-ui-datepicker', 'jquery-ui-draggable', 'jquery-ui-droppable'));
 				
 	}	

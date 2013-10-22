@@ -77,13 +77,19 @@ class PMXI_CsvParser
 
     $xpath = '',
 
+    $delimiter = '',
+
     $large_import = false,    
 
     $htmlentities = false,
 
     $xml_path = '',
 
-    $iteration = 0;
+    $iteration = 0,
+
+    $csv_encoding = 'UTF-8',
+
+    $auto_encoding = true;
 
     protected
 
@@ -120,14 +126,21 @@ class PMXI_CsvParser
      * @see load()
      * @return void
      */
-    public function __construct($filename = null, $large_import = false, $xpath = '')
+    public function __construct($filename = null, $large_import = false, $xpath = '', $delimiter = '', $encoding = '', $xml_path = '')
     {
-        
+        PMXI_Plugin::$csv_path = $filename;
+
         $this->large_import = $large_import;
         $this->xpath = (!empty($xpath) ? $xpath : ((!empty($_POST['xpath'])) ? $_POST['xpath'] : '/node'));        
+        $this->delimiter = $delimiter;
+        if ('' != $encoding){ 
+            $this->csv_encoding = $encoding;
+            $this->auto_encoding = false;
+        }
+        if ('' != $xml_path) $this->xml_path = $xml_path;
 
-        ini_set( "display_errors", 0);
-        ini_set('auto_detect_line_endings', true);
+        @ini_set( "display_errors", 0);
+        @ini_set('auto_detect_line_endings', true);        
         
         $file_params = self::analyse_file($filename, 1);
 
@@ -941,18 +954,20 @@ class PMXI_CsvParser
         }
 
         $c = 0;
-        $d = $this->settings['delimiter'];
+        $d = ( "" != $this->delimiter ) ? $this->delimiter : $this->settings['delimiter'];
         $e = $this->settings['escape'];
-        $l = $this->settings['length'];        
+        $l = $this->settings['length'];       
+
+        PMXI_Plugin::$is_csv = $d;         
 
         $res = fopen($this->_filename, 'rb');
         
         $wp_uploads = wp_upload_dir();
         if ($this->large_import){
             $tmpname = wp_unique_filename($wp_uploads['path'], str_replace("csv", "xml", basename($this->_filename)));
-            $this->xml_path = $wp_uploads['path']  .'/'. $tmpname;
+            if ('' == $this->xml_path) $this->xml_path = $wp_uploads['path']  .'/'. $tmpname;            
             $fp = fopen($this->xml_path, 'w');
-            fwrite($fp, "<?xml version=\"1.0\" encoding=\"utf-8\"?><data>");
+            fwrite($fp, "<?xml version=\"1.0\" encoding=\"".$this->csv_encoding."\"?><data>");
         }
         $create_new_headers = false;
         
@@ -983,7 +998,10 @@ class PMXI_CsvParser
                     $chunk = array();
                     
                     foreach ($this->headers as $key => $header) {                                                
-                        $chunk[$header] = $this->fixEncoding( ($legacy_special_character_handling) ? htmlspecialchars($keys[$key]) : htmlentities($keys[$key]));
+                        if ($this->auto_encoding)
+                            $chunk[$header] = $this->fixEncoding( ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key] );
+                        else
+                            $chunk[$header] = ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key];
                     }
 
                     if (!empty($chunk))
@@ -1000,23 +1018,7 @@ class PMXI_CsvParser
         fwrite($fp, '</data>');
         fclose($fp);
         fclose($res);
-        $this->removeEmpty();      
-
-        /*$errors = array();
-        $xml = file_get_contents($this->xml_path);
-        
-        PMXI_Import_Record::preprocessXml($xml);
-
-        if (PMXI_Import_Record::validateXml($xml, $errors)){
-            return true;            
-        }
-        else{
-            $this->htmlentities = true;     
-            $this->rows = array();
-            $this->iteration++;
-            if ($this->iteration > 1) return true;
-            return $this->parse();
-        } */
+        $this->removeEmpty();             
 
         return true;       
     }
@@ -1141,7 +1143,7 @@ class PMXI_CsvParser
             'comma'     => ',',
             'semicolon' => ';',            
             'pipe'         => '|',
-            'tabulation' => "\t"            
+            'tabulation' => "\t"
         );
        
         // specify allowed line endings

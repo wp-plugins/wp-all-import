@@ -121,6 +121,7 @@
 	// template form: preview button
 	$('form.template').each(function () {
 		var $form = $(this);
+		var set_encoding = false;
 		var $modal = $('<div></div>').dialog({
 			autoOpen: false,
 			modal: true,
@@ -133,11 +134,33 @@
 		});
 		$form.find('.preview').click(function () {
 			$modal.addClass('loading').empty().dialog('open').dialog('option', 'position', 'center');
-			tinyMCE.triggerSave(false, false);
+			if (tinyMCE != undefined) tinyMCE.triggerSave(false, false);
 			$.post('admin.php?page=pmxi-admin-import&action=preview', $form.serialize(), function (response) {
 				$modal.removeClass('loading').html(response).dialog('option', 'position', 'center');
+				if (set_encoding){
+					var $tag = $('.tag');
+					$tag.addClass('loading').css('opacity', 0.7);
+					$.post('admin.php?page=pmxi-admin-import&action=tag', {tagno: 0}, function (data) {
+						var $indicator = $('<span />').insertBefore($tag);
+						$tag.replaceWith(data);
+						$indicator.next().tag().prevObject.remove();					
+						if ($('.layout').length){
+					    	var offset = $('.layout').offset();
+					        if ($(document).scrollTop() > offset.top)
+					            $('.tag').css({'top':(($(document).scrollTop() - offset.top) ? $(document).scrollTop() - offset.top : 0) + 'px'});        
+					        else
+					        	$('.tag').css({'top':''});
+					    }
+					    set_encoding = false;
+					}, 'html');
+				}
 			});
 			return false;
+		});
+		$form.find('.set_encoding').live('click', function(e){
+			e.preventDefault();
+			set_encoding = true;			
+			$form.find('input[type="button"].preview').click();
 		});
 	});
 	
@@ -306,6 +329,8 @@
 		return this;
 	};
 
+	var go_to_template = false;
+
 	// selection logic
 	$('form.choose-elements').each(function () {
 		var $form = $(this);
@@ -316,6 +341,9 @@
 		var $goto_element =  $form.find('#goto_element');
 		var $get_default_xpath = $form.find('#get_default_xpath');	
 		var $root_element = $form.find('#root_element');		
+		var $submit = $form.find('input[type="submit"]');
+		var $csv_delimiter = $form.find('input[name=delimiter]');
+		var $apply_delimiter = $form.find('input[name=apply_delimiter]');
 
 		var $xml = $('.xml');
 		$form.find('.xml-tag.opening').live('mousedown', function () {return false;}).live('dblclick', function () {
@@ -334,22 +362,36 @@
 			$input.attr('readonly', true).unbind('change', xpathChanged).data('checkedValue', $input.val());
 			$xml.css({'visibility':'hidden'});
 			$xml.parents('fieldset:first').addClass('preload');
-			$('.ajax-console').load('admin.php?page=pmxi-admin-import&action=evaluate', {xpath: $input.val(), show_element: $goto_element.val(), root_element:$root_element.val()}, function () {
-				$input.attr('readonly', false).change(function(){$goto_element.val(1); xpathChanged();});
-				$form.removeClass('loading');
-				$xml.parents('fieldset:first').removeClass('preload');
-			});
+			go_to_template = false;
+			$submit.hide();
+			var evaluate = function(pointer, chunk){
+				$.post('admin.php?page=pmxi-admin-import&action=evaluate', {xpath: $input.val(), show_element: $goto_element.val(), root_element:$root_element.val(), delimiter:$csv_delimiter.val(), pointer:pointer, chunk:chunk}, function (response) {					
+					if (response.result){
+						$('.ajax-console').html(response.html);
+						$input.attr('readonly', false).change(function(){$goto_element.val(1); xpathChanged();});
+						$form.removeClass('loading');
+						$xml.parents('fieldset:first').removeClass('preload');
+						go_to_template = true;
+						$submit.show();				
+					}
+					else evaluate(response.pointer, response.chunk);
+
+				}, "json");
+			}
+			evaluate(0, 0);
 		};
-		$next_element.click(function(){
-			var show_element = Math.min((parseInt($goto_element.val()) + 1), parseInt($('.matches_count').html()));
+		$next_element.live('click', function(){
+			var matches_count = ($('.matches_count').length) ? parseInt($('.matches_count').html()) : 0;
+			var show_element = Math.min((parseInt($goto_element.val()) + 1), matches_count);
 			$goto_element.val(show_element).html( show_element ); $input.data('checkedValue', ''); xpathChanged();
 		});
-		$prev_element.click(function(){
+		$prev_element.live('click', function(){
 			var show_element = Math.max((parseInt($goto_element.val()) - 1), 1);
 			$goto_element.val(show_element).html( show_element ); $input.data('checkedValue', ''); xpathChanged();
 		});
 		$goto_element.change(function(){
-			var show_element = Math.max(Math.min(parseInt($goto_element.val()), parseInt($('.matches_count').html())), 1);
+			var matches_count = ($('.matches_count').length) ? parseInt($('.matches_count').html()) : 0;
+			var show_element = Math.max(Math.min(parseInt($goto_element.val()), matches_count), 1);
 			$goto_element.val(show_element); $input.data('checkedValue', ''); xpathChanged();			
 		});
 		$get_default_xpath.click(function(){$root_element.val($(this).attr('root')); $goto_element.val(1); $input.val($(this).attr('rel')); xpathChanged();});
@@ -360,24 +402,43 @@
 		$input.keyup(function (e) {
 			if (13 == e.keyCode) $(this).change();
 		});
+
+		$apply_delimiter.click(function(){			
+			if ( ! $input.attr('readonly') ){										
+				$('input[name="xpath"]').data('checkedValue','');
+				xpathChanged();
+			}
+		});
 	});
 	
+	$('form.choose-elements').find('input[type="submit"]').click(function(e){
+		e.preventDefault();
+		if (go_to_template) $(this).parents('form:first').submit();
+	});
+
 	// tag preview
 	$.fn.tag = function () {
 		this.each(function () {
 			var $tag = $(this);
 			$tag.xml('dragable');
 			var tagno = parseInt($tag.find('input[name="tagno"]').val());
-			$tag.find('.navigation a').click(function () {
-				tagno += '#prev' == $(this).attr('href') ? -1 : 1;
+			$tag.find('.navigation a').live('click', function () {
+				tagno += '#prev' == $(this).attr('href') ? -1 : 1;				
 				$tag.addClass('loading').css('opacity', 0.7);
 				$.post('admin.php?page=pmxi-admin-import&action=tag', {tagno: tagno}, function (data) {
 					var $indicator = $('<span />').insertBefore($tag);
 					$tag.replaceWith(data);
 					$indicator.next().tag().prevObject.remove();
-					if ($('#variations_xpath').length){
+					if ($('#variations_xpath').length){						
 						$('#variations_xpath').data('checkedValue', '').change();
 					}
+					if ($('.layout').length){
+				    	var offset = $('.layout').offset();
+				        if ($(document).scrollTop() > offset.top)
+				            $('.tag').css({'top':(($(document).scrollTop() - offset.top) ? $(document).scrollTop() - offset.top : 0) + 'px'});        
+				        else
+				        	$('.tag').css({'top':''});
+				    }
 				}, 'html');
 				return false;
 			});
@@ -466,26 +527,7 @@
 		$(this).parents('form:first').submit();
 	});
 
-	/* END Categories hierarchy */	
-
-	// manage screen: cron url
-	$('.get_cron_url').each(function () {
-		var $form = $(this);
-		var $modal = $('<div></div>').dialog({
-			autoOpen: false,
-			modal: true,
-			title: 'Cron URLs',
-			width: 760,
-			maxHeight: 600,
-			open: function(event, ui) {
-				$(this).dialog('option', 'height', 'auto').css({'max-height': $(this).dialog('option', 'maxHeight') - $(this).prev().height() - 24, 'overflow-y': 'auto'}); 
-	    	}
-		});	
-		$form.find('a').click(function () {
-			$modal.addClass('loading').empty().dialog('open').dialog('option', 'position', 'center');									
-			$modal.removeClass('loading').html('<textarea style="width:100%; height:100%;">' + $form.find('a').attr('rel') + '</textarea>').dialog('option', 'position', 'center');
-		});
-	});
+	/* END Categories hierarchy */		
 	
 	// chunk files upload
 	if ($('#plupload-ui').length)
@@ -515,24 +557,50 @@
 
 	$('#large_import_toggle').click(function(){
 		$('#large_import_xpath').slideToggle();
-	});
+	});		
 
-	// Step 4 - custom meta keys helper	
+	$('.pmxi_plugin').find('.nav-tab').click(function(){
+		$('.nav-tab').removeClass('nav-tab-active');
+		$(this).addClass('nav-tab-active');
+		$('.pmxi_tab').hide();
+		$('div#' + $(this).attr('rel')).fadeIn();
+	});
 
 	if ($('#pmxi_tabs').length){ 		
 		if ($('form.options').length){
+			$('.nav-tab').removeClass('nav-tab-active');
 			if ($('#selected_post_type').val() != ''){
 				var post_type_founded = false;
+				$('.pmxi_tab').hide();				
 				$('input[name=custom_type]').each(function(i){					
-					if ($(this).val() == $('#selected_post_type').val()) { $('#pmxi_tabs').tabs({ selected:i }).show(); post_type_founded = true; }
+					if ($(this).val() == $('#selected_post_type').val()) { 												
+						$('.nav-tab[rel='+ $(this).val() +']').addClass('nav-tab-active');
+						$(this).parents('.pmxi_tab:first').show(); 
+						post_type_founded = true; 
+					}
 				});
 				if ( ! post_type_founded){
-					$('#pmxi_tabs').tabs({ selected: ($('#selected_type').val() == 'post') ? 0 : 1 }).show();					
+					if ($('#selected_type').val() == 'post'){
+						$('.nav-tab[rel=posts]').addClass('nav-tab-active');
+						$('div#posts').show();				
+					}	
+					else{
+						$('.nav-tab[rel=pages]').addClass('nav-tab-active');
+						$('div#pages').show();
+					}					
 				}
 			}
 			else if ($('#selected_type').val() != ''){
-				$('#pmxi_tabs').tabs({ selected: ($('#selected_type').val() == 'post') ? 0 : 1 }).show();				
+				if ($('#selected_type').val() == 'post'){
+					$('.nav-tab[rel=posts]').addClass('nav-tab-active');
+					$('div#posts').show();				
+				}	
+				else{
+					$('.nav-tab[rel=pages]').addClass('nav-tab-active');
+					$('div#pages').show();
+				}				
 			}
+			$('.nav-tab-wrapper').show();
 		}
 		else
 			$('#pmxi_tabs').tabs().show();
@@ -552,10 +620,42 @@
 	});			
 
     $(document).scroll(function() {    	    	
-        if ($(document).scrollTop() > 135)
-            $('.tag').css({'top':'30px'});        
-        else
-        	$('.tag').css({'top':''});
-    });           
+    	if ($('.layout').length){
+	    	var offset = $('.layout').offset();
+	        if ($(document).scrollTop() > offset.top)
+	            $('.tag').css({'top':(($(document).scrollTop() - offset.top) ? $(document).scrollTop() - offset.top : 0) + 'px'});        
+	        else
+	        	$('.tag').css({'top':''});
+	    }
+	});       
+
+	// Select Encoding
+	$('#import_encoding').live('change', function(){
+		if ($(this).val() == 'new'){
+			$('#select_encoding').hide();
+			$('#add_encoding').show();
+		}
+	});
+
+	$('#cancel_new_encoding').live('click', function(){
+		$('#add_encoding').hide();
+		$('#select_encoding').show();		
+		$('#new_encoding').val('');
+		$('#import_encoding').prop('selectedIndex',0);	
+	});
+
+	$('#add_new_encoding').live('click', function(){
+		var new_encoding = $('#new_encoding').val();
+		if ("" != new_encoding){
+			$('#import_encoding').prepend('<option value="'+new_encoding+'">' + new_encoding + '</option>');
+			$('#cancel_new_encoding').click();
+			$('#import_encoding').prop('selectedIndex',0);	
+		}
+		else alert('Please enter encoding.');
+	});
+
+	$('input[name=keep_custom_fields]').click(function(){
+		$(this).parents('.input:first').find('.keep_except').slideToggle();
+	});		
 
 });})(jQuery);

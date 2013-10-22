@@ -8,7 +8,7 @@
 	<p class="submit">
 		<?php wp_nonce_field('delete-import', '_wpnonce_delete-import') ?>
 		<input type="hidden" name="is_confirmed" value="1" />
-		<input type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" value="Delete" />
+		<input type="submit" class="button-primary" value="Delete" />
 	</p>
 	
 </form>

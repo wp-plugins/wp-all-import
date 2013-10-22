@@ -24,7 +24,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			'order_by' => 'registered_on',
 			'order' => 'DESC',
 			'pagenum' => 1,
-			'perPage' => 10,
+			'perPage' => 25,
 		));
 		$get['pagenum'] = absint($get['pagenum']);
 		extract($get);
@@ -93,8 +93,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		if ( ! $id or $item->getById($id)->isEmpty()) {
 			wp_redirect($this->baseUrl); die();
 		}				
-		
-		//unset(PMXI_Plugin::$session['pmxi_import']);
+				
 		pmxi_session_unset();
 
 		if ($this->input->post('is_confirmed')) {
@@ -159,7 +158,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 								}
 								else{										
 									include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');
-									$csv = new PMXI_CsvParser($filePath, true); // create chunks
+									$csv = new PMXI_CsvParser($filePath, true, '', ( ! empty($item->options['delimiter']) ) ? $item->options['delimiter'] : '', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : ''); // create chunks
 									$filePath = $csv->xml_path;								
 								}
 							}							
@@ -174,7 +173,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 							$filePath = PMXI_Plugin::csv_to_xml($item->path);					
 						} else{										
 							include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
-							$csv = new PMXI_CsvParser($item->path, true);					
+							$csv = new PMXI_CsvParser($item->path, true, '', ( ! empty($item->options['delimiter']) ) ? $item->options['delimiter'] : '', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : '');					
 							$filePath = $csv->xml_path;						
 						}					   					
 					} elseif(preg_match('%\W(gz)$%i', trim($item->path))){ // If gz file uploaded
@@ -187,7 +186,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 							}
 							else{																
 								include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
-								$csv = new PMXI_CsvParser($filePath, true); // create chunks
+								$csv = new PMXI_CsvParser($filePath, true, '', ( ! empty($item->options['delimiter']) ) ? $item->options['delimiter'] : '', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : ''); // create chunks
 								$filePath = $csv->xml_path;												
 							}
 						}
@@ -203,7 +202,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 					
 					if ($item->large_import == 'Yes'){
 						
-						set_time_limit(0);			
+						@set_time_limit(0);			
 
 						$chunks = 0;
 						
@@ -226,17 +225,12 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						      				$xml = $file->encoding . "\n" . $xml;
 								      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
 									      					      		
-									      	$dom = new DOMDocument('1.0', 'UTF-8');															
+									      	$dom = new DOMDocument('1.0', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : 'UTF-8');															
 											$old = libxml_use_internal_errors(true);
 											$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
 											libxml_use_internal_errors($old);
 											$xpath = new DOMXPath($dom);
-											if (($elements = @$xpath->query($item->xpath)) and !empty($elements) and !empty($elements->length)) { 												
-												$chunk_path = $uploads['path'] .'/'. wp_unique_filename($uploads['path'], "chunk_".basename($path));											
-												file_put_contents($chunk_path, $xml);
-												chmod($chunk_path, 0755);												
-												$chunk_founded = true;
-											}
+											if (($elements = @$xpath->query($item->xpath)) and !empty($elements) and !empty($elements->length)) $chunk_founded = true;
 											unset($dom, $xpath, $elements);
 						      			}						      			
 						      			$chunks++;
@@ -250,19 +244,12 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 							      		$xml = $file->encoding . "\n" . $xml;
 							      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
 								      					      		
-								      	$dom = new DOMDocument('1.0', 'UTF-8');															
+								      	$dom = new DOMDocument('1.0', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : 'UTF-8');															
 										$old = libxml_use_internal_errors(true);
 										$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
 										libxml_use_internal_errors($old);
 										$xpath = new DOMXPath($dom);
-										if (($elements = @$xpath->query($item->xpath)) and !empty($elements) and !empty($elements->length)) { 
-											if ( !$chunks) {											
-												$chunk_path = $uploads['path'] .'/'. wp_unique_filename($uploads['path'], "chunk_".basename($path));											
-											    file_put_contents($chunk_path, $xml);
-											    chmod($chunk_path, 0755);
-											}											 																																
-											$chunks++;
-										}
+										if (($elements = @$xpath->query($item->xpath)) and !empty($elements) and !empty($elements->length)) $chunks++;
 										unset($dom, $xpath, $elements);
 									}
 							    }
@@ -273,9 +260,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						}
 
 						if (empty($chunks)) 
-							$this->errors->add('form-validation', __('No matching elements found for Root element and XPath expression specified', 'pmxi_plugin'));
-						else
-							$xml = @file_get_contents($chunk_path);
+							$this->errors->add('form-validation', __('No matching elements found for Root element and XPath expression specified', 'pmxi_plugin'));						
 						
 					} else {
 
@@ -292,8 +277,6 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 				}					
 			}
 			
-			//if (!empty(PMXI_Plugin::$session['pmxi_import']['xml'])) $xml = PMXI_Plugin::$session['pmxi_import']['xml'];
-
 			if ($item->large_import == 'Yes' or PMXI_Import_Record::validateXml($xml, $this->errors)) { // xml is valid		
 				
 				if ( ! PMXI_Plugin::is_ajax() and empty(PMXI_Plugin::$session->data['pmxi_import']['chunk_number'])){
@@ -328,6 +311,9 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						'xpath' => $item->xpath,
 						'template' => $item->template,
 						'options' => $item->options,
+						'encoding' => (!empty($item->options['encoding'])) ? $item->options['encoding'] : 'UTF-8',
+						'is_csv' => (!empty($item->options['delimiter'])) ? $item->options['delimiter'] : PMXI_Plugin::$is_csv,
+						'csv_path' => PMXI_Plugin::$csv_path,
 						'scheduled' => $item->scheduled,				
 						'current_post_ids' => '',
 						'large_file' => ($item->large_import == 'Yes') ? true : false,

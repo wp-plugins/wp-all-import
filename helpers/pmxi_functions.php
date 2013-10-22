@@ -217,7 +217,7 @@
 			if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
 
 			$uploads = wp_upload_dir();
-			$tmpname = wp_unique_filename($uploads['path'], basename($filePath));	
+			$tmpname = wp_unique_filename($uploads['path'], ($type and strlen(basename($filePath)) < 30) ? basename($filePath) : time());	
 			$localPath = $uploads['path']  .'/'. $tmpname;		  	   	
 
 			$file = @fopen($filePath, "rb");
@@ -260,7 +260,7 @@
 
 			$type = 'csv';
 			$uploads = wp_upload_dir();
-			$tmpname = wp_unique_filename($uploads['path'], basename($filename));
+			$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time());	
 			$fp = @fopen($uploads['path']  .'/'. $tmpname, 'w');
 
 		    $file = @gzopen($filename, 'rb', $use_include_path);
@@ -376,11 +376,35 @@
 
 			if ( empty($change_array) or count($orig_array) != count($change_array)) return "";
 
-			return str_replace($orig_array, $change_array, $value);
+			return str_replace(array_map('trim', $orig_array), array_map('trim', $change_array), $value); 
 			
 		}
 	}
 
+	if ( ! function_exists('pmxi_convert_encoding')){
+		
+		function pmxi_convert_encoding ( $source, $target_encoding = 'ASCII' )
+		{		   
+
+		    // detect the character encoding of the incoming file
+		    $encoding = mb_detect_encoding( $source, "auto" );
+		      
+		    // escape all of the question marks so we can remove artifacts from
+		    // the unicode conversion process
+		    $target = str_replace( "?", "[question_mark]", $source );
+		    
+		    // convert the string to the target encoding
+		    $target = mb_convert_encoding( $target, $target_encoding, $encoding);
+		      
+		    // remove any question marks that have been introduced because of illegal characters
+		    $target = str_replace( "?", "", $target );
+		      
+		    // replace the token string "[question_mark]" with the symbol "?"
+		    $target = str_replace( "[question_mark]", "?", $target );
+		  	
+		    return html_entity_decode($target, ENT_COMPAT, 'UTF-8');
+		}
+	}
 
 	/* Session */
 

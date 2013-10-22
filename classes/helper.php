@@ -36,8 +36,8 @@ class PMXI_Helper {
 		$split = explode('/', str_replace('\\', '/', $pattern));
 		$mask = array_pop($split);
 		$path = implode('/', $split);
-		
-		if (($dir = @opendir($path)) !== false or ($dir = @opendir($path . '/')) !== false) {
+
+		if (($dir = @opendir($path . '/')) !== false or ($dir = @opendir($path)) !== false) {
 			$glob = array();
 			while(($file = readdir($dir)) !== false) {
 				// Recurse subdirectories (self::GLOB_RECURSE)
@@ -45,7 +45,7 @@ class PMXI_Helper {
 					$glob = array_merge($glob, self::array_prepend(self::safe_glob($path . '/' . $file . '/' . $mask, $flags), ($flags & self::GLOB_PATH ? '' : $file . '/')));
 				}
 				// Match file mask				
-				if (self::fnmatch($mask, $file)) {					
+				if (self::fnmatch($mask, $file, FNM_CASEFOLD)) {					
 					if ((( ! ($flags & self::GLOB_ONLYDIR)) || is_dir("$path/$file"))
 						&& (( ! ($flags & self::GLOB_NODIR)) || ( ! is_dir($path . '/' . $file)))
 						&& (( ! ($flags & self::GLOB_NODOTS)) || ( ! in_array($file, array('.', '..'))))

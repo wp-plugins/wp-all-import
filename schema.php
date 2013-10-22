@@ -35,6 +35,7 @@ CREATE TABLE {$table_prefix}templates (
 	is_keep_linebreaks TINYINT(1) NOT NULL DEFAULT 0,
 	is_leave_html TINYINT(1) NOT NULL DEFAULT 0,
 	fix_characters TINYINT(1) NOT NULL DEFAULT 0,
+	meta LONGTEXT,
 	PRIMARY KEY  (id)
 ) $charset_collate;
 CREATE TABLE {$table_prefix}imports (
@@ -44,7 +45,7 @@ CREATE TABLE {$table_prefix}imports (
 	type VARCHAR(32) NOT NULL DEFAULT '',
 	feed_type ENUM('xml','csv','zip','gz','') NOT NULL DEFAULT '',
 	path TEXT,	
-	xpath VARCHAR(255) NOT NULL DEFAULT '',
+	xpath TEXT,
 	template LONGTEXT,
 	options TEXT,
 	scheduled VARCHAR(64) NOT NULL DEFAULT '',

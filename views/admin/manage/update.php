@@ -12,7 +12,7 @@
 		<p class="submit">
 			<?php wp_nonce_field('update-import', '_wpnonce_update-import') ?>
 			<input type="hidden" name="is_confirmed" value="1" />
-			<input type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only ajax-update" value="Create Posts" />
+			<input type="submit" class="button-primary ajax-update" value="Create Posts" />
 		</p>
 		
 	</form>

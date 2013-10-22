@@ -1,27 +1,45 @@
 <?php
-if ( ! function_exists('get_file_curl')):
 
-	function get_file_curl($url, $fullpath, $to_variable = false) {
+if ( ! function_exists('get_file_curl') ):
+
+	function get_file_curl($url, $fullpath, $to_variable = false) {						
 
 		$rawdata = wp_remote_retrieve_body( wp_remote_get($url) );
 
-		if (empty($rawdata)){			
-			$ch = curl_init($url);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-			$rawdata = curl_exec_follow($ch);
-		    
-		    $result = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		if (empty($rawdata))	
+			
+			return pmxi_curl_download($url, $fullpath, $to_variable);							
 
-			curl_close ($ch);
+		if ( ! @file_put_contents($fullpath, $rawdata) ){
+			$fp = fopen($fullpath,'w');	    
+		    fwrite($fp, $rawdata);
+		    fclose($fp);			
+		}							
+				
+		if( ! ($image_info = @getimagesize($fullpath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG)))
+					
+			return pmxi_curl_download($url, $fullpath, $to_variable);
+		
+	    return ($to_variable) ? $rawdata : true;
+	}
 
-			if (!@file_put_contents($fullpath, $rawdata)){
-				$fp = fopen($fullpath,'w');	    
-			    fwrite($fp, $rawdata);
-			    fclose($fp);			
-			}	    
+endif;
 
-		    return ($result == 200) ? (($to_variable) ? $rawdata : true) : false;
-		}	    
+if ( ! function_exists('pmxi_curl_download') ) {
+
+	function pmxi_curl_download($url, $fullpath, $to_variable){
+
+		if ( ! function_exists('curl_version') ) return false;
+		
+		$ch = curl_init($url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		$rawdata = curl_exec_follow($ch);	    	    
+
+	    $result = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+		curl_close ($ch);
+
+		if ( empty($rawdata) ) return false;
 
 		if (!@file_put_contents($fullpath, $rawdata)){
 			$fp = fopen($fullpath,'w');	    
@@ -29,12 +47,13 @@ if ( ! function_exists('get_file_curl')):
 		    fclose($fp);			
 		}	    
 
-	    return ($to_variable) ? $rawdata : true;
+	    return ($result == 200) ? (($to_variable) ? $rawdata : true) : false;
 	}
 
-endif;
+}
 
-if (!function_exists('curl_exec_follow')):
+if ( ! function_exists('curl_exec_follow') ):
+
 	function curl_exec_follow($ch, &$maxredirect = null) {
 	  
 	  $mr = $maxredirect === null ? 5 : intval($maxredirect);
@@ -87,10 +106,8 @@ if (!function_exists('curl_exec_follow')):
 	      
 	      if (!$mr)
 	      {
-	        if ($maxredirect === null)
-	        trigger_error('Too many redirects.', E_USER_WARNING);
-	        else
-	        $maxredirect = 0;
+	        if ($maxredirect !== null)	        
+	        	$maxredirect = 0;
 	        
 	        return false;
 	      }

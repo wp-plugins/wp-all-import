@@ -110,7 +110,7 @@ class XmlImportParser {
 		$tree = $t_parser->parse();
 		$codegenerator = new XmlImportTemplateCodeGenerator($tree);
 		$file = $codegenerator->generate();
-		
+				
 		return new self($xml, $rootNodeXPath, $file);
 	}
 }

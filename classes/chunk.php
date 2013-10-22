@@ -37,7 +37,8 @@ class PMXI_Chunk {
     'path' => './',       // string The path to check for $file in
     'element' => '',      // string The XML element to return
     'chunkSize' => 1024,    // integer The amount of bytes to retrieve in each chunk
-    'type' => 'upload'
+    'type' => 'upload',
+    'is_remove_colons' => false
   );
   
   /**
@@ -63,8 +64,10 @@ class PMXI_Chunk {
 
   public $encoding = "";
 
-  public $return_with_encoding = true;
-  
+  public $case_sensitive = 1;
+
+  public $return_with_encoding = true;  
+    
   /**
    * handle
    *
@@ -117,12 +120,16 @@ class PMXI_Chunk {
       $this->options['chunkSize'] = 1024;
     }
 
-    $this->options['chunkSize'] *= PMXI_Plugin::getInstance()->getOption('chunk_size');
+    $chunk_size = PMXI_Plugin::getInstance()->getOption('chunk_size');
+
+    $this->options['chunkSize'] *= $chunk_size;
     
     $this->pointer = $pointer;      
 
     // set the filename
     $this->file = $file;     
+
+    $this->case_sensitive = PMXI_Plugin::getInstance()->getOption('case_sensitive');
     
     // open the file
     $this->handle = @fopen($this->file, 'rb');      
@@ -160,7 +167,7 @@ class PMXI_Chunk {
       
     } else {
       $element = '';
-    }
+    }    
     
     // initialize the buffer
     $buffer = false;      
@@ -174,27 +181,30 @@ class PMXI_Chunk {
       while ($this->reading and (count($founded_tags) < 500)) {
         $c = @fread($this->handle, $this->options['chunkSize']);                
         
-        $c = $this->removeColonsFromRSS($c);
+        if ( $this->options['is_remove_colons'] === false ) {
+          $this->options['is_remove_colons'] = strpos($c, ":");         
+        }        
+
+        if ($this->options['is_remove_colons'] !== false) 
+          $c = $this->removeColonsFromRSS($c);
 
         if ($this->is_validate) {
           if (stripos($c, "xmlns") !== false){ 
             $this->is_validate = false;                        
           }
-        }                
-
-        if ( preg_match_all("/<\\w+\\s*[^<|^\n]*\\s*\/?>/i", $c, $matches, PREG_PATTERN_ORDER) ){          
+        }                        
+        if ( @preg_match_all("/<\\w+\\s*[^<|^\n|^>]*\\s*\/?>/" . ($this->case_sensitive ? "i" : ""), $c, $matches, PREG_PATTERN_ORDER) ){                    
           foreach ($matches[0] as $tag) {
-            if (strpos($tag, "<br") === false) {
+            if ( strpos($tag, "<br") === false and strpos($tag, "?xml") === false and strpos($tag, "!--") === false and strpos($tag, "<p>") === false and strpos($tag, "<li>") === false and strpos($tag, "<ul>") === false and strpos($tag, "<a ") === false) {
               $tag = explode(" ", trim(str_replace(array('<','>','/'), '', $tag)));
               array_push($founded_tags, $tag[0]);
             }
-          }         
+          }
         }
-        $this->reading = (!@feof($this->handle));
+        $this->reading = (!@feof($this->handle));                
       }
-      
-    // we must be looking for a specific element
-    } 
+      // we must be looking for a specific element
+    }        
     
     if (empty($this->encoding)) {      
       fseek($this->handle, 0);
@@ -202,14 +212,14 @@ class PMXI_Chunk {
       // read in the whole doc, cos we don't know what's wanted      
       while ($this->reading) {
         $c = @fread($this->handle, $this->options['chunkSize']);          
-        $enc = preg_match("/<\?xml.*\?>/i", $c, $enc_matches);
+        $enc = @preg_match("/<\?xml[^<]*\?>/" . ($this->case_sensitive ? "i" : ""), $c, $enc_matches);
         if ($enc)
-          $this->encoding = $enc_matches[0];                  
+          $this->encoding = $enc_matches[0];
         $this->reading = false;
       }      
     }      
 
-    if (empty($this->encoding)) $this->encoding = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    if (empty($this->encoding) or strpos($this->encoding, 'encoding') === false) $this->encoding = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
 
     if (empty($element) and !empty($founded_tags)) {      
       
@@ -217,30 +227,42 @@ class PMXI_Chunk {
       
       if (!empty($element_counts)){
 
-        //$this->cloud = array_slice($element_counts, 0, 2);
-
         foreach ($element_counts as $tag => $count) {    
-          if (strpos($tag, ":") === false){
-            if ($count > 1 and empty($this->options['element'])) {
-              $this->options['element'] = $element = $tag;            
-            }          
-            else{
-              $this->cloud[$tag] = $count;    
-            }
-          }
+          if (strpos($tag, ":") === false)
+              $this->cloud[$tag] = $count;                
         }
+
+        $element_counts = array_flip($element_counts);
+        krsort($element_counts); 
+
       }
             
     }    
-    
-    // return it all if element doesn't founded
-    if (empty($element)){
-      if (!empty($element_counts)){
-        $this->options['element'] = $element = array_shift(array_keys($element_counts));
-      }
-      else return false;
-    }                    
 
+    $main_elements = array('node', 'product', 'job', 'deal', 'entry', 'item', 'property', 'listing', 'hotel', 'record', 'article');
+
+    // return it all if element doesn't founded
+    if (empty($element)){      
+      if (!empty($this->cloud)){      
+        foreach ($this->cloud as $element_name => $value) {          
+          if ( in_array(strtolower($element_name), $main_elements) ){
+            $this->options['element'] = $element = $element_name;
+            break;    
+          }
+        }
+        if (empty($element)){
+          if (count($element_counts) > 1) array_shift($element_counts);
+          foreach ($element_counts as $el) {            
+            if ( ! preg_match("%[\'\/~`\!@#\$\^&\*\(\)\-\+=\{\}\[\]\|;:\"\<\>,\.\?\\\]%", $el) ) {
+              $this->options['element'] = $element = $el;
+              break;
+            }
+          }          
+        }
+      }      
+      else return false;
+    }                              
+    
     // we must be looking for a specific element    
     
     // initialize the buffer
@@ -265,84 +287,65 @@ class PMXI_Chunk {
     fseek($this->handle, $this->pointer);
 
     // start reading
-    while ($this->reading && !@feof($this->handle)) {      
+    while ($this->reading && !@feof($this->handle)) {            
 
       // store the chunk in a temporary variable                        
       $tmp = @fread($this->handle, $this->options['chunkSize']);
       
-      $tmp = $this->removeColonsFromRSS($tmp);
+      if ( $this->options['is_remove_colons'] === false ) $this->options['is_remove_colons'] = strpos($tmp, ":");        
 
+      if ($this->options['is_remove_colons'] !== false) $tmp = $this->removeColonsFromRSS($tmp);
+      
       // update the global buffer
       $this->readBuffer .= $tmp;
       
-      if ($checkOpen === false){
+      if ($checkOpen === false) {                        
 
-        $checkOpen = preg_match_all("/".$open."[ |>]{1}/i", $tmp, $checkOpenmatches, PREG_OFFSET_CAPTURE);
-
-        if (!empty($checkOpenmatches[0])){          
-
-          $checkOpen = $checkOpenmatches[0][0][1];
-
-        }
-        else $checkOpen = false;
-
-        // check for the open string
-        /*$checkOpen = stripos($tmp, $open." "); 
-        if ($checkOpen === false) stripos($tmp, $open.">");                */
+        $checkOpen = @preg_match_all( "/". $open ."[\s|>]{1}/" . ($this->case_sensitive ? "i" : ""), $tmp, $checkOpenmatches, PREG_OFFSET_CAPTURE);
         
+        $checkOpen = (!empty($checkOpenmatches[0])) ? $checkOpenmatches[0][0][1] : false;
+                
         // if it wasn't in the new buffer
         if ($checkOpen === false && !($store)) {
+
           // check the full buffer (in case it was only half in this buffer)
-
-          $checkOpen = preg_match_all("/".$open."[ |>]{1}/i", $this->readBuffer, $checkOpenmatches, PREG_OFFSET_CAPTURE);
-
-          if (!empty($checkOpenmatches[0])){          
-
-            $checkOpen = $checkOpenmatches[0][0][1];
-
-          }
-          else $checkOpen = false;
-
-          /*$checkOpen = strpos($this->readBuffer, $open." ");
-          if ($checkOpen === false) $checkOpen = strpos($this->readBuffer, $open.">");*/
+          $checkOpen = @preg_match_all("/".$open."[\s|>]{1}/" . ($this->case_sensitive ? "i" : ""), $this->readBuffer, $checkOpenmatches, PREG_OFFSET_CAPTURE);
+          
+          $checkOpen = (!empty($checkOpenmatches[0])) ? $checkOpenmatches[0][0][1] : false;          
 
           // if it was in there
-          if ($checkOpen !== false) {
-            // set it to the remainder
-            $checkOpen = $checkOpen % $this->options['chunkSize'];
-          }          
+          if ($checkOpen !== false) $checkOpen = $checkOpen % $this->options['chunkSize'];            
+          
         }
       }      
 
       // check for the close string
-      $checkClose = preg_match_all("/<\/".$element.">/i", $tmp, $closematches, PREG_OFFSET_CAPTURE);
-      $withoutcloseelement = (preg_match("%<".$element."(^<)*\/>%", $tmp, $matches)) ? strpos($tmp, $matches[0]) : false;
-
+      $checkClose = @preg_match_all("/<\/".$element.">/" . ($this->case_sensitive ? "i" : ""), $tmp, $closematches, PREG_OFFSET_CAPTURE);
+      $withoutcloseelement = (@preg_match("/(<".$element."\s{1}[^<]*\/>|<".$element."\/>)/" . ($this->case_sensitive ? "i" : ""), $tmp, $matches)) ? strpos($tmp, $matches[0]) : false;
+      
       if ($withoutcloseelement and $checkClose and $closematches[0][0][1] > $withoutcloseelement) $checkClose = false;       
 
       if (!$checkClose){ 
-        $checkClose = (preg_match("%<".$element."(^<)*\/>%", $tmp, $matches)) ? strpos($tmp, $matches[0]) : false;
-        
-        if ($checkClose !== false) 
-          $withoutcloseelement = true;
-        else{
-          $checkClose = (preg_match_all("%<".$element."(^<)*\/>%", $this->readBuffer, $matches)) ? strpos($this->readBuffer, $matches[0][count($matches[0]) - 1]) : false;
+        $checkClose = $withoutcloseelement; 
+
+        if ($checkClose === false){           
+          $checkClose = (@preg_match_all("/(<".$element."\s{1}[^<]*\/>|<".$element."\/>)/" . ($this->case_sensitive ? "i" : ""), $this->readBuffer, $matches)) ? strpos($this->readBuffer, $matches[0][count($matches[0]) - 1]) : false;
           if ($checkClose !== false) {
             $withoutcloseelement = true;
             $matches[0] = $matches[0][count($matches[0]) - 1];
           }
         }
-      }      
+      }
       else{                
         
         $close_finded = false;
         $length = $closematches[0][0][1] - $checkOpen;
         
-        $checkDuplicateOpen = preg_match_all("/".$open."[ |>]{1}/i", substr($this->readBuffer, $checkOpen, $length), $matches, PREG_OFFSET_CAPTURE);
-        
+        $checkDuplicateOpen = @preg_match_all("/".$open."[\s|>]{1}/" . ($this->case_sensitive ? "i" : ""), substr($this->readBuffer, $checkOpen, $length), $matches, PREG_OFFSET_CAPTURE);
+      
         while (!$close_finded){                                        
           if ($checkDuplicateOpen > 1 and !empty($closematches[0][$checkDuplicateOpen - 1])){
-            $secondcheckDuplicateOpen = preg_match_all("/".$open."[ |>]{1}/i", substr($this->readBuffer, $checkOpen, $closematches[0][$checkDuplicateOpen - 1][1] - $checkOpen), $matches, PREG_OFFSET_CAPTURE);            
+            $secondcheckDuplicateOpen = @preg_match_all("/".$open."[\s|>]{1}/" . ($this->case_sensitive ? "i" : ""), substr($this->readBuffer, $checkOpen, $closematches[0][$checkDuplicateOpen - 1][1] - $checkOpen), $matches, PREG_OFFSET_CAPTURE);            
             if ($secondcheckDuplicateOpen == $checkDuplicateOpen){
               $checkClose = $closematches[0][$checkDuplicateOpen - 1][1];
               $close_finded = true;              
@@ -365,8 +368,8 @@ class PMXI_Chunk {
       } 
 
       if ($checkClose !== false) {
-        // add the length of the close string itself
-        if ( ! $withoutcloseelement)
+        // add the length of the close string itself        
+        if ( ! $withoutcloseelement or ( !empty($closematches[0][0][1]) and $closematches[0][0][1] < $withoutcloseelement))
           $checkClose += strlen($close);
         else
           $checkClose += strlen($matches[0]); // "/>" symbols
@@ -425,20 +428,26 @@ class PMXI_Chunk {
   }  
 
   function removeColonsFromRSS($feed) {
+      
+      /*$pattern = '/(<[^<:>]*):/' . ($this->case_sensitive ? 'i' : '');
+      $replacement = '$1_';
+      $feed = preg_replace($pattern, $replacement, $feed);    */  
+      
       // pull out colons from start tags
       // (<\w+):(\w+>)
-      $pattern = '/(<\w+):(\w+[ |>]{1})/i';
+      $pattern = '/(<\w+):(\w+[ |>]{1})/' . ($this->case_sensitive ? 'i' : '');
       $replacement = '$1_$2';
       $feed = preg_replace($pattern, $replacement, $feed);
       // pull out colons from end tags
       // (<\/\w+):(\w+>)
-      $pattern = '/(<\/\w+):(\w+>)/i';
+      $pattern = '/(<\/\w+):(\w+>)/' . ($this->case_sensitive ? 'i' : '');
       $replacement = '$1_$2';
       $feed = preg_replace($pattern, $replacement, $feed);
       // pull out colons from attributes
-      $pattern = '/(\s+\w+):(\w+[=]{1})/i';
+      $pattern = '/(\s+\w+):(\w+[=]{1})/' . ($this->case_sensitive ? 'i' : '');
       $replacement = '$1_$2';
       $feed = preg_replace($pattern, $replacement, $feed);
+    
       return $feed;
   }
 }

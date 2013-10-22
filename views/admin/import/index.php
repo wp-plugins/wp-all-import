@@ -58,7 +58,7 @@ $l10n = array(
 			            <div>
 			                <h3 style="float:left; margin-top:5px;"><label><?php _e( 'Choose file to upload...' ); ?></label></h3>&nbsp;&nbsp;
 			                <input type="hidden" name="filepath" value="<?php echo $post['filepath'] ?>" id="filepath"/>
-			                <span><input id="select-files" type="button" value="<?php esc_attr_e('Select File'); ?>" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" /></span>
+			                <span><input id="select-files" type="button" class="button-primary" value="<?php esc_attr_e('Select File'); ?>" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" /></span>
 			                <div id="progress" class="progress" <?php if (!empty($post['filepath'])):?>style="visibility: visible;"<?php endif;?>>
 			                	<div id="upload_process" class="upload_process"></div>
 			                	<div id="progressbar" class="progressbar"><?php if (!empty($post['filepath'])) _e( 'Import Complete - '.basename($post['filepath']).' 100%', 'pmxi_plugin'); ?></div>
@@ -115,7 +115,7 @@ $l10n = array(
 				<p class="submit-buttons">
 					<input type="hidden" name="is_submitted" value="1" />
 					<?php wp_nonce_field('choose-file', '_wpnonce_choose-file') ?>
-					<input type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only large_button" value="<?php _e('Next', 'pmxi_plugin') ?>" id="advanced_upload"/>
+					<input type="submit" class="button button-primary button-hero large_button" value="<?php _e('Next', 'pmxi_plugin') ?>" id="advanced_upload"/>
 				</p>
 				<br />
 				<table><tr><td class="note"></td></tr></table>

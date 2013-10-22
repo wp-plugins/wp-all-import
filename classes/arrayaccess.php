@@ -22,7 +22,7 @@ class PMXI_ArrayAccess implements ArrayAccess {
 	 *
 	 * @var array
 	 */
-	protected $container = array();
+	public $container = array();
 
 	/**
 	 * Flag whether or not the internal collection has been changed.
@@ -60,9 +60,11 @@ class PMXI_ArrayAccess implements ArrayAccess {
 	 */
 	public function toArray() {
 		$data = $this->container;
-		foreach ( $data as $key => $value ) {
-			if ( $value instanceof self ) {
-				$data[ $key ] = $value->toArray();
+		if (!empty($data)){
+			foreach ( $data as $key => $value ) {
+				if ( $value instanceof self ) {
+					$data[ $key ] = $value->toArray();
+				}
 			}
 		}
 		return $data;

@@ -17,6 +17,7 @@ require_once dirname(__FILE__) . '/ast/XmlImportAstXPath.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstString.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstInteger.php';
 require_once dirname(__FILE__) . '/ast/XmlImportAstFloat.php';
+require_once dirname(__FILE__) . '/ast/XmlImportAstFunction.php';
 
 /**
  * Parses a list of nodes into AST (Abstract Syntax Tree)
@@ -185,8 +186,11 @@ class XmlImportTemplateParser
   {
     if ($this->index + 1 == count($this->tokens))
       throw new XmlImportException("Reached end of template but expression was expected");
-    
-  	if($this->tokens[$this->index + 1]->getKind() == XmlImportToken::KIND_MATH)
+    if ($this->tokens[$this->index + 1]->getKind() == XmlImportToken::KIND_FUNCTION)
+    {
+      return $this->parseFunction();
+    }
+  	elseif($this->tokens[$this->index + 1]->getKind() == XmlImportToken::KIND_MATH)
   	{
   		return $this->parseMath();
   	}
@@ -214,7 +218,43 @@ class XmlImportTemplateParser
     }
     else
       throw new XmlImportException("Unexpected token " . $this->tokens[$this->index + 1]->getKind());
-  }  
+  }
+
+  /**
+   * Parses function
+   *
+   * @return XmlImportAstFunction
+   */
+  private function parseFunction()
+  {
+    $function = new XmlImportAstFunction($this->tokens[++$this->index]->getValue());
+    if ($this->tokens[$this->index + 1]->getKind() != XmlImportToken::KIND_OPEN)
+      throw new XmlImportException ("Open brace expected instead of " . $this->tokens[$this->index + 1]->getKind());
+    $this->index++;
+    if ($this->tokens[$this->index + 1]->getKind() == XmlImportToken::KIND_CLOSE)
+    {
+      $this->index++;
+      return $function;
+    }
+    else
+    {
+      while ($this->index < count($this->tokens) - 2)
+      {
+        $function->addArgument($this->parseExpression());
+        if ($this->tokens[$this->index + 1]->getKind() == XmlImportToken::KIND_CLOSE)
+        {
+          $this->index++;
+          return $function;
+          break;
+        }
+        elseif ($this->tokens[$this->index + 1]->getKind() == XmlImportToken::KIND_COMMA)
+          $this->index++;
+        else
+          throw new XmlImportException("Comma or closing brace expected instead of " . $this->tokens[$this->index + 1]->getKind());
+      }
+      throw new XmlImportException("Unexpected end of {$function->getName()} function argument list");
+    }
+  }
   
   /**
    * Parses function

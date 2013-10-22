@@ -47,6 +47,7 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 
 	public $data = array();
 
+	public $session_mode = '';
 	/**
 	 * Retrieve the current session instance.
 	 *
@@ -71,28 +72,54 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 	 * @uses apply_filters Calls `wp_session_expiration` to determine how long until sessions expire.
 	 */
 	protected function __construct() {
-		if ( isset( $_COOKIE[PMXI_SESSION_COOKIE] ) ) {
-			$cookie = stripslashes( $_COOKIE[PMXI_SESSION_COOKIE] );
-			$cookie_crumbs = explode( '||', $cookie );
+		
+		$this->session_mode = PMXI_Plugin::getInstance()->getOption('session_mode');
+		
+		if ($this->session_mode != 'default'){		
+		
+			if ( isset( $_COOKIE[PMXI_SESSION_COOKIE] ) ) {			
 
-			$this->session_id = $cookie_crumbs[0];
-			$this->expires = $cookie_crumbs[1];
-			$this->exp_variant = $cookie_crumbs[2];
+				$cookie = stripslashes( $_COOKIE[PMXI_SESSION_COOKIE] );
+				$cookie_crumbs = explode( '||', $cookie );
 
-			// Update the session expiration if we're past the variant time
-			if ( time() > $this->exp_variant ) {
+				$this->session_id = (!empty($cookie_crumbs[0])) ? $cookie_crumbs[0] : $this->generate_id();
+				$this->expires = $cookie_crumbs[1];
+				$this->exp_variant = $cookie_crumbs[2];
+				
+				// Update the session expiration if we're past the variant time
+				if ( time() > $this->exp_variant ) {
+					$this->set_expiration();				
+					if ($this->session_mode == 'database'){
+						update_option( "_pmxi_session_expires_{$this->session_id}", $this->expires );				
+					}
+					elseif ($this->session_mode == 'files'){
+						@file_put_contents(PMXI_ROOT_DIR . "/sessions/_pmxi_session_expires_{$this->session_id}.txt", $this->expires);				
+					}
+				}
+				
+			} else {
+				$this->session_id = $this->generate_id();
 				$this->set_expiration();
-				update_option( "_pmxi_session_expires_{$this->session_id}", $this->expires );
 			}
-		} else {
-			$this->session_id = $this->generate_id();
-			$this->set_expiration();
-		}
+		}								
+		else{
+			try{
+				$path = @session_save_path(); 
+				if ( ! @is_dir($path) or ! @is_writable($path)){
+					@ini_set("session.save_handler", "files");
+					@session_save_path(sys_get_temp_dir());	
+				}
+			} catch (XmlImportException $e) {
+				
+			}
+			
+			// enable sessions
+			if ( ! session_id()) @session_start();
+		}		
 
 		$this->read_data();
 
 		$this->set_cookie();
-
 	}
 
 	/**
@@ -122,7 +149,7 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 	 * Set the session cookie
 	 */
 	protected function set_cookie() {
-		setcookie( PMXI_SESSION_COOKIE, $this->session_id . '||' . $this->expires . '||' . $this->exp_variant , $this->expires, COOKIEPATH, COOKIE_DOMAIN );
+		@setcookie( PMXI_SESSION_COOKIE, $this->session_id . '||' . $this->expires . '||' . $this->exp_variant , $this->expires, COOKIEPATH, COOKIE_DOMAIN );
 	}
 
 	/**
@@ -145,9 +172,18 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 	 * @return array
 	 */
 	protected function read_data() {
-		$this->container = get_option( "_pmxi_session_{$this->session_id}", array() );
+		if ($this->session_mode == 'database'){
+			$this->container = get_option( "_pmxi_session_{$this->session_id}", array() );
+		}
+		elseif ($this->session_mode == 'files'){			
+			$container = @file_get_contents(PMXI_ROOT_DIR . "/sessions/_pmxi_session_{$this->session_id}.txt");
+			$this->container = unserialize( (!empty($container)) ? $container : '' );			
+		}
+		else{			
+			$this['pmxi_import'] = ( ! empty($_SESSION['pmxi_import']) ) ? $_SESSION['pmxi_import'] : array();			
+		}
 		
-		$this->data = $this->toArray();
+		$this->data = $this->toArray();		
 
 		return $this->container;
 	}
@@ -162,7 +198,7 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 		$this->data = $this->toArray();
 
 		// Only write the collection to the DB if it's changed.
-		//if ( $this->dirty ) {
+		if ($this->session_mode == "database"){
 			if ( false === get_option( $option_key ) ) {
 				add_option( "_pmxi_session_{$this->session_id}", $this->container, '', 'no' );
 				add_option( "_pmxi_session_expires_{$this->session_id}", $this->expires, '', 'no' );
@@ -170,7 +206,19 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 				delete_option("_pmxi_session_{$this->session_id}");
 				add_option( "_pmxi_session_{$this->session_id}", $this->container, '', 'no' );
 			}
-		//}		
+		}
+		elseif ($this->session_mode == 'files'){			
+			if ( @file_exists( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt") ){									
+				@file_put_contents( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", (string) serialize($this->container) );				
+			}
+			else{
+				@file_put_contents( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", (string) serialize($this->container) );
+				@file_put_contents( PMXI_ROOT_DIR . "/sessions/_pmxi_session_expires_{$this->session_id}.txt", $this->expires );
+			}
+		}
+		else{			
+			$session = $this->toArray(); $_SESSION['pmxi_import'] = $session['pmxi_import'];
+		}	
 
 	}
 
@@ -208,7 +256,12 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 	 */
 	public function regenerate_id( $delete_old = false ) {
 		if ( $delete_old ) {
-			delete_option( "_pmxi_session_{$this->session_id}" );
+			if ($this->session_mode == "database"){
+				delete_option( "_pmxi_session_{$this->session_id}" );
+			}
+			elseif ($this->session_mode == 'files'){
+				@unlink( PMXI_ROOT_DIR . "/sessions/_pmxi_session_{$this->session_id}.txt");
+			}
 		}
 
 		$this->session_id = $this->generate_id();
@@ -239,6 +292,7 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 	 */
 	public function reset() {
 		$this->container = array();
+		if ($this->session_mode == "default") unset($_SESSION['pmxi_import']);
 	}
 
 	/*****************************************************************/

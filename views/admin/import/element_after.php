@@ -14,11 +14,30 @@
 			<fieldset class="widefat">
 				<legend><?php _e('Current XML tree', 'pmxi_plugin');?></legend>
 				<div class="action_buttons">
-					<a href="javascript:void(0);" id="prev_element" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only large_button" style="float:left;">&lang;&lang;</a>
-					<a href="javascript:void(0);" id="next_element" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only large_button" style="float:left; margin-right:15px;">&rang;&rang;</a>
+					<a href="javascript:void(0);" id="prev_element" class="button button-primary button-hero large_button go_to">&laquo;</a>
+					<a href="javascript:void(0);" id="next_element" class="button button-primary button-hero large_button go_to" style="margin-right:15px;">&raquo;</a>
 					<div style="float:left;">
-						<span style="font-size:18px; padding-top:15px; float:left; margin-right:10px;"><?php _e('Go to:','pmxi_plugin');?> </span><input type="text" id="goto_element" value="1"/>
-					</div>
+						<span style="font-size:20px; padding-top:17px; float:left; margin-right:10px;"><?php _e('Go to:','pmxi_plugin');?> </span><input type="text" id="goto_element" value="1"/>
+					</div>					
+					<?php
+					if ($is_csv !== false){
+						?>										
+						<ul class="set_csv_delimiter">
+							<li>Set delimiter for CSV fields: </li>
+							<!--li> <a href="javascript:void(0);" rel="," <?php if ($is_csv == ','):?>class="delimiter_selected"<?php endif;?>><?php _e('comma', 'pmxi_plugin');?></a> </li>
+							<li> <a href="javascript:void(0);" rel=";" <?php if ($is_csv == ';'):?>class="delimiter_selected"<?php endif;?>><?php _e('semicolon', 'pmxi_plugin');?></a> </li>
+							<li> <a href="javascript:void(0);" rel="|" <?php if ($is_csv == '|'):?>class="delimiter_selected"<?php endif;?>><?php _e('pipe', 'pmxi_plugin');?></a> </li>
+							<li> <a href="javascript:void(0);" rel="\t" <?php if ($is_csv == '\t'):?>class="delimiter_selected"<?php endif;?>><?php _e('tabulation', 'pmxi_plugin');?></a> </li-->
+							<li> <input type="text" value="<?php echo $is_csv;?>" name="delimiter"/> <input type="button" name="apply_delimiter" value="Apply"/></li>
+						</ul>
+						<?php
+					} 
+					else{
+						?>
+						<input type="hidden" value="" name="delimiter"/>
+						<?php
+					}
+					?>
 				</div>
 				<div class="xml" style="min-height:400px;">
 					<?php //$this->render_xml_element($dom->documentElement) ?>
@@ -52,7 +71,7 @@
 				&nbsp;
 				<input type="hidden" name="is_submitted" value="1" />
 				<?php wp_nonce_field('choose-elements', '_wpnonce_choose-elements') ?>
-				<input type="submit" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only large_button" value="<?php _e('Next', 'pmxi_plugin') ?>" />
+				<input type="submit" class="button button-primary button-hero large_button" value="<?php _e('Next', 'pmxi_plugin') ?>" />
 			</p>
 		</td>
 	</tr>

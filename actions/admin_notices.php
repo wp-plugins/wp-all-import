@@ -14,7 +14,7 @@ function pmxi_admin_notices() {
 			) ?>
 		</p></div>
 		<?php
-	}	
+	}
 
 	// notify user
 	if (!PMXI_Plugin::getInstance()->getOption('dismiss') and strpos($_SERVER['REQUEST_URI'], 'pmxi-admin') !== false) {

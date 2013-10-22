@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description:  The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs. Free lite edition.
-Version: 3.0.2
+Version: 3.0.4
 Author: Soflyy
 */
 
@@ -28,7 +28,7 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('PMXI_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.01');
+define('PMXI_VERSION', '3.0.4');
 
 define('PMXI_EDITION', 'free');
 
@@ -78,6 +78,12 @@ final class PMXI_Plugin {
 	const LARGE_SIZE = 0; // all files will importing in large import mode
 
 	public static $session;		
+
+	public static $encodings = array('UTF-8','UTF-16','Windows-1250','Windows-1251','Windows-1252','Windows-1253','Windows-1254','Windows-1255','Windows-1256','Windows-1257','Windows-1258','ISO-8859-1','ISO-8859-2','ISO-8859-3','ISO-8859-4','ISO-8859-5','ISO-8859-6','ISO-8859-7','ISO-8859-8','ISO-8859-9','ISO-8859-10', 'KOI8-R', 'KOI8-U');
+
+	public static $is_csv = false;
+
+	public static $csv_path = false;
 	
 	/**
 	 * Return singletone instance
@@ -227,26 +233,7 @@ final class PMXI_Plugin {
 		}
 
 		// register admin page pre-dispatcher
-		add_action('admin_init', array($this, '__adminInit'));
-
-		global $wpdb;
-
-		if (function_exists('is_multisite') && is_multisite()) {
-	        // check if it is a network activation - if so, run the activation function for each blog id
-	        if (isset($_GET['networkwide']) && ($_GET['networkwide'] == 1)) {
-	            $old_blog = $wpdb->blogid;
-	            // Get all blog ids
-	            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
-	            foreach ($blogids as $blog_id) {
-	                switch_to_blog($blog_id);
-	                $this->__add_feed_type_fix(); // feature to version 2.22
-	            }
-	            switch_to_blog($old_blog);		            
-            	return;
-	        }
-	    }
-
-		$this->__add_feed_type_fix(); // feature to version 2.22
+		add_action('admin_init', array($this, '__adminInit'));		
 
 	}
 
@@ -420,7 +407,8 @@ final class PMXI_Plugin {
 		// create plugin options
 		$option_name = get_class($this) . '_Options';
 		$options_default = PMXI_Config::createFromFile(self::ROOT_DIR . '/config/options.php')->toArray();
-		update_option($option_name, $options_default);
+		$wpai_options = get_option($option_name, false);
+		if ( ! $wpai_options ) update_option($option_name, $options_default);
 
 		// create/update required database tables
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -437,7 +425,7 @@ final class PMXI_Plugin {
 	                switch_to_blog($blog_id);
 	                require self::ROOT_DIR . '/schema.php';
 	                dbDelta($plugin_queries);
-	                $this->__ver_1_04_transition_fix();
+	                //$this->__ver_1_04_transition_fix();
 
 					// sync data between plugin tables and wordpress (mostly for the case when plugin is reactivated)
 					
@@ -458,6 +446,20 @@ final class PMXI_Plugin {
 		$post = new PMXI_Post_Record();
 		$wpdb->query('DELETE FROM ' . $post->getTable() . ' WHERE post_id NOT IN (SELECT ID FROM ' . $wpdb->posts . ')');
 
+	}
+
+	/**
+	 * Load Localisation files.
+	 *
+	 * Note: the first-loaded translation file overrides any following ones if the same translation is present
+	 *
+	 * @access public
+	 * @return void
+	 */
+	public function load_plugin_textdomain() {
+		$locale = apply_filters( 'plugin_locale', get_locale(), 'pmxi_plugin' );							
+		
+		load_plugin_textdomain( 'pmxi_plugin', false, dirname( plugin_basename( __FILE__ ) ) . "/i18n/languages" );
 	}
 
 	/**
@@ -492,85 +494,7 @@ final class PMXI_Plugin {
 				break;
 			}
 		}
-	}
-
-	public function __add_feed_type_fix(){
-
-		$table = $this->getTablePrefix() . 'imports';
-		global $wpdb;
-		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
-		$large_import = false;
-		$root_element = false;
-		$processing = false;
-		$triggered = false;
-		$queue_chunk_number = false;
-		$current_post_ids = false;
-		$first_import = false;
-		$count = false;
-		$friendly_name = false;
-		$imported = false;
-		$created = false;
-		$updated = false;
-		$skipped = false;
-		$fix_characters = false;
-		$feed_type = false;
-
-		// Check if field exists
-		foreach ($tablefields as $tablefield) {
-			if ('feed_type' == $tablefield->Field) $feed_type = true;
-			if ('large_import' == $tablefield->Field) $large_import = true;
-			if ('root_element' == $tablefield->Field) $root_element = true;
-			if ('processing' == $tablefield->Field) $processing = true;
-			if ('triggered' == $tablefield->Field) $triggered = true;
-			if ('current_post_ids' == $tablefield->Field) $current_post_ids = true;
-			if ('queue_chunk_number' == $tablefield->Field) $queue_chunk_number = true;
-			if ('first_import' == $tablefield->Field) $first_import = true;
-			if ('count' == $tablefield->Field) $count = true;
-			if ('friendly_name' == $tablefield->Field) $friendly_name = true;
-			if ('imported' == $tablefield->Field) $imported = true;
-			if ('created' == $tablefield->Field) $created = true;
-			if ('updated' == $tablefield->Field) $updated = true;
-			if ('skipped' == $tablefield->Field) $skipped = true;			
-		}
-		if ($feed_type) $wpdb->query("ALTER TABLE {$table} CHANGE `feed_type` `feed_type` ENUM( 'xml', 'csv', 'zip', 'gz', '' ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '';");					
-		if (!$feed_type) $wpdb->query("ALTER TABLE {$table} ADD `feed_type` ENUM( 'xml','csv','zip','gz','' ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '';");
-		if (!$large_import) $wpdb->query("ALTER TABLE {$table} ADD `large_import` ENUM( 'Yes', 'No' ) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT 'No';");
-		if (!$root_element) $wpdb->query("ALTER TABLE {$table} ADD `root_element` VARCHAR(255) NOT NULL DEFAULT '';");
-		if (!$processing) $wpdb->query("ALTER TABLE {$table} ADD `processing` BOOL NOT NULL DEFAULT 0;");
-		if (!$triggered) $wpdb->query("ALTER TABLE {$table} ADD `triggered` BOOL NOT NULL DEFAULT 0;");
-		if (!$queue_chunk_number) $wpdb->query("ALTER TABLE {$table} ADD `queue_chunk_number` BIGINT(20) NOT NULL DEFAULT 0;");
-		if (!$current_post_ids) $wpdb->query("ALTER TABLE {$table} ADD `current_post_ids` TEXT;");
-		if (!$first_import) $wpdb->query("ALTER TABLE {$table} ADD `first_import` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;");
-		if (!$count) $wpdb->query("ALTER TABLE {$table} ADD `count` BIGINT(20) NOT NULL DEFAULT 0;");
-		if (!$imported) $wpdb->query("ALTER TABLE {$table} ADD `imported` BIGINT(20) NOT NULL DEFAULT 0;");
-		if (!$created) $wpdb->query("ALTER TABLE {$table} ADD `created` BIGINT(20) NOT NULL DEFAULT 0;");
-		if (!$updated) $wpdb->query("ALTER TABLE {$table} ADD `updated` BIGINT(20) NOT NULL DEFAULT 0;");
-		if (!$skipped) $wpdb->query("ALTER TABLE {$table} ADD `skipped` BIGINT(20) NOT NULL DEFAULT 0;");
-		if (!$friendly_name) $wpdb->query("ALTER TABLE {$table} ADD `friendly_name` VARCHAR(255) NOT NULL DEFAULT '';");
-
-		$table = $this->getTablePrefix() . 'templates';
-		global $wpdb;
-		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
-		$is_leave_html = false;
-		// Check if field exists
-		foreach ($tablefields as $tablefield) {
-			if ('is_leave_html' == $tablefield->Field) $is_leave_html = true;
-			if ('fix_characters' == $tablefield->Field) $fix_characters = true;
-		}
-		if (!$is_leave_html) $wpdb->query("ALTER TABLE {$table} ADD `is_leave_html` TINYINT( 1 ) NOT NULL DEFAULT 0;");
-		if (!$fix_characters) $wpdb->query("ALTER TABLE {$table} ADD `fix_characters` TINYINT( 1 ) NOT NULL DEFAULT 0;");
-
-		$table = $this->getTablePrefix() . 'posts';
-		global $wpdb;
-		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
-		$product_key = false;
-		// Check if field exists
-		foreach ($tablefields as $tablefield) {
-			if ('product_key' == $tablefield->Field) $product_key = true;			
-		}
-		if (!$product_key) $wpdb->query("ALTER TABLE {$table} ADD `product_key` TEXT NOT NULL DEFAULT '';");
-
-	}
+	}	
 
 	/**
 	 * Method returns default import options, main utility of the method is to avoid warnings when new
@@ -585,7 +509,7 @@ final class PMXI_Plugin {
 			'tags_delim' => ',',
 			'categories_delim' => ',',
 			'categories_auto_nested' => 0,
-			'featured_delim' => ',',
+			'featured_delim' => '',
 			'atch_delim' => ',',
 			'post_taxonomies' => array(),
 			'parent' => '',
@@ -613,6 +537,7 @@ final class PMXI_Plugin {
 			'feed_type' => 'auto',
 
 			'is_delete_missing' => 0,
+			'is_update_missing_cf' => 0,
 			'is_keep_former_posts' => 'no',
 			'is_keep_status' => 0,
 			'is_keep_content' => 0,
@@ -624,6 +549,8 @@ final class PMXI_Plugin {
 			'is_duplicates' => 0,
 			'is_keep_dates' => 0,
 			'is_keep_menu_order' => 0,
+			'is_keep_parent' => 0,
+			'is_keep_attachments_on_update' => 0,
 			'records_per_request' => 10,
 			'not_create_records' => 0,
 			'no_create_featured_image' => 0,
@@ -637,6 +564,7 @@ final class PMXI_Plugin {
 			'post_slug' => '',
 			'keep_custom_fields' => 0,
 			'keep_custom_fields_specific' => '',
+			'keep_custom_fields_except' => '',
 			'friendly_name' => '',
 			'custom_duplicate_name' => '',
 			'custom_duplicate_value' => '',
@@ -646,8 +574,22 @@ final class PMXI_Plugin {
 			'update_missing_cf_value' => '',
 			'auto_rename_images' => 0,
 			'auto_rename_images_suffix' => '',
-			'images_name' => 'auto',
-			'is_add_newest_categories' => 0
+			'images_name' => 'filename',
+			'is_add_newest_categories' => 0,
+			'post_format' => 'standard',
+			'encoding' => 'UTF-8',
+			'delimiter' => '',
+			'set_image_meta_data' => 0,
+			'image_meta_title' => '',
+			'image_meta_title_delim' => '',
+			'image_meta_caption' => '',
+			'image_meta_caption_delim' => '',
+			'image_meta_alt' => '',
+			'image_meta_alt_delim' => '',
+			'image_meta_description' => '',
+			'image_meta_description_delim' => '',
+			'status_xpath' => '',
+			'download_images' => 1
 		);
 	}
 

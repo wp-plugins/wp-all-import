@@ -81,7 +81,7 @@
 		vertical-align: middle;
 	}
 .pmxi_plugin .options input[type=text], .pmxi_plugin .options select {
-	background: #fafafa !important;
+	/*background: #fafafa !important;*/
 	border: 1px solid #aaa !important;
 }
 .pmxi_plugin .note {
@@ -111,6 +111,7 @@
 		padding: 0px 0 16px 20px;
 		width: 25%;
 		min-width: 260px; 
+		position: relative;
 	}
 		.pmxi_plugin table.layout td.left > h2:first-child {
 			margin-top: -22px;
@@ -122,6 +123,18 @@
 		.pmxi_plugin.no-js table.layout td.left > h2:first-child {
 			margin-top: 0px;
 		}
+.pmxi_plugin table.layout div.left {
+	min-width: 490px;
+	width: 70%;
+	float: left;
+}
+.pmxi_plugin table.layout div.right {
+	padding: 0px 0 16px 20px;
+	width: 25%;
+	/*min-width: 260px; */
+	position: relative;
+	float: right;
+}
 /*@*/
 
 /*@+ Setting Form */
@@ -155,7 +168,7 @@
 		font-size: 12px;
 	}
 	.pmxi_plugin form.choose-file input[type="submit"].button {
-		width: 150px;
+		/*width: 150px;*/
 	}
 	.pmxi_plugin form.choose-file div.input {
 		margin-top: 20px;
@@ -213,8 +226,8 @@
 }
 .pmxi_plugin .post-type-container.selected,
 .pmxi_plugin .file-type-container.selected {
-	background-color: #F2FBD9;
-	border: 1px solid #B5E61D;
+	background-color: #F1F1F1;
+	border: 1px solid #ccc;
 	padding-bottom: 10px;
 }
 	.pmxi_plugin .post-type-container h3,
@@ -246,7 +259,7 @@
 }
 	.pmxi_plugin table.form-table td,
 	.pmxi_plugin table.form-table th {
-		padding: 2px 4px;
+		padding: 0;
 		vertical-align: top;
 	}
 	.pmxi_plugin .post-type-options table.form-table th {
@@ -270,8 +283,9 @@
 /*@+ XML representation */
 .pmxi_plugin .tag {	
 	background-color: #fff;	
-	position: fixed;
-	width:22%;
+	position: absolute;
+	width:95%;
+	top: 0;
 	margin-top: 45px;			
 	border-top: 1px solid #DFDFDF;
 	-moz-border-radius-topleft: 4px;
@@ -454,6 +468,7 @@ table.xml table {
 }
 .pmxi_plugin .ui-dialog {
 	position: absolute !important; /* FIX: for wordpress 3.1 not to add empty space */
+	z-index: 999999;
 }
 .pmxi_plugin .ui-autocomplete {
 	position: absolute;
@@ -534,7 +549,7 @@ table.xml table {
 .pmxi_plugin .remove-ico{
 	background: url("../img/ico-remove.png") no-repeat;
 	top:1px;
-	right:-8px;
+	right:0px;
 	position: absolute;
 }
 
@@ -596,12 +611,15 @@ table.xml table {
 	width: 580px;
 }
 .pmxi_plugin #pmxi_tabs{
-	display: none;
+	/*display: none;*/
 	padding-bottom: 20px;
 	-moz-border-radius: 4px;
 	-khtml-border-radius: 4px;
 	-webkit-border-radius: 4px;
 	border-radius: 4px;
+}
+.pmxi_plugin .pmxi_tab{
+	display: none;
 }
 .pmxi_plugin .ui-widget-header{
 	-moz-border-radius: 4px;
@@ -726,18 +744,18 @@ table.xml table {
 	text-align: center;
 }
 .pmxi_plugin .col3{
-	border-right: 1px solid #CCCCCC;
+	/*border-right: 1px solid #CCCCCC;*/
 	float: left;
-	height: 265px;
-	width:30%;
+	/*height: 265px;*/
+	width:33%;
 	margin-bottom: 10px;
-	padding: 0 1%;
+	/*padding: 0 1%;*/
 }
 .pmxi_plugin .col3.last{
 	border: none;
 }
 .pmxi_plugin .col3 > div{
-	margin-left: 20px;
+	/*margin-left: 20px;*/
 }
 .pmxi_plugin .col2{
 	float: left;
@@ -755,7 +773,7 @@ table.xml table {
 }
 .pmxi_plugin .post_taxonomy{	
 	margin-bottom: 15px;
-	/*overflow: hidden;*/
+	overflow: hidden;
 	padding-bottom: 15px;
 }
 .pmxi_plugin .post_taxonomy .delim{
@@ -815,8 +833,13 @@ table.xml table {
 	font-size: 13px !important;
 }
 .pmxi_plugin .preview{
-	float:none;
+	float: none;
+	/*line-height: 32px;
+	position: relative;
+	text-align: center;
 	text-decoration: none;
+	top: -1px;
+	vertical-align: middle;*/
 }
 .pmxi_plugin .template-sidebar .tag{		
 	max-height:550px;
@@ -825,12 +848,13 @@ table.xml table {
 	float: right;
 	position: relative;
 	text-align: right;
-	top: 30px;
-	right:-18px;
+	top: 10px;	
 }
 .pmxi_plugin .back{
-	font-size: 16px;
-	color:#21759B;
+	color: #21759B;
+	font-size: 20px;
+	position: relative;
+	top: 3px;
 }
 .pmxi_plugin .separated_by{
 	float: right;
@@ -920,12 +944,13 @@ table.xml table {
 .pmxi_plugin #goto_element{
 	display: block;
 	float: left;
-	height: 47px;
-	margin-right: 10px;
-	width: 70px !important;
-	min-width: 70px;
-	text-align: center;
 	font-size: 18px;
+	height: 46px;
+	margin-right: 10px;
+	min-width: 70px;
+	padding-top: 5px;
+	text-align: center;
+	width: 70px !important;
 }
 .pmxi_plugin .choose-elements table tbody tr td{
 	overflow: hidden;
@@ -941,17 +966,21 @@ table.xml table {
 	display: none;
 }
 .pmxi_plugin label{
-	-webkit-touch-callout: none;
+	/*-webkit-touch-callout: none;
 	-webkit-user-select: none;
 	-khtml-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
-	user-select: none;
+	user-select: none;*/
 }
 .pmxi_plugin .large_button{
-	margin-left: 10px;
+	/*margin-left: 10px;
 	padding: 15px 25px;
-	border: 1px solid #C5DBEC;
+	border: 1px solid #C5DBEC;*/
+	height: 40px;
+	line-height: 39px;
+	margin-left: 10px;
+	/*width: 90px;*/
 }
 .pmxi_plugin .drag-element .assign_post{
 	float: left;
@@ -963,7 +992,7 @@ table.xml table {
 .pmxi_plugin .upgrade_link{
 	color: #21759B;
 }
-.pmxi_stars{
+.pmxi_plugin .pmxi_stars{
 	display: inline-block;
 	background: url("../img/stars.png") no-repeat;
 	width: 125px;
@@ -971,7 +1000,7 @@ table.xml table {
 	position: relative;
 	top:10px;
 }
-.updated_bottom{
+.pmxi_plugin .updated_bottom{
 	background-color: #FFFFE0;
 	border-color: #E6DB55;
 	margin: 5px 0 15px;
@@ -992,6 +1021,130 @@ table.xml table {
 	top: -35px;
 	width: 100%;
 }
-.form-field textarea{
+.pmxi_plugin .form-field textarea{
 	width:80%;
+}
+/* Tabs */
+.pmxi_plugin .nav-tab-wrapper{
+	display: none;
+}
+.pmxi_plugin h2.nav-tab-wrapper, h3.nav-tab-wrapper{	
+	margin-bottom: 10px;
+}
+.pmxi_plugin .nav-tab{
+	margin-right: 0px !important;
+}
+.pmxi_plugin h2 .nav-tab{
+	font-size: 18px !important;
+}
+.pmxi_plugin #set_encoding{
+	line-height: 25px;
+	position: relative;
+	text-align: center;
+	top: -10px;
+	margin-top: -55px;
+}
+.pmxi_plugin #add_encoding{
+	display: none;
+}
+.pmxi_plugin #new_encoding{
+	border: 1px solid #BBBBBB;
+	-moz-border-radius: 3px;
+	-khtml-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;	
+}
+.pmxi_plugin .options #set_encoding{
+	display: none;
+}
+.pmxi_plugin .set_csv_delimiter > li{
+	float: left;
+	padding: 0 3px;
+}
+/*.pmxi_plugin .set_csv_delimiter > li a.delimiter_selected{
+	font-weight: bold;
+	text-decoration: underline;
+}
+.pmxi_plugin .set_csv_delimiter{
+	float: left;
+	padding-top: 3px;
+}*/
+.pmxi_plugin .set_csv_delimiter{
+	padding-top: 5px;
+}
+.pmxi_plugin input[name="delimiter"]{
+	display: block;
+	float: left;
+	width: 25px !important;
+	height: 25px;
+	min-width: 25px !important;
+	position: relative;
+	top:-5px;
+	padding: 0 3px;
+	text-align: center;
+}
+.pmxi_plugin input[name="apply_delimiter"]{
+	border: 1px solid #BBBBBB;
+	-moz-border-radius: 3px;
+	-khtml-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;	
+	padding: 3px 5px;
+	margin-left: 10px;	
+	position: relative;
+	top:-4px;
+	cursor: pointer;
+}
+.pmxi_plugin .go_to{
+	float: left;	
+	font-size: 23px;
+	line-height: 38px;
+	text-align: center;
+}
+.pmxi_plugin .fix_checkbox{
+	position: relative;
+	/*top: -2px;*/
+}
+.pmxi_plugin .newline{
+	line-height: 16px;
+}
+.pmxi_plugin .button-primary:hover{
+	font-weight: normal;
+}
+.pmxi_plugin .hndle{
+	padding: 7px;
+	margin-bottom: 0px;
+	cursor: default !important;
+}
+.pmxi_plugin .inside{
+	margin: 0;
+	line-height: 20px;
+}
+.pmxi_plugin .inside input[type="text"]{
+	background: #fff;
+}
+.pmxi_plugin .postbox{
+	margin: 0;
+}
+.pmxi_plugin .txt_center{
+	text-align: center;
+}
+.pmxi_plugin div.meta-options{
+	padding: 10px 0px;
+}
+.pmxi_plugin input[name^="attribute_name"], .pmxi_plugin input[name^="variable_attribute_name"]{
+	width: 95% !important;
+}
+.pmxi_plugin .widefat{
+	background-color: #fff;
+	border-color: #DFDFDF;
+}
+.pmxi_plugin #woocommerce-product-data{
+	margin-bottom: 20px;
+}
+.pmxi_plugin .set_xpath{
+	left: 0;
+	padding-left: 15px;
+	position: absolute;
+	top: 0;
 }

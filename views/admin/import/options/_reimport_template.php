@@ -1,32 +1,32 @@
 <tr>
-	<td colspan="3">
+	<td colspan="3" style="padding-top:20px;">
 		<fieldset class="optionsset">
-			<legend><?php _e('Record Matching','pmxi_plugin');?></legend>
+			<legend><?php _e('Record Matching','pmxi_plugin');?></legend>		
 			<div class="input" style="margin-bottom:15px;">
-				<input type="radio" id="auto_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="auto" <?php echo 'manual' != $post['duplicate_matching'] ? 'checked="checked"': '' ?> />
+				<input type="radio" id="auto_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="auto" <?php echo 'manual' != $post['duplicate_matching'] ? 'checked="checked"': '' ?>/>
 				<label for="auto_matching_<?php echo $entry; ?>"><?php _e('Automatic Record Matching', 'pmxi_plugin' )?></label><br>
 				<div class="switcher-target-auto_matching_<?php echo $entry; ?>"  style="padding-left:17px;">
 					<div class="input">
 						<label><?php _e("Unique key"); ?></label>
-						<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php echo esc_attr($post['unique_key']) ?>" <?php echo  ! ($this->isWizard && $update_previous->isEmpty()) ? 'disabled="disabled"' : '' ?> />
+						<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php echo esc_attr($post['unique_key']) ?>" <?php echo  ! ($this->isWizard && $update_previous->isEmpty()) ? 'disabled="disabled"' : '' ?>/>
 						<a href="#help" class="help" title="<?php _e('Specify something that is unique for all records. If posts are being updated and not just created during a brand new import, the problem is that the value of the unique key is not unique.', 'pmxi_plugin') ?>">?</a>
 					</div>
 				</div>
-				<input type="radio" id="manual_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="manual" <?php echo 'manual' == $post['duplicate_matching'] ? 'checked="checked"': '' ?> />
+				<input type="radio" id="manual_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="manual" <?php echo 'manual' == $post['duplicate_matching'] ? 'checked="checked"': '' ?>/>
 				<label for="manual_matching_<?php echo $entry; ?>"><?php _e('Manual Record Matching', 'pmxi_plugin' )?></label>
 				<a href="#help" class="help" title="<?php _e('This allows you to match records by something other than Unique Key.', 'pmxi_plugin') ?>">?</a>
 				<div class="switcher-target-manual_matching_<?php echo $entry; ?>" style="padding-left:17px;">
 					<div class="input">
 						<span style="vertical-align:middle"><?php _e('Match records based on...', 'pmxi_plugin') ?></span><br>
-						<input type="radio" id="duplicate_indicator_title_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="title" <?php echo 'title' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?> />
+						<input type="radio" id="duplicate_indicator_title_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="title" <?php echo 'title' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
 						<label for="duplicate_indicator_title_<?php echo $entry; ?>"><?php _e('title', 'pmxi_plugin' )?></label><br>
-						<input type="radio" id="duplicate_indicator_content_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="content" <?php echo 'content' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?> />
+						<input type="radio" id="duplicate_indicator_content_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="content" <?php echo 'content' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
 						<label for="duplicate_indicator_content_<?php echo $entry; ?>"><?php _e('content', 'pmxi_plugin' )?></label><br>
-						<input type="radio" id="duplicate_indicator_custom_field_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?> />
+						<input type="radio" id="duplicate_indicator_custom_field_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
 						<label for="duplicate_indicator_custom_field_<?php echo $entry; ?>"><?php _e('custom field', 'pmxi_plugin' )?></label><br>
 						<span class="switcher-target-duplicate_indicator_custom_field_<?php echo $entry; ?>" style="vertical-align:middle; padding-left:17px;">
 							<?php _e('Name', 'pmxi_plugin') ?>
-							<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" /><br>
+							<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" />
 							<?php _e('Value', 'pmxi_plugin') ?>
 							<input type="text" name="custom_duplicate_value" value="<?php echo esc_attr($post['custom_duplicate_value']) ?>" />
 						</span>
@@ -41,9 +41,9 @@
 			</div>
 			<div class="input">
 				<input type="hidden" name="is_delete_missing" value="0" />
-				<input type="checkbox" id="is_delete_missing_<?php echo $entry; ?>" name="is_delete_missing" value="1" <?php echo $post['is_delete_missing'] ? 'checked="checked"': '' ?> class="switcher" />
+				<input type="checkbox" id="is_delete_missing_<?php echo $entry; ?>" name="is_delete_missing" value="1" <?php echo $post['is_delete_missing'] ? 'checked="checked"': '' ?> class="switcher"/>
 				<label for="is_delete_missing_<?php echo $entry; ?>"><?php _e('Delete missing records', 'pmxi_plugin') ?></label>
-				<a href="#help" class="help" title="<?php _e('Check this option if you want to delete posts from previous import operation which are not found among newly impoprted set.', 'pmxi_plugin') ?>">?</a>
+				<a href="#help" class="help" title="<?php _e('Check this option if you want to delete posts from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>
 			</div>
 			<div class="switcher-target-is_delete_missing_<?php echo $entry; ?>" style="padding-left:17px;">
 				<div class="input">
@@ -144,6 +144,12 @@
 						<input type="checkbox" id="keep_custom_fields_<?php echo $entry; ?>" name="keep_custom_fields" value="1" <?php echo $post['keep_custom_fields'] ? 'checked="checked"': '' ?>  class="switcher switcher-reversed"/>
 						<label for="keep_custom_fields_<?php echo $entry; ?>"><?php _e('Keep custom fields', 'pmxi_plugin') ?></label>
 						<a href="#help" class="help" title="<?php _e('If Keep Custom Fields box is checked, it will keep all Custom Fields, and add any new Custom Fields specified in Custom Fields section, as long as they do not overwrite existing fields. If \'Only keep this Custom Fields\' is specified, it will only keep the specified fields.', 'pmxi_plugin') ?>">?</a>
+						<div class="keep_except" style="padding-left:17px; <?php if (!$post['keep_custom_fields'] ):?>display:none;<?php endif;?>" >
+							<div class="input">
+								<label for="keep_custom_fields_except"><?php _e('Keep all Custom Fields, except for the fields specified for update <small>(separate field names with commas)</small>', 'pmxi_plugin') ?></label>
+								<input type="text" id="keep_custom_fields_except" name="keep_custom_fields_except" style="width:100%;" value="<?php echo esc_attr($post['keep_custom_fields_except']) ?>" />
+							</div>
+						</div>
 					</div>
 					<div class="switcher-target-keep_custom_fields_<?php echo $entry; ?>" style="padding-left:17px;">
 						<div class="input">
@@ -152,7 +158,7 @@
 						</div>
 					</div>
 				</div>
-			</div>
+			</div>				
 		</fieldset>
 	</td>
 </tr>

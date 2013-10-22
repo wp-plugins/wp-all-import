@@ -1,57 +1,72 @@
 <tr>
-	<td colspan="3">
-		<h3>
-			<?php _e('Download & Import Images To The Post Media Gallery', 'pmxi_plugin') ?> <a href="#help" class="help" title="<?php _e('Specify URLs or XPath Template Tags to download and import images to the post media gallery. The first image will be set as the Featured Image. Example: <pre>{image[1]},{image[2]},{image[3]}</pre> Separate your URLs or XPath Template Tags with the comma. <i>Separated by</i> character will use if xPath value contains multiple URLs, for example: <br> \'http://test.com/first.jpg | http://test.com/second.png\'.', 'pmxi_plugin') ?>">?</a>
-			<span class="separated_by"><?php _e('Separated by','pmxi_plugin');?></span>
-		</h3>
-		<div>
-			<input type="text" name="featured_image" style="width:92%;" value="<?php echo ($post_type == "product") ? esc_attr($post['featured_image']) : ""; ?>"  <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
-			<input type="text" class="small" name="featured_delim" maxlength="1" value="<?php echo esc_attr($post['featured_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
-		</div>
-		<div class="input">
-			<input type="hidden" name="create_draft" value="no" />
-			<input type="checkbox" id="create_draft_<?php echo $entry; ?>" name="create_draft" value="yes" <?php echo ($post_type == "product" and "yes" == $post['create_draft']) ? 'checked="checked"' : '' ?> <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
-			<label for="create_draft_<?php echo $entry; ?>"><?php _e('<small>If no images are downloaded successfully, create entry as Draft.</small>', 'pmxi_plugin') ?></label>
-		</div>
-		<div class="input">
-			<input type="radio" id="use_filename_<?php echo $entry; ?>" name="images_name" value="filename" <?php echo ($post['images_name'] == "filename") ? 'checked="checked"' : '' ?> <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
-			<label for="use_filename_<?php echo $entry; ?>"><?php _e('<small>The image filenames should be generated based on URLs.</small>', 'pmxi_plugin') ?></label> <br>
-
-			<input type="radio" id="use_autoname_<?php echo $entry; ?>" name="images_name" value="auto" <?php echo ($post['images_name'] == "auto") ? 'checked="checked"' : '' ?> <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
-			<label for="use_autoname_<?php echo $entry; ?>"><?php _e('<small>The image filenames should be generated based on timestamp.</small>', 'pmxi_plugin') ?></label> <br>
-		</div>
-		<div class="input">
-			<input type="hidden" name="auto_rename_images" value="0" />
-			<input type="checkbox" id="auto_rename_images_<?php echo $entry; ?>" name="auto_rename_images" value="1" <?php echo $post['auto_rename_images'] ? 'checked="checked"' : '' ?> class="switcher" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
-			<label for="auto_rename_images_<?php echo $entry; ?>"><?php _e('<small>The image filenames should be generated based on provided suffix.</small>', 'pmxi_plugin') ?></label>
-			<a href="#help" class="help" title="<?php _e('Example <product_title>Acme Product</product>. Image filenames: acme_product-1.(ext), acme_product-2.(ext), acme_product-3.(ext), etc.', 'pmxi_plugin') ?>">?</a>
-		</div>		
-		<div class="switcher-target-auto_rename_images_<?php echo $entry; ?>" style="padding-left:17px;">
+	<td colspan="3" style="padding-top:20px;">
+		<fieldset class="optionsset">
+			<legend><?php _e('Featured Image & Media Gallery', 'pmxi_plugin') ?></legend>		
 			<div class="input">
-				<?php _e('<small>Images suffix</small>', 'pmxi_plugin') ?>
-				<input type="text" name="auto_rename_images_suffix" value="<?php echo esc_attr($post['auto_rename_images_suffix']) ?>" />
+				<p style="margin-bottom:5px;"><?php _e('<b>Image URLs</b> (one per line)', 'pmxi_plugin');?></p>
+				<textarea name="featured_image" class="newline" style="width:100%;margin-bottom:5px;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>><?php echo esc_attr($post['featured_image']) ?></textarea>			
+				<label for="featured_delim_<?php echo $entry;?>"><?php _e('Place one image URL per line, or separate URLs with a ', 'pmxi_plugin');?></label>
+				<input type="text" class="small" id="featured_delim_<?php echo $entry;?>" name="featured_delim" value="<?php echo esc_attr($post['featured_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
+				<span style="float:right;">
+					<input type="hidden" name="create_draft" value="no" />
+					<input type="checkbox" id="create_draft_<?php echo $entry; ?>" name="create_draft" value="yes" <?php echo 'yes' == $post['create_draft'] ? 'checked="checked"' : '' ?> class="fix_checkbox" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
+					<label for="create_draft_<?php echo $entry; ?>"><?php _e('If no images are downloaded successfully, create entry as Draft.', 'pmxi_plugin') ?></label>
+				</span>
 			</div>
-		</div>
-		<?php if ($post_type != "product"):?>
-						<center>
+			<div class="input" style="margin:3px 0px;">
+				<input type="hidden" name="download_images" value="0" />
+				<input type="checkbox" id="download_images_<?php echo $entry; ?>" name="download_images" value="1" <?php echo $post['download_images'] ? 'checked="checked"' : '' ?> class="switcher fix_checkbox" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
+				<label for="download_images_<?php echo $entry;?>"><?php _e('Download images','pmxi_plugin');?> </label>
+				<a href="#help" class="help" title="<?php _e('If this option enabled, then plugin will download images into the Uploads folder. If this option disabled, then plugin will search files in Uploads <strong>/wp-content/uploads/'.date("Y/m").'</strong> folder.', 'pmxi_plugin') ?>">?</a>
+			</div>
+			<div class="input switcher-target-download_images_<?php echo $entry; ?>" style="margin:3px 0px;">
+				<input type="hidden" name="auto_rename_images" value="0" />
+				<input type="checkbox" id="auto_rename_images_<?php echo $entry; ?>" name="auto_rename_images" value="1" <?php echo $post['auto_rename_images'] ? 'checked="checked"' : '' ?> class="switcher fix_checkbox" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/>
+				<label for="auto_rename_images_<?php echo $entry;?>"><?php _e('Instead of using original image file name, set file name(s) to','pmxi_plugin');?> </label>
+				<input type="text" id="auto_rename_images_suffix_<?php echo $entry;?>" class="switcher-target-auto_rename_images_<?php echo $entry; ?>" name="auto_rename_images_suffix" value="<?php echo esc_attr($post['auto_rename_images_suffix']) ?>" /> <a href="#help" class="help" title="<?php _e('Instead of using original image file name, set file name(s) suffix', 'pmxi_plugin') ?>">?</a>
+			</div>			
+			<div class="input">
+				<input type="hidden" name="set_image_meta_data" value="0" />
+				<input type="checkbox" id="set_image_meta_data_<?php echo $entry; ?>" name="set_image_meta_data" value="1" <?php echo $post['set_image_meta_data'] ? 'checked="checked"' : '' ?> class="switcher fix_checkbox"/>
+				<label for="set_image_meta_data_<?php echo $entry;?>"><?php _e('Set Image Meta Data (alt text, caption, description, title)','pmxi_plugin');?></label>
+			</div>
+			<div class="switcher-target-set_image_meta_data_<?php echo $entry; ?>" style="padding-left:17px;">
+				<div class="input">
+					<p style="margin-bottom:5px;"><?php _e('Title', 'pmxi_plugin');?> <a href="#help" class="help" title="<?php _e('Image Title', 'pmxi_plugin') ?>">?</a></p>
+					<textarea name="image_meta_title" class="newline" style="width:100%; margin-bottom:5px;" placeholder="<?php _e('Default will be image filename. The first title will be associated with the first image URL, the second title will be associated with second image URL, etc.','pmxi_plugin');?>" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>><?php echo esc_attr($post['image_meta_title']) ?></textarea>			
+					<label for="image_meta_title_delim_<?php echo $entry;?>"><?php _e('Separated by', 'pmxi_plugin');?></label>
+					<input type="text" class="small" id="image_meta_title_delim_<?php echo $entry;?>" name="image_meta_title_delim" value="<?php echo esc_attr($post['image_meta_title_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/> <span>(<?php _e('or newline','pmxi_plugin');?>)</span>						
+				</div>
+				<div class="input">
+					<p style="margin-bottom:5px;"><?php _e('Caption', 'pmxi_plugin');?> <a href="#help" class="help" title="<?php _e('Image Capltion', 'pmxi_plugin') ?>">?</a></p>
+					<textarea name="image_meta_caption" class="newline" style="width:100%; margin-bottom:5px;" placeholder="The first caption will be associated with the first image URL, the second caption will be associated with the second image URL, etc." <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>><?php echo esc_attr($post['image_meta_caption']) ?></textarea>			
+					<label for="image_meta_caption_delim_<?php echo $entry;?>"><?php _e('Separated by', 'pmxi_plugin');?></label>
+					<input type="text" class="small" id="image_meta_caption_delim_<?php echo $entry;?>" name="image_meta_caption_delim" value="<?php echo esc_attr($post['image_meta_caption_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/> <span>(<?php _e('or newline','pmxi_plugin');?>)</span>						
+				</div>
+				<div class="input">
+					<p style="margin-bottom:5px;"><?php _e('Alt text', 'pmxi_plugin');?> <a href="#help" class="help" title="<?php _e('Image Alt Text', 'pmxi_plugin') ?>">?</a></p>
+					<textarea name="image_meta_alt" class="newline" style="width:100%; margin-bottom:5px;" placeholder="The first alt text will be associated with the first image URL, the second alt text will be associted with the second image URL, etc." <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>><?php echo esc_attr($post['image_meta_alt']) ?></textarea>			
+					<label for="image_meta_alt_delim_<?php echo $entry;?>"><?php _e('Separated by', 'pmxi_plugin');?></label>
+					<input type="text" class="small" id="image_meta_alt_delim_<?php echo $entry;?>" name="image_meta_alt_delim" value="<?php echo esc_attr($post['image_meta_alt_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/> <span>(<?php _e('or newline','pmxi_plugin');?>)</span>						
+				</div>
+				<div class="input">
+					<p style="margin-bottom:5px;"><?php _e('Description', 'pmxi_plugin');?> <a href="#help" class="help" title="<?php _e('Image Description', 'pmxi_plugin') ?>">?</a></p>
+					<textarea name="image_meta_description" class="newline" style="width:100%; margin-bottom:5px;" placeholder="The first description will be associated with the first URL, the second descrition will be associated with the second URL, etc." <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>><?php echo esc_attr($post['image_meta_description']) ?></textarea>			
+					<label for="image_meta_description_delim_<?php echo $entry;?>"><?php _e('Separated by', 'pmxi_plugin');?></label>
+					<input type="text" class="small" id="image_meta_description_delim_<?php echo $entry;?>" name="image_meta_description_delim" value="<?php echo esc_attr($post['image_meta_description_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product"):?>disabled="disabled"<?php endif; ?>/> <span>(<?php _e('or newline','pmxi_plugin');?>)</span>						
+				</div>
+			</div>		
+			<?php if ($post_type != "product"):?>
+				<center>
 
-							<hr />
+					<hr />
 
-							<b>Please upgrade to the professional edition of WP All Import to download and import images to the post media gallery.</b>
+					<b>Please upgrade to the professional edition of WP All Import to download and import images to the post media gallery.</b>
 
-							<p style='font-size: 1.1em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=featured-images&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+					<p style='font-size: 1.1em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=featured-images&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
 
-						</center>
-		<?php endif; ?>
-
-		<h3>
-			<?php _e('Download & Import Attachments', 'pmxi_plugin') ?>
-			<span class="separated_by">Separated by</span>
-		</h3>
-		<div>
-			<input type="text" name="attachments" style="width:92%;" value="<?php echo esc_attr($post['attachments']) ?>" />
-			<input type="text" class="small" name="atch_delim" maxlength="1" value="<?php echo esc_attr($post['atch_delim']) ?>" style="width:5%; text-align:center;" />
-		</div>
-		<br>
+				</center>
+			<?php endif; ?>							
+		</fieldset>								
 	</td>
 </tr>

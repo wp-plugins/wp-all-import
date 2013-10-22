@@ -1,7 +1,7 @@
 <h2>
 	<?php _e('Manage Imports', 'pmxi_plugin') ?>
 	&nbsp;
-	<a href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import'), admin_url('admin.php'))) ?>" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only" style="font-size:15px; padding:10px 20px; text-decoration:none;"><?php echo esc_html_x('New Import', 'pmxi_plugin'); ?></a>
+	<a href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import'), admin_url('admin.php'))) ?>" class="add-new-h2"><?php echo esc_html_x('New Import', 'pmxi_plugin'); ?></a>
 </h2>
 
 <?php
@@ -170,11 +170,11 @@ $columns = array(
 
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl)) ?>"><?php _e('Edit Template', 'pmxi_plugin') ?></a></span> |
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"><?php _e('Edit Options', 'pmxi_plugin') ?></a></span> |
-										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"><?php _e('Update', 'pmxi_plugin') ?></a></span> |
-										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php'))) ?>"><?php _e('Use New File', 'pmxi_plugin') ?></a></span> |
+										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"><?php _e('Re-Run Import', 'pmxi_plugin') ?></a></span> |
+										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php'))) ?>"><?php _e('Re-Run With New File', 'pmxi_plugin') ?></a></span> |
 										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'log'), $this->baseUrl)) ?>"><?php _e('Download Log', 'pmxi_plugin') ?></a></span> |
 										<span class="delete"><a class="delete" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'delete'), $this->baseUrl)) ?>"><?php _e('Delete', 'pmxi_plugin') ?></a></span>
-										<?php if ( "Yes" == $item['large_import'] and $item['imported'] != $item['count']):?>
+										<?php if ( "Yes" == $item['large_import'] and (($item['imported'] + $item['skipped']) != $item['count'] and ! $item['options']['is_import_specified']) ):?>
 										| <span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update', 'type' => 'continue'), $this->baseUrl)) ?>"><?php _e('Continue import', 'pmxi_plugin') ?></a></span>
 										<?php endif; ?>
 									</div>
@@ -241,9 +241,6 @@ $columns = array(
 	}
 	?>
 
-
-
-		<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=manage&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Find out more about the professional edition of WP All Import.</a></p>
-
+	<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=manage&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Find out more about the professional edition of WP All Import.</a></p>
 
 </form>
