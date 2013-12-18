@@ -217,7 +217,7 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 			}
 		}
 		else{			
-			$session = $this->toArray(); $_SESSION['pmxi_import'] = $session['pmxi_import'];
+			$session = $this->toArray(); $_SESSION['pmxi_import'] = (!empty($session['pmxi_import'])) ? $session['pmxi_import'] : array();
 		}	
 
 	}

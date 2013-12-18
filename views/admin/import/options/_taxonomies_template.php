@@ -8,7 +8,7 @@
 		<td colspan="3" style="padding-bottom:20px;">
 			<fieldset class="optionsset">
 				<legend><?php _e('Custom Taxonomies','pmxi_plugin');?></legend>
-				<?php foreach ($post_taxonomies as $ctx): if ("" == $ctx->labels->name) continue;?>
+				<?php foreach ($post_taxonomies as $ctx): if ("" == $ctx->labels->name or (class_exists('PMWI_Plugin') and strpos($ctx->name, "pa_") === 0 and $post_type == "product")) continue;?>
 				<table style="width:100%;">
 					<tr>
 						<td>

@@ -10,7 +10,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 	protected $isTemplateEdit = false; // indicates whether controlled is deligated by manage imports controller	
 
 	protected function init() {
-		parent::init();				
+		parent::init();							
 		
 		if ('PMXI_Admin_Manage' == PMXI_Plugin::getInstance()->getAdminCurrentScreen()->base) { // prereqisites are not checked when flow control is deligated
 			$id = $this->input->get('id');
@@ -30,6 +30,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		// preserve id parameter as part of baseUrl
 		$id = $this->input->get('id') and $this->baseUrl = add_query_arg('id', $id, $this->baseUrl);
+
+		$this->baseUrl = apply_filters('pmxi_base_url', $this->baseUrl);
 	}
 
 	public function set($var, $val)
@@ -53,12 +55,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		$this->data['dom'] = $dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);
 		$this->data['update_previous'] = $update_previous = new PMXI_Import_Record();
 		$old = libxml_use_internal_errors(true);				
-
-		if ( ! in_array($action, array('evaluate_variations', 'process')) ){
-			PMXI_Plugin::$session['pmxi_import']['pointer'] = 0;					
-			pmxi_session_commit();
-		}
-
+		
 		$xml = $this->get_xml();
 		
 		if (empty($xml) and in_array($action, array('process')) ){ 
@@ -67,7 +64,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		}				
 
 		if (empty(PMXI_Plugin::$session->data['pmxi_import'])
-			or ! @$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml))// FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load
+			or ! @$dom->loadXML($xml)// FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load
 			//or empty(PMXI_Plugin::$session['pmxi_import']['source'])
 			or ! empty(PMXI_Plugin::$session->data['pmxi_import']['update_previous']) and $update_previous->getById(PMXI_Plugin::$session->data['pmxi_import']['update_previous'])->isEmpty()			
 		) {					
@@ -113,6 +110,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		$this->data['reimported_import'] = $import = new PMXI_Import_Record();
 		$this->data['id'] = $id = $this->input->get('id');
+		$this->data['parent_import'] = $parent_import = $this->input->get('parent_import');
 		if ($id and $import->getById($id)->isEmpty()) { // update requested but corresponding import is not found
 			wp_redirect(remove_query_arg('id', $this->baseUrl)); die();
 		}
@@ -126,11 +124,10 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			'reimport' => '',
 			'is_update_previous' => $id ? 1 : 0,
 			'update_previous' => $id,
-			'xpath' => '/',
-			'large_file' => '',
+			'xpath' => '/',			
 			'filepath' => '',
 			'root_element' => ''
-		));						
+		));			
 
 		if ($this->input->post('is_submitted_continue')) { 
 			if ( ! empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])) {
@@ -159,8 +156,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					$filePath = '';
 
 					if (!empty($v_result_list)){
-						foreach ($v_result_list as $unzipped_file) {
-							if ($unzipped_file['status'] == 'ok') $filePath = $unzipped_file['filename'];
+						foreach ($v_result_list as $unzipped_file) {							
+							if ($unzipped_file['status'] == 'ok' and preg_match('%\W(xml|csv|txt|dat|psv)$%i', trim($unzipped_file['stored_filename']))) { $filePath = $unzipped_file['filename']; break; }
 						}
 					}
 			    	if($uploads['error']){
@@ -188,8 +185,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					    }						
 					}																
 
-					// Detect if file is very large
-					$post['large_file'] = (filesize($filePath) > PMXI_Plugin::LARGE_SIZE) ? 'on' : false;
+					// Detect if file is very large					
 					$source = array(
 						'name' => basename($post['filepath']),
 						'type' => 'upload',							
@@ -201,23 +197,18 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 						if($uploads['error']){
 							 $this->errors->add('form-validation', __('Can not create upload folder. Permision denied', 'pmxi_plugin'));
 						}																								
-						if (empty($post['large_file'])) {
-							$filePath = PMXI_Plugin::csv_to_xml($filePath);																	
-						}
-						else{										
-							include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');
-							$csv = new PMXI_CsvParser($filePath, true); // create chunks
-							$filePath = $csv->xml_path;
-							$post['root_element'] = 'node';		
-						}
+						
+						include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');
+						$csv = new PMXI_CsvParser($filePath, true); // create chunks
+						$filePath = $csv->xml_path;
+						$post['root_element'] = 'node';		
+						
 					}					
 				}
 
 			} elseif ( preg_match('%\W(csv|txt|dat|psv)$%i', trim($post['filepath']))) { // If CSV file uploaded
 				
-				// Detect if file is very large
-				$post['large_file'] = (filesize($post['filepath']) > PMXI_Plugin::LARGE_SIZE) ? 'on' : false;
-
+				// Detect if file is very large				
 				if($uploads['error']){
 					 $this->errors->add('form-validation', __('Can not create upload folder. Permision denied', 'pmxi_plugin'));
 				}									
@@ -226,22 +217,17 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					'name' => basename($post['filepath']),
 					'type' => 'upload',
 					'path' => $filePath,
-				);				
-				if (empty($post['large_file'])) {
-					$filePath = PMXI_Plugin::csv_to_xml($post['filepath']);					
-				} else{										
-					include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
-					$csv = new PMXI_CsvParser($post['filepath'], true);					
-					$filePath = $csv->xml_path;
-					$post['root_element'] = 'node';
-				}					   					
+				);								
+				include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
+				$csv = new PMXI_CsvParser($post['filepath'], true);					
+				$filePath = $csv->xml_path;
+				$post['root_element'] = 'node';
+						
 			} elseif(preg_match('%\W(gz)$%i', trim($post['filepath']))){ // If gz file uploaded
 				$fileInfo = pmxi_gzfile_get_contents($post['filepath']);
 				$filePath = $fileInfo['localPath'];				
 				
-				// Detect if file is very large
-				$post['large_file'] = (filesize($filePath) > PMXI_Plugin::LARGE_SIZE) ? 'on' : false;
-
+				// Detect if file is very large				
 				$source = array(
 					'name' => basename($post['filepath']),
 					'type' => 'upload',
@@ -250,21 +236,16 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 				// detect CSV or XML 
 				if ( $fileInfo['type'] == 'csv') { // it is CSV file									
-					if (empty($post['large_file'])) {																
-						$filePath = PMXI_Plugin::csv_to_xml($filePath); // convert CSV to XML																						
-					}
-					else{																
-						include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
-						$csv = new PMXI_CsvParser($filePath, true); // create chunks
-						$filePath = $csv->xml_path;
-						$post['root_element'] = 'node';						
-					}
+					
+					include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
+					$csv = new PMXI_CsvParser($filePath, true); // create chunks
+					$filePath = $csv->xml_path;
+					$post['root_element'] = 'node';						
+				
 				}
 			} else { // If XML file uploaded				
 
 				// Detect if file is very large
-				$post['large_file'] = (filesize($post['filepath']) > PMXI_Plugin::LARGE_SIZE) ? 'on' : false;
-				
 				$filePath = $post['filepath'];
 				$source = array(
 					'name' => basename($post['filepath']),
@@ -276,142 +257,105 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		elseif ($this->input->post('is_submitted')){  
 
 			$this->errors->add('form-validation', __('Upgrade to the paid edition of WP All Import to use this feature.', 'pmxi_plugin'));
-		}
+		} 
 
 		if ($post['is_update_previous'] and empty($post['update_previous'])) {
 			$this->errors->add('form-validation', __('Previous import for update must be selected to proceed with a new one', 'pmxi_plugin'));
 		}
+
+		$this->data['detection_feed_extension'] = false;		
+
+		if ( ! class_exists('DOMDocument') ) {
+			$this->errors->add('form-validation', __('Class \'DOMDocument\' not found.', 'pmxi_plugin')); 						
+		}
+		if ( ! class_exists('XMLReader') ) {
+			$this->errors->add('form-validation', __('Class \'XMLReader\' not found.', 'pmxi_plugin')); 						
+		}
 		
-		if ($this->input->post('is_submitted') and ! $this->errors->get_error_codes()) {
+		if ($this->input->post('is_submitted') and ! $this->errors->get_error_codes()) {			
 				
-			check_admin_referer('choose-file', '_wpnonce_choose-file');					 											
-			$elements_cloud = array();
-			$is_validate = true;
+			check_admin_referer('choose-file', '_wpnonce_choose-file');					 														
+			$elements_cloud = array();																					
+			@set_time_limit(0);																	
+			$local_paths = !empty($local_paths) ? $local_paths : array($filePath);
+			
+			foreach ($local_paths as $key => $path) {						
+													
+				if ( @file_exists($path) ){
+					
+					$file = new PMXI_Chunk($path, array('element' => $post['root_element']));										    					    					   							
 
-			if (empty($xml)){
-
-				$wp_uploads = wp_upload_dir();
-				
-				if (!empty($post['large_file'])){
-					
-					@set_time_limit(0);							
-					$chunks  = 0;					
-					$chunk_path = '';
-					$local_paths = !empty($local_paths) ? $local_paths : array($filePath);
-					
-					foreach ($local_paths as $key => $path) {						
-															
-						if ( @file_exists($path) ){
-							
-							$file = new PMXI_Chunk($path, array('element' => $post['root_element'], 'path' => $wp_uploads['path']));										    					    
-						    
-						    while ($xml = $file->read()) {					      						    					    					    							    
-						    	if (!empty($xml))
-						      	{										      						  					      		
-						      		PMXI_Import_Record::preprocessXml($xml);
-							      	if ( !empty($xml) ){
-							      		$xml = $file->encoding . "\n" . $xml;
-									    $is_validate = $file->is_validate;
-									    $chunks++;
-									    break;
-									}
-							    }							    
-							}						
-							
-							if ( ! $key ){								
-								if ( ! empty($file->options['element'])) { 									
-									$post['root_element'] = $file->options['element']; 
-									$xpath = "/".$post['root_element'];
-									$elements_cloud = $file->cloud;									
-									if (empty($chunks)) { $this->errors->add('form-validation', __('No matching elements found for Root element and XPath expression specified', 'pmxi_plugin')); }								    		   
-								}
-								else $this->errors->add('form-validation', __('Unable to find root element for this feed. Please open the feed in your browser or a text editor and ensure it is a valid feed.', 'pmxi_plugin')); 
-							}
-						}
-						else $this->errors->add('form-validation', __('Unable to download feed resource.', 'pmxi_plugin')); 
-					}							
-					
-				} else {
-
-					ob_start();
-					$filePath && @readgzfile($filePath);					
-					$xml = ob_get_clean();										
-					
-					if (empty($xml)){
-						$xml = @file_get_contents($filePath);										
-						if (empty($xml)) get_file_curl($filePath, $wp_uploads['path']  .'/'. basename($filePath));
-						if (empty($xml)) $xml = @file_get_contents($wp_uploads['path']  .'/'. basename($filePath));
+					if ( ! empty($file->options['element']) ) {						
+						$xpath = "/".$file->options['element'];
+						$elements_cloud = $file->cloud;								
+						break;																				    		   
 					}
-				}								   
-			}						
-			
-			if ((!$is_validate or PMXI_Import_Record::validateXml($xml, $this->errors)) and (empty($post['large_file']) or (!empty($post['large_file']) and !empty($chunks)))) {
-				// xml is valid
-				if (!empty($post['large_file'])){
-					$source['large_import'] = 'Yes';
-					$source['root_element'] = $post['root_element'];
-				} 
-				else {
-					$source['large_import'] = 'No';
-					$source['root_element'] = '';
+					else $this->errors->add('form-validation', __('Unable to find root element for this feed. Please open the feed in your browser or a text editor and ensure it is a valid feed.', 'pmxi_plugin')); 
+					
 				}
+				else $this->errors->add('form-validation', __('Unable to download feed resource.', 'pmxi_plugin')); 
+			}			
 			
-				$source['first_import'] = date("Y-m-d H:i:s");
+			if ( ! $this->errors->get_error_codes() ) {
 				
-				pmxi_session_unset();
-
-				$encoding = 'UTF-8';
-				preg_match('~encoding=["|\']{1}([-a-z0-9_]+)["|\']{1}~i', $file->encoding, $encoding);
-
-				if ( "" == $post['feed_type'] and "" != PMXI_Plugin::$is_csv) $post['feed_type'] = 'csv';
+				// xml is valid				
+				$source['root_element'] = $file->options['element'];				
+				$source['first_import'] = date("Y-m-d H:i:s");				
+				pmxi_session_unset();														
 
 				PMXI_Plugin::$session['pmxi_import'] = array(						
 					'filePath' => $filePath,
+					'parent_import_id' => $parent_import,
 					'xpath' => (!empty($xpath)) ? $xpath : '',
 					'feed_type' => $post['feed_type'],
-					'source' => $source,					
-					'large_file' => (!empty($post['large_file'])) ? true : false,
-					'encoding' => (is_array($encoding)) ? $encoding[1] : $encoding,
+					'source' => $source,										
+					'encoding' => 'UTF-8',//$file->options['encoding'],
 					'is_csv' => PMXI_Plugin::$is_csv,
 					'csv_path' => PMXI_Plugin::$csv_path,
 					'chunk_number' => 1,
-					'log' => '',
-					'current_post_ids' => '',
+					'log' => '',					
 					'processing' => 0,
 					'queue_chunk_number' => 0,
-					'count' => (isset($chunks)) ? $chunks : 0,
-					'created_records' => 0,
-					'updated_records' => 0,
-					'skipped_records' => 0,
+					'count' => (isset($chunks)) ? $chunks : 0,					
 					'warnings' => 0,
 					'errors' => 0,
 					'start_time' => 0,
 					'local_paths' => (!empty($local_paths)) ? $local_paths : array(), // ftp import local copies of remote files
 					'csv_paths' => (!empty($csv_paths)) ? $csv_paths : array(PMXI_Plugin::$csv_path), // ftp import local copies of remote CSV files
 					'action' => 'import',
-					'elements_cloud' => (!empty($elements_cloud)) ? $elements_cloud : array()
+					'elements_cloud' => (!empty($elements_cloud)) ? $elements_cloud : array(),
+					'pointer' => 1
 				);								
-				
-				unset($xml);				
+										
 				$update_previous = new PMXI_Import_Record();
 				if ($post['is_update_previous'] and ! $update_previous->getById($post['update_previous'])->isEmpty()) {
 					PMXI_Plugin::$session['pmxi_import']['update_previous'] = $update_previous->id;
 					PMXI_Plugin::$session['pmxi_import']['xpath'] = $update_previous->xpath;
 					PMXI_Plugin::$session['pmxi_import']['template'] = $update_previous->template;
-					PMXI_Plugin::$session['pmxi_import']['options'] = $update_previous->options;					
+					PMXI_Plugin::$session['pmxi_import']['options'] = $update_previous->options;
 				} else {
 					PMXI_Plugin::$session['pmxi_import']['update_previous'] = '';
 				}		
 
 				pmxi_session_commit(); 						
-
-				wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
+				
+				$xml = $this->get_xml();
+				if (empty($xml))
+				{
+					$this->errors->add('form-validation', __('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@soflyy.com">support@soflyy.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'pmxi_plugin')); 
+					if ( "" != PMXI_Plugin::$is_csv) $this->errors->add('form-validation', __('Probably your CSV feed contains HTML code. In this case, you can enable the <strong>"My CSV feed contains HTML code"</strong> option on the settings screen.', 'pmxi_plugin')); 
+				}
+				else{
+					wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
+				}				
 
 			} else {
 				$this->errors->add('form-validation', __('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@soflyy.com">support@soflyy.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'pmxi_plugin')); 
 				if ( "" != PMXI_Plugin::$is_csv) $this->errors->add('form-validation', __('Probably your CSV feed contains HTML code. In this case, you can enable the <strong>"My CSV feed contains HTML code"</strong> option on the settings screen.', 'pmxi_plugin')); 
 			}
-		}		
+
+			do_action("pmxi_get_file", $filePath);
+		}
 		
 		$this->render();
 	}
@@ -459,7 +403,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			
 		} else {
 			
-			if (isset(PMXI_Plugin::$session->data['pmxi_import']['xpath']) and PMXI_Plugin::$session->data['pmxi_import']['large_file']) {
+			if (isset(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) {
 				$post['xpath'] = PMXI_Plugin::$session->data['pmxi_import']['xpath'];
 				$this->data['elements'] = $elements = $xpath->query($post['xpath']);
 				if ( ! $elements->length and ! empty(PMXI_Plugin::$session->data['pmxi_import']['update_previous'])) {
@@ -477,7 +421,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		// workaround to prevent rendered XML representation to eat memory since it has to be stored in momory when output is bufferred
 		$this->render();
-		add_action('pmxi_action_after', array($this, 'element_after'));
+		//add_action('pmxi_action_after', array($this, 'element_after'));
 	}
 	public function element_after()
 	{
@@ -493,123 +437,113 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
 		}				
 
+		// HTTP headers for no cache etc
+		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+		header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+		header("Cache-Control: no-store, no-cache, must-revalidate");
+		header("Cache-Control: post-check=0, pre-check=0", false);
+		header("Pragma: no-cache");
+		
 		$xpath = new DOMXPath($this->data['dom']);
-		$post = $this->input->post(array('xpath' => '', 'show_element' => 1, 'root_element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'delimiter' => '', 'pointer' => 0, 'chunk' => 0));
+		$post = $this->input->post(array('xpath' => '', 'show_element' => 1, 'root_element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'delimiter' => ''));
 		$wp_uploads = wp_upload_dir();
 
 		if ('' == $post['xpath']) {
 			$this->errors->add('form-validation', __('No elements selected', 'pmxi_plugin'));
 		} else {		
-			// counting selected elements
-			if (PMXI_Plugin::$session->data['pmxi_import']['large_file']){ // in large mode	
+			// counting selected elements			
+			if ('' != $post['delimiter'] and $post['delimiter'] != PMXI_Plugin::$session->data['pmxi_import']['is_csv']) {
+				include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');						
+				
+				PMXI_Plugin::$session['pmxi_import']['is_csv'] = $post['delimiter'];
 
-				if ('' != $post['delimiter'] and $post['delimiter'] != PMXI_Plugin::$session->data['pmxi_import']['is_csv']) {
-					include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');						
-					
-					PMXI_Plugin::$session['pmxi_import']['is_csv'] = $post['delimiter'];
-
-					if (PMXI_Plugin::$session->data['pmxi_import']['source']['type'] != 'ftp'){
-						$csv = new PMXI_CsvParser(PMXI_Plugin::$session->data['pmxi_import']['csv_path'], true, '', $post['delimiter']); // create chunks
+				if (PMXI_Plugin::$session->data['pmxi_import']['source']['type'] != 'ftp'){
+					$csv = new PMXI_CsvParser(PMXI_Plugin::$session->data['pmxi_import']['csv_path'], true, '', $post['delimiter']); // create chunks
+					$filePath = $csv->xml_path;										
+					PMXI_Plugin::$session['pmxi_import']['filePath'] = $filePath;
+					PMXI_Plugin::$session['pmxi_import']['local_paths'] = array($filePath);
+				}
+				else{
+					$local_paths = array();
+					foreach (PMXI_Plugin::$session->data['pmxi_import']['csv_paths'] as $key => $path) {
+						$csv = new PMXI_CsvParser($path, true, '', $post['delimiter']); // create chunks
 						$filePath = $csv->xml_path;										
-						PMXI_Plugin::$session['pmxi_import']['filePath'] = $filePath;
-						PMXI_Plugin::$session['pmxi_import']['local_paths'] = array($filePath);
+						if (!$key) PMXI_Plugin::$session['pmxi_import']['filePath'] = $filePath;
+						$local_paths[] = $filePath;							
 					}
-					else{
-						$local_paths = array();
-						foreach (PMXI_Plugin::$session->data['pmxi_import']['csv_paths'] as $key => $path) {
-							$csv = new PMXI_CsvParser($path, true, '', $post['delimiter']); // create chunks
-							$filePath = $csv->xml_path;										
-							if (!$key) PMXI_Plugin::$session['pmxi_import']['filePath'] = $filePath;
-							$local_paths[] = $filePath;							
-						}
-						PMXI_Plugin::$session['pmxi_import']['local_paths'] = $local_paths;
-					}
+					PMXI_Plugin::$session['pmxi_import']['local_paths'] = $local_paths;
 				}
-
-				// counting selected elements			
-				PMXI_Plugin::$session['pmxi_import']['xpath'] = $post['xpath'];
-
-				if ($post['show_element'] == 1 and ! $post['pointer']) {
-					PMXI_Plugin::$session['pmxi_import']['count'] = $this->data['node_list_count'] = 0;					 														
-				}else{
-					if($post['show_element'] > 1 and ! $post['chunk'] ) $post['pointer'] = 0;
-					$this->data['node_list_count'] = PMXI_Plugin::$session->data['pmxi_import']['count'];										
-				}				
-							
-				$xpath_elements = explode('[', $post['xpath']);
-				$xpath_parts    = explode('/', $xpath_elements[0]);				
-				
-				PMXI_Plugin::$session['pmxi_import']['source']['root_element'] = $xpath_parts[count($xpath_parts) - 1];				
-
-				pmxi_session_commit();
-				
-				$loop = $post['chunk'] * 100 + 1; 								
-
-				foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {										
-					$file = new PMXI_Chunk($path, array('element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'path' => $wp_uploads['path']), $post['pointer']);
-				    // loop through the file until all lines are read				    				    			   				    
-				    while ($xml = $file->read()) {					      						    					    					    							
-				    	if (!empty($xml))
-				      	{							      		
-				      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>" . "\n" . $xml;
-				      		PMXI_Import_Record::preprocessXml($xml);
-					      	
-					      	$dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);
-							$old = libxml_use_internal_errors(true);
-							$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
-							libxml_use_internal_errors($old);
-							$xpath = new DOMXPath($dom);
-							
-							if (($this->data['elements'] = $elements = @$xpath->query($post['xpath'])) and $elements->length){								
-								if ( $post['show_element'] == 1 ){
-									$this->data['node_list_count'] += $elements->length;
-									PMXI_Plugin::$session['pmxi_import']['count'] = $this->data['node_list_count'];
-								}
-								
-								if ( $loop == $post['show_element'] ){
-									$this->data['dom'] = $dom;
-									if ($post['show_element'] > 1)										
-										break;
-								}
-								unset($dom, $xpath, $elements);								
-							}
-
-							if ($loop % 100 == 0){
-								exit( json_encode( array('result' => false, 'pointer' => $file->pointer, 'chunk' => ++$post['chunk'] ) ));
-							}
-
-							if ($this->data['elements']->length) $loop++;
-					    }
-					}
-					unset($file);					
-				}
-				if ( ! $this->data['node_list_count']) {
-					$this->errors->add('form-validation', __('No matching elements found for XPath expression specified', 'pmxi_plugin'));
-				}		
 			}
-			else{ // in default mode
-				$this->data['elements'] = $elements = @ $xpath->query($post['xpath']); // prevent parsing warning to be displayed
-				$this->data['node_list_count'] = $elements->length;
-				if (FALSE === $elements) {
-					$this->errors->add('form-validation', __('Invalid XPath expression', 'pmxi_plugin'));
-				} elseif ( ! $elements->length) {
-					$this->errors->add('form-validation', __('No matching elements found for XPath expression specified', 'pmxi_plugin'));
-				} else {
-					foreach ($elements as $el) {
-						if ( ! $el instanceof DOMElement) {
-							$this->errors->add('form-validation', __('XPath must match only elements', 'pmxi_plugin'));
-							break;
-						};
-					}
+
+			// counting selected elements			
+			PMXI_Plugin::$session['pmxi_import']['xpath'] = $post['xpath'];
+
+			$current_xpath = '';
+
+			if ($post['show_element'] == 1) {
+				PMXI_Plugin::$session['pmxi_import']['count'] = $this->data['node_list_count'] = 0;					 														
+			}else{				
+				$this->data['node_list_count'] = PMXI_Plugin::$session->data['pmxi_import']['count'];	
+				//$post['xpath'] .= '[' . $post['show_element'] . ']';									
+			}				
+						
+			$xpath_elements = explode('[', $post['xpath']);
+			$xpath_parts    = explode('/', $xpath_elements[0]);				
+			
+			PMXI_Plugin::$session['pmxi_import']['source']['root_element'] = $xpath_parts[1];				
+
+			pmxi_session_commit();									
+
+			$loop = 0;			
+
+			foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {		
+
+				$file = new PMXI_Chunk($path, array('element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'encoding' => PMXI_Plugin::$session->data['pmxi_import']['encoding']));
+
+			    // loop through the file until all lines are read				    				    			   				    
+			    while ($xml = $file->read()) {
+
+			    	if (!empty($xml))
+			      	{
+			      		PMXI_Import_Record::preprocessXml($xml);
+			      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>" . "\n" . $xml;					      		
+				      	
+				      	$dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);
+						$old = libxml_use_internal_errors(true);
+						$dom->loadXML($xml);
+						libxml_use_internal_errors($old);
+						$xpath = new DOMXPath($dom);
+						
+						if (($elements = @$xpath->query($post['xpath'])) and $elements->length){
+						
+							if ( $post['show_element'] == 1 ){
+								$this->data['node_list_count'] += $elements->length;
+								PMXI_Plugin::$session['pmxi_import']['count'] = $this->data['node_list_count'];
+								if (!$loop) $this->data['dom'] = $dom;
+							}
+							
+							$loop += $elements->length;							
+
+							if ( $post['show_element'] > 1 and $loop == $post['show_element']) {
+								$this->data['dom'] = $dom;
+								break(2);								
+							}
+
+							unset($dom, $xpath, $elements);		
+						}
+				    }
 				}
-			}			
+				unset($file);					
+			}
+			if ( ! $this->data['node_list_count']) {
+				$this->errors->add('form-validation', __('No matching elements found for XPath expression specified', 'pmxi_plugin'));
+			}					
 		}
 		
 		pmxi_session_commit();
 		
-		ob_start();
-		if ( ! $this->errors->get_error_codes()) {
-			//$this->shrink_xml_element($this->data['dom']->documentElement);
+		ob_start();		
+		if ( ! $this->errors->get_error_codes()) {			
 			$xpath = new DOMXPath($this->data['dom']);
 			$this->data['elements'] = $elements = @ $xpath->query($post['xpath']); // prevent parsing warning to be displayed			
 			$paths = array(); $this->data['paths'] =& $paths;
@@ -623,7 +557,16 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		} else {
 			$this->error();
 		}		
-		exit( json_encode( array('result' => true, 'html' => ob_get_clean() ) ));
+
+		$html = ob_get_clean();
+
+		ob_start();
+
+		if ( ! empty($elements->length) ) $this->render_xml_elements_for_filtring($elements->item(0));
+
+		$render_element = ob_get_clean();
+
+		exit( json_encode( array('result' => true, 'html' => $html, 'root_element' =>  PMXI_Plugin::$session['pmxi_import']['source']['root_element'], 'render_element' => $render_element )));
 	}
 
 	/**
@@ -635,17 +578,20 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
 		}		
 
-		$xpath = new DOMXPath($this->data['dom']);
-		$post = $this->input->post(array('xpath' => '', 'show_element' => 1, 'root_element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'tagno' => 0));
+		$post = $this->input->post(array('xpath' => '', 'show_element' => 1, 'root_element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'tagno' => 0, 'parent_tagno' => 1));
 		$wp_uploads = wp_upload_dir();
+
+		$this->get_xml( $post['parent_tagno'] );
+
+		$xpath = new DOMXPath($this->data['dom']);
 
 		$this->data['tagno'] = max(intval($this->input->getpost('tagno', 1)), 0);
 
 		if ('' == $post['xpath']) {
 			$this->errors->add('form-validation', __('No elements selected', 'pmxi_plugin'));
 		} else {			
-			$post['xpath'] = '/' . PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'] . '/'.  ltrim(trim(str_replace("[*]","",$post['xpath']),'{}'), '/');
-			
+			$post['xpath'] = '/' . ((!empty($this->data['update_previous']->root_element)) ? $this->data['update_previous']->root_element : PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']) .'/'.  ltrim(trim(str_replace("[*]","",$post['xpath']),'{}'), '/');					
+
 			// in default mode
 			$this->data['variation_elements'] = $elements = @ $xpath->query($post['xpath']); // prevent parsing warning to be displayed
 			$this->data['variation_list_count'] = $elements->length;
@@ -663,9 +609,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			}			
 		}
 		if ( ! $this->errors->get_error_codes()) {
-			
-			//$xpath = new DOMXPath($this->data['dom']);
-			//$this->data['variation_elements'] = $elements = @ $xpath->query($post['xpath']); // prevent parsing warning to be displayed			
+								
 			$paths = array(); $this->data['paths'] =& $paths;
 			if (PMXI_Plugin::getInstance()->getOption('highlight_limit') and $elements->length <= PMXI_Plugin::getInstance()->getOption('highlight_limit')) {
 				foreach ($elements as $el) {
@@ -699,15 +643,15 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 		if ($this->isWizard) {			
 			$this->data['post'] = $post = $this->input->post(
-				(isset(PMXI_Plugin::$session->data['pmxi_import']['template']) ? PMXI_Plugin::$session->data['pmxi_import']['template'] : array())
-				+ $default
-			);
+				apply_filters('pmxi_template_options', (isset(PMXI_Plugin::$session->data['pmxi_import']['template']) ? PMXI_Plugin::$session->data['pmxi_import']['template'] : array())
+				+ $default, $this->isWizard)
+			);						
 		} else {			
 			$this->data['post'] = $post = $this->input->post(
-				$this->data['import']->template
-				+ $default
+				apply_filters('pmxi_template_options', $this->data['import']->template
+				+ $default, $this->isWizard)
 			);			
-		}		
+		}	
 		
 		if (($load_template = $this->input->post('load_template'))) { // init form with template selected
 			if ( ! $template->getById($load_template)->isEmpty()) {
@@ -731,9 +675,9 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				$this->_validate_template($post['title'], 'Post title');
 			}
 
-			if ( ! empty($post['content'])) {
-				/*$this->errors->add('form-validation', __('Post content is empty', 'pmxi_plugin'));
-			} else {*/
+			if (empty($post['content'])) {
+				$this->errors->add('form-validation', __('Post content is empty', 'pmxi_plugin'));
+			} else {
 				$this->_validate_template($post['content'], 'Post content');
 			}							
 			
@@ -743,8 +687,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					PMXI_Plugin::$session['pmxi_import']['saved_template'] = $template->id;				
 				}
 				if ($this->isWizard) {
-					PMXI_Plugin::$session['pmxi_import']['template'] = $post;					
-					pmxi_session_commit();									
+					PMXI_Plugin::$session['pmxi_import']['template'] = $post;
+					pmxi_session_commit();
 					wp_redirect(add_query_arg('action', 'options', $this->baseUrl)); die();
 				} else {					
 					$this->data['import']->set('template', $post)->save();
@@ -767,8 +711,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		}
 		wp_enqueue_script('word-count');
 		add_thickbox();
-		wp_enqueue_script('media-upload');
-		add_action('admin_print_footer_scripts', 'wp_tiny_mce', 25);
+		wp_enqueue_script('media-upload');		
 		wp_enqueue_script('quicktags');
 		$this->render();
 	}
@@ -811,24 +754,13 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					$history_file = new PMXI_File_Record();
 					$history_file->getBy('id', $history[0]['id']);
 
-					if ($update_previous->large_import == 'Yes' and empty(PMXI_Plugin::$session->data['pmxi_import'])){
+					if (empty(PMXI_Plugin::$session->data['pmxi_import'])){
 						PMXI_Plugin::$session['pmxi_import']['filePath'] = $history_file->path;						
-						if (!@file_exists($history_file->path)) PMXI_Plugin::$session['pmxi_import']['filePath'] = $wp_uploads['basedir']  . '/wpallimport_history/' . $history_file->id;
-						PMXI_Plugin::$session['pmxi_import']['source']['root_element'] = $update_previous->root_element;						
-						PMXI_Plugin::$session['pmxi_import']['large_file'] = true;
+						if (!@file_exists($history_file->path)) PMXI_Plugin::$session['pmxi_import']['filePath'] = $wp_uploads['basedir']  . '/wpallimport_history/' . $history_file->id;						
 						PMXI_Plugin::$session['pmxi_import']['count'] = $update_previous->count;
 						PMXI_Plugin::$session['pmxi_import']['encoding'] = (!empty($update_previous->options['encoding'])) ? $update_previous->options['encoding'] : 'UTF-8';						
 						pmxi_session_commit();
-					}
-					/*else{ 						
-						$xml = @file_get_contents($history_file->path);																	
-						$this->data['dom'] = $dom = new DOMDocument('1.0', 'UTF-8');			
-						$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml));
-						$xpath = new DOMXPath($dom);
-
-						$this->data['elements'] = $elements = $xpath->query($update_previous->xpath);
-						if ( !$elements->length ) $this->data['elements'] = $elements = $xpath->query('.');
-					}*/
+					}					
 				}	
 
 			} else {
@@ -838,36 +770,36 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		$this->data['tagno'] = max(intval($this->input->getpost('tagno', 1)), 1);
 		
-		if (PMXI_Plugin::$session->data['pmxi_import']['large_file'] and $this->data['tagno']){	
+		if ($this->data['tagno']){	
 			
 			PMXI_Plugin::$session['pmxi_import']['local_paths'] = $local_paths = (!empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])) ? PMXI_Plugin::$session->data['pmxi_import']['local_paths'] : array(PMXI_Plugin::$session->data['pmxi_import']['filePath']);						
 			
-			$loop = 1;
+			$loop = 0;
 			
-			foreach ($local_paths as $key => $path) {												
+			foreach ($local_paths as $key => $path) {	
+
 				if (@file_exists($path)){				
 					
-					$file = new PMXI_Chunk($path, array('element' => (!empty($update_previous->root_element)) ? $update_previous->root_element : ((!empty($this->data['update_previous']->root_element)) ? $this->data['update_previous']->root_element : PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'])));								   
+					$file = new PMXI_Chunk($path, array('element' => (!empty($update_previous->root_element)) ? $update_previous->root_element : ((!empty($this->data['update_previous']->root_element)) ? $this->data['update_previous']->root_element : PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']), 'encoding' => PMXI_Plugin::$session->data['pmxi_import']['encoding']));								   
 				    // loop through the file until all lines are read				    				    			   			    
 				    while ($xml = $file->read()) {					      						    					    					    			    					    	
 				    
 				    	if (!empty($xml))
-				      	{						      						      		
-				      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>" . "\n" . $xml;		
-				      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      		
+				      	{						      			
+				      		PMXI_Import_Record::preprocessXml($xml);
+				      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>" . "\n" . $xml;						      			      						      							      					      		
 					      					      		
-					      	$dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);															
+					      	$dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);
 							$old = libxml_use_internal_errors(true);
-							$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
+							$dom->loadXML($xml);				
 							libxml_use_internal_errors($old);
 							$xpath = new DOMXPath($dom);
-							if (($this->data['elements'] = $elements = @$xpath->query(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) and $elements->length){ 														
-								if ($loop == $this->data['tagno']){ 	
-									PMXI_Plugin::$session['pmxi_import']['pointer'] = $file->pointer;
-									pmxi_session_commit();																								
-									break; 
-								} else unset($dom, $xpath, $elements);
-								$loop++;
+							if (($elements = @$xpath->query(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) and $elements->length){ 														
+								$this->data['elements'] = $elements;
+								$loop += $elements->length;
+								unset($dom, $xpath, $elements);								
+								if ($loop == $this->data['tagno'] or $loop == PMXI_Plugin::$session->data['pmxi_import']['count'])
+									break(2);
 							}											  					 
 					    }
 					}	
@@ -890,53 +822,56 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			'is_keep_linebreaks' => 0,
 			'is_leave_html' => 0,
 			'fix_characters' => 0,
-			'import_encoding' => 'UFT-8'
+			'import_encoding' => 'UTF-8',
+			'tagno' => 0
 		));		
 		$wp_uploads = wp_upload_dir();		
 
 		$legacy_handling = PMXI_Plugin::getInstance()->getOption('legacy_special_character_handling');
-		$tagno = min(max(intval($this->input->getpost('tagno', 1)), 1), ( ! PMXI_Plugin::$session->data['pmxi_import']['large_file']) ? $this->data['elements']->length : PMXI_Plugin::$session->data['pmxi_import']['count']);								
+		$this->data['tagno'] = $tagno = min(max(intval($this->input->getpost('tagno', 1)), 1), PMXI_Plugin::$session->data['pmxi_import']['count']);
 
 		$xml = '';
+		
+		$local_paths = (!empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])) ? PMXI_Plugin::$session->data['pmxi_import']['local_paths'] : array(PMXI_Plugin::$session->data['pmxi_import']['filePath']);						
 
-		if (PMXI_Plugin::$session->data['pmxi_import']['large_file']){ 
-			$loop = 1; 
-			foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {
+		$loop = 1; 
+		foreach ($local_paths as $key => $path) {
 
-				if (PMXI_Plugin::$session->data['pmxi_import']['encoding'] != $post['import_encoding'] and ! empty(PMXI_Plugin::$session->data['pmxi_import']['csv_paths'][$key])){
-					include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');	
-					$csv = new PMXI_CsvParser(PMXI_Plugin::$session->data['pmxi_import']['csv_paths'][$key], true, '', PMXI_Plugin::$is_csv, $post['import_encoding'], $path); // conver CSV to XML with selected encoding												
-				}
-
-				$file = new PMXI_Chunk($path, array('element' => (!empty($this->data['update_previous']->root_element)) ? $this->data['update_previous']->root_element : PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'path' => $wp_uploads['path']));								   
-			    // loop through the file until all lines are read				    				    			   			    
-			    while ($xml = $file->read()) {					      						    					    					    			    	
-			    	if (!empty($xml))
-			      	{			
-			      		$xml = "<?xml version=\"1.0\" encoding=\"". $post['import_encoding'] ."\"?>" . "\n" . $xml;			
-			      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      						      	
-				      	$dom = new DOMDocument('1.0', $post['import_encoding']);															
-						$old = libxml_use_internal_errors(true);
-						$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
-						libxml_use_internal_errors($old);
-						$xpath = new DOMXPath($dom);						
-						if (($this->data['elements'] = $elements = @$xpath->query(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) and $elements->length){ 						
-							if ( $loop == $tagno )
-								break; 											
-							unset($dom, $xpath, $elements);												
-							$loop++;
-						}											  					 
-				    }
-				}
-				unset($file);				
+			if (PMXI_Plugin::$session->data['pmxi_import']['encoding'] != $post['import_encoding'] and ! empty(PMXI_Plugin::$session->data['pmxi_import']['csv_paths'][$key])){
+				include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');	
+				$csv = new PMXI_CsvParser(PMXI_Plugin::$session->data['pmxi_import']['csv_paths'][$key], true, '', PMXI_Plugin::$is_csv, $post['import_encoding'], $path); // conver CSV to XML with selected encoding
 			}
-			$tagno = 1;			
+
+			$file = new PMXI_Chunk($path, array('element' => (!empty($this->data['update_previous']->root_element)) ? $this->data['update_previous']->root_element : PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'encoding' => $post['import_encoding']));
+		    // loop through the file until all lines are read				    				    			   			    
+		    while ($xml = $file->read()) {					      						    					    					    			    	
+		    	if (!empty($xml))
+		      	{			
+		      		PMXI_Import_Record::preprocessXml($xml);	      						      							      					      						      	
+		      		$xml = "<?xml version=\"1.0\" encoding=\"". $post['import_encoding'] ."\"?>" . "\n" . $xml;			
+		      		
+			      	$dom = new DOMDocument('1.0', $post['import_encoding']);															
+					$old = libxml_use_internal_errors(true);
+					$dom->loadXML($xml); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load							
+					libxml_use_internal_errors($old);
+					$xpath = new DOMXPath($dom);						
+					if (($this->data['elements'] = $elements = @$xpath->query(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) and $elements->length){ 						
+						unset($dom, $xpath, $elements);
+						if ( $loop == $tagno )
+							break(2); 																											
+						$loop++;
+					}											  					 
+			    }
+			}
+			unset($file);				
 		}
-		$xpath = "(" . PMXI_Plugin::$session->data['pmxi_import']['xpath'] . ")[$tagno]";		
-		//if ( "" != $xml){
-			PMXI_Plugin::$session['pmxi_import']['encoding'] = $post['import_encoding'];
-			pmxi_session_commit();
-		//}
+		//$this->data['tagno'] = $tagno = 1;			
+		
+		$xpath = "(" . PMXI_Plugin::$session->data['pmxi_import']['xpath'] . ")[1]";		
+		
+		PMXI_Plugin::$session['pmxi_import']['encoding'] = $post['import_encoding'];
+		pmxi_session_commit();
+		
 		// validate
 		try {
 			if (empty($xml)){
@@ -976,8 +911,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 	 * Step #4: Options
 	 */
 	public function options()
-	{
-		include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');
+	{		
 
 		$default = PMXI_Plugin::get_default_import_options();
 		
@@ -1010,73 +944,98 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					}					
 				}
 			}
+			
+			$DefaultOptions = (isset(PMXI_Plugin::$session->data['pmxi_import']['options']) ? PMXI_Plugin::$session->data['pmxi_import']['options'] : array()) + $default;
+			foreach (PMXI_Admin_Addons::get_active_addons() as $class) 
+				$DefaultOptions += call_user_func(array($class, "get_default_import_options"));			
 
-			if ( class_exists('PMWI_Plugin') )
-				$post = $this->input->post(
-					(isset(PMXI_Plugin::$session->data['pmxi_import']['options']) ? PMXI_Plugin::$session->data['pmxi_import']['options'] : array())
-					+ $default
-					+ PMWI_Plugin::get_default_import_options()
-				);
-			else 
-				$post = $this->input->post(
-					(isset(PMXI_Plugin::$session->data['pmxi_import']['options']) ? PMXI_Plugin::$session->data['pmxi_import']['options'] : array())
-					+ $default
-				);
-
-			$scheduled = $this->input->post(array(
-				'is_scheduled' => ! empty(PMXI_Plugin::$session->data['pmxi_import']['scheduled']),
-				'scheduled_period' => ! empty(PMXI_Plugin::$session->data['pmxi_import']['scheduled']) ? PMXI_Plugin::$session->data['pmxi_import']['scheduled'] : '0 0 * * *', // daily by default
-			));
+			$post = $this->input->post( apply_filters('pmxi_options_options', $DefaultOptions, $this->isWizard) );
 	
 		} else {
-			$this->data['source_type'] = $this->data['import']->type;			
-			if ( class_exists('PMWI_Plugin') )
-				$post = $this->input->post(
-					$this->data['import']->options
-					+ $default
-					+ PMWI_Plugin::get_default_import_options()
-				);
-			else
-				$post = $this->input->post(
-					$this->data['import']->options
-					+ $default
-				);
-			$scheduled = $this->input->post(array(
-				'is_scheduled' => ! empty($this->data['import']->scheduled),
-				'scheduled_period' => ! empty($this->data['import']->scheduled) ? $this->data['import']->scheduled : '0 0 * * *', // daily by default
-			));
+			$this->data['source_type'] = $this->data['import']->type;	
+			$DefaultOptions = $this->data['import']->options + $default;
+			foreach (PMXI_Admin_Addons::get_active_addons() as $class) 
+				$DefaultOptions += call_user_func(array($class, "get_default_import_options"));			
+
+			$post = $this->input->post( apply_filters( 'pmxi_options_options', $DefaultOptions, $this->isWizard) );	
 		}		
 
-		$this->data['post'] =& $post;		
-		$this->data['scheduled'] =& $scheduled;		
+		$this->data['post'] =& $post;				
 
 		// Get All meta keys in the system
 		$this->data['meta_keys'] = $keys = new PMXI_Model_List();
 		$keys->setTable(PMXI_Plugin::getInstance()->getWPPrefix() . 'postmeta');
-		$keys->setColumns('meta_id', 'meta_key')->getBy(NULL, "meta_id", NULL, NULL, "meta_key");
-		
+		$keys->setColumns('meta_id', 'meta_key')->getBy(NULL, "meta_id", NULL, NULL, "meta_key");			
+
+		global $wpdb;
+
+		$existing_attributes = $wpdb->get_results("SELECT meta_value FROM $wpdb->postmeta WHERE meta_key = '_product_attributes'" );
+
+		$this->data['existing_attributes'] = array();
+
+		if ( ! empty($existing_attributes)){
+			foreach ($existing_attributes as $key => $existing_attribute) {				
+				$existing_attribute = maybe_unserialize($existing_attribute->meta_value);				
+				if (!empty($existing_attribute) and is_array($existing_attribute)): 
+					foreach ($existing_attribute as $key => $value) {
+						if (strpos($key, "pa_") === false and ! in_array($key, $this->data['existing_attributes'])) $this->data['existing_attributes'][] = $key;
+					} 
+				endif;
+			}
+		}				
+
 		$load_template = $this->input->post('load_template');
 		if ($load_template) { // init form with template selected			 			
 			PMXI_Plugin::$session['pmxi_import']['is_loaded_template'] = $load_template;
 			$template = new PMXI_Template_Record();
 			if ( ! $template->getById($load_template)->isEmpty()) {					
-				$post = (!empty($template->options) ? $template->options : array()) + $default;
-				$scheduled = array(
-					'is_scheduled' => ! empty($template->scheduled),
-					'scheduled_period' => ! empty($template->scheduled) ? $template->scheduled : '0 0 * * *', // daily by default
-				);				
+				$post = (!empty($template->options) ? $template->options : array()) + $default;							
 			}
 		} elseif ($load_template == -1){
 			PMXI_Plugin::$session['pmxi_import']['is_loaded_template'] = 0;
 
-			$post = $default;				
-			$scheduled = $this->input->post(array(
-				'is_scheduled' => ! empty($post['scheduled']),
-				'scheduled_period' => ! empty($post['scheduled']) ? $post['scheduled_period'] : '0 0 * * *', // daily by default
-			));
+			$post = $default;							
 
-		} elseif ($this->input->post('is_submitted')) {
-			check_admin_referer('options', '_wpnonce_options');											
+		} elseif ($this->input->post('is_submitted')) {							
+
+			check_admin_referer('options', '_wpnonce_options');						
+
+			// Categories/taxonomies logic
+			if ($post['update_categories_logic'] == 'only'){
+				$post['taxonomies_list'] = explode(",", $post['taxonomies_only_list']); 
+			}
+			elseif ($post['update_categories_logic'] == 'all_except'){
+				$post['taxonomies_list'] = explode(",", $post['taxonomies_except_list']); 	
+			}			
+
+			// Custom fields logic
+			if ($post['update_custom_fields_logic'] == 'only'){
+				$post['custom_fields_list'] = explode(",", $post['custom_fields_only_list']); 
+			}
+			elseif ($post['update_custom_fields_logic'] == 'all_except'){
+				$post['custom_fields_list'] = explode(",", $post['custom_fields_except_list']); 	
+			}
+
+			// Attributes fields logic
+			$post = apply_filters('pmxi_save_options', $post);					
+						
+			// remove entires where both custom_name and custom_value are empty 
+			$not_empty = array_flip(array_values(array_merge(array_keys(array_filter($post['custom_name'], 'strlen')), array_keys(array_filter($post['custom_value'], 'strlen')))));
+
+			$post['custom_name'] = array_intersect_key($post['custom_name'], $not_empty);
+			$post['custom_value'] = array_intersect_key($post['custom_value'], $not_empty);
+			
+			// validate
+			if (array_keys(array_filter($post['custom_name'], 'strlen')) != array_keys(array_filter($post['custom_value'], 'strlen'))) {
+				$this->errors->add('form-validation', __('Both name and value must be set for all custom parameters', 'pmxi_plugin'));
+			} else {
+				foreach ($post['custom_name'] as $custom_name) {
+					$this->_validate_template($custom_name, __('Custom Field Name', 'pmxi_plugin'));
+				}
+				foreach ($post['custom_value'] as $custom_value) {
+					$this->_validate_template($custom_value, __('Custom Field Value', 'pmxi_plugin'));
+				}
+			}
 			
 			if ( $post['type'] == "post" and $post['custom_type'] == "product" and class_exists('PMWI_Plugin')){
 				// remove entires where both custom_name and custom_value are empty 
@@ -1105,6 +1064,14 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			if ('post' == $post['type']) {
 				/*'' == $post['categories'] or $this->_validate_template($post['categories'], __('Categories', 'pmxi_plugin'));*/
 				'' == $post['tags'] or $this->_validate_template($post['tags'], __('Tags', 'pmxi_plugin'));
+				if ( "" != $post['custom_type']) {
+					if ($post['custom_type'] != 'product'){
+						$this->_validate_template($post['custom_type'], __('Custom post type is not supported', 'pmxi_plugin'));
+					}
+					elseif ( ! class_exists('PMWI_Plugin') ){
+						$this->_validate_template($post['custom_type'], __('Custom post type is not supported', 'pmxi_plugin'));
+					}
+				}
 			}
 			if ('specific' == $post['date_type']) {
 				'' == $post['date'] or $this->_validate_template($post['date'], __('Date', 'pmxi_plugin'));
@@ -1124,7 +1091,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 						if ( ! preg_match('%^([1-9]\d*)( *- *([1-9]\d*))?$%', $chank, $mtch)) {
 							$this->errors->add('form-validation', __('Wrong format of `Import only specified records` value', 'pmxi_plugin'));
 							break;
-						} elseif ($this->isWizard and empty(PMXI_Plugin::$session->data['pmxi_import']['large_file']) and (intval($mtch[1]) > $this->data['elements']->length or isset($mtch[3]) and intval($mtch[3]) > $this->data['elements']->length)) {
+						} elseif (isset($mtch[3]) and intval($mtch[3]) > PMXI_Plugin::$session->data['pmxi_import']['count']) {
 							$this->errors->add('form-validation', __('One of the numbers in `Import only specified records` value exceeds record quantity in XML file', 'pmxi_plugin'));
 							break;
 						}
@@ -1142,6 +1109,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				if ('' == $post['custom_duplicate_value'])
 					$this->errors->add('form-validation', __('Custom field value must be specified.', 'pmxi_plugin'));
 			}
+
+			apply_filters('pmxi_options_validation', $this->errors, $post, $this->data['import']);
 			
 			if ( ! $this->errors->get_error_codes()) { // no validation errors found
 				// assign some defaults
@@ -1154,14 +1123,12 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					
 					$template->getByName($this->input->post('name'))->set(array(
 						'name' => $this->input->post('name'),
-						'options' => $post,
-						'scheduled' => (($scheduled['is_scheduled']) ? $scheduled['scheduled_period'] : '')
+						'options' => $post,						
 					))->save();						
 				}
 
 				if ($this->isWizard) {
 					PMXI_Plugin::$session['pmxi_import']['options'] = $post;
-					PMXI_Plugin::$session['pmxi_import']['scheduled'] = $scheduled['is_scheduled'] ? $scheduled['scheduled_period'] : '';					
 
 					pmxi_session_commit();
 
@@ -1176,7 +1143,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 								'xpath' => PMXI_Plugin::$session->data['pmxi_import']['xpath'],
 								'template' => PMXI_Plugin::$session->data['pmxi_import']['template'],
 								'options' => PMXI_Plugin::$session->data['pmxi_import']['options'],
-								'scheduled' => PMXI_Plugin::$session->data['pmxi_import']['scheduled'],
+								//'scheduled' => PMXI_Plugin::$session->data['pmxi_import']['scheduled'],
 								'count' => PMXI_Plugin::$session->data['pmxi_import']['count'],
 								'friendly_name' => $this->data['post']['friendly_name'],
 							)
@@ -1187,19 +1154,17 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 							'name' => $import->name,
 							'import_id' => $import->id,
 							'path' => PMXI_Plugin::$session->data['pmxi_import']['filePath'],
-							'contents' => $this->get_xml(), //PMXI_Plugin::$session->data['pmxi_import']['xml'],
+							'contents' => $this->get_xml(), 
 							'registered_on' => date('Y-m-d H:i:s'),
 						))->save();	
 
-						pmxi_session_unset();
-						
-						//unset(PMXI_Plugin::$session->data['pmxi_import']); // clear session data
+						pmxi_session_unset();												
 
 						wp_redirect(add_query_arg(array('page' => 'pmxi-admin-manage', 'pmlc_nt' => urlencode($is_update ? __('Import updated', 'pmxi_plugin') : __('Import created', 'pmxi_plugin'))), admin_url('admin.php'))); die();
 					}
 				} else {
 
-					$this->data['import']->set('options', $post)->set( array( 'scheduled' => $scheduled['is_scheduled'] ? $scheduled['scheduled_period'] : '', 'friendly_name' => $this->data['post']['friendly_name'] ) )->save();
+					$this->data['import']->set('options', $post)->set( array( 'scheduled' => '', 'friendly_name' => $this->data['post']['friendly_name'] ) )->save();
 					
 					wp_redirect(add_query_arg(array('page' => 'pmxi-admin-manage', 'pmlc_nt' => urlencode(__('Options updated', 'pmxi_plugin'))) + array_intersect_key($_GET, array_flip($this->baseUrlParamNames)), admin_url('admin.php'))); die();
 				} 
@@ -1216,45 +1181,50 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		pmxi_session_commit();
 		
 		$this->render();
-	}
+	}	
 
 	/**
 	 * Import processing step (status console)
 	 */
 	public function process($save_history = true)
 	{
-		$wp_uploads = wp_upload_dir();
-		@set_time_limit(0);													
+		$wp_uploads = wp_upload_dir();		
+													
 		$import = $this->data['update_previous'];				
 		$logger = create_function('$m', 'echo "<div class=\\"progress-msg\\">$m</div>\\n"; if ( "" != strip_tags(pmxi_strip_tags_content($m))) { PMXI_Plugin::$session[\'pmxi_import\'][\'log\'] .= "<p>".strip_tags(pmxi_strip_tags_content($m))."</p>"; flush(); }');								
 
-		if ( ! PMXI_Plugin::is_ajax()) {										
-			// Save import history			
-
-			PMXI_Plugin::$session['pmxi_import']['pointer'] = 0;
-			pmxi_session_commit();
+		if ( ! PMXI_Plugin::is_ajax() ) {																
 
 			$import->set(
 				(empty(PMXI_Plugin::$session->data['pmxi_import']['source']) ? array() : PMXI_Plugin::$session->data['pmxi_import']['source'])
 				+ array(
 					'xpath' => PMXI_Plugin::$session->data['pmxi_import']['xpath'],
 					'template' => PMXI_Plugin::$session->data['pmxi_import']['template'],
-					'options' => PMXI_Plugin::$session->data['pmxi_import']['options'],				
-					'scheduled' => PMXI_Plugin::$session->data['pmxi_import']['scheduled'],	
+					'options' => PMXI_Plugin::$session->data['pmxi_import']['options'],									
 					'count' => PMXI_Plugin::$session->data['pmxi_import']['count'],
 					'friendly_name' => PMXI_Plugin::$session->data['pmxi_import']['options']['friendly_name'],
-					'feed_type' => PMXI_Plugin::$session->data['pmxi_import']['feed_type']						
+					'feed_type' => PMXI_Plugin::$session->data['pmxi_import']['feed_type'],
+					'parent_import_id' => ($this->data['update_previous']->isEmpty()) ? PMXI_Plugin::$session->data['pmxi_import']['parent_import_id'] : $this->data['update_previous']->parent_import_id,
+					'queue_chunk_number' => 0,
+					'triggered' => 0,
+					'processing' => 0,					
 				)
-			);
+			)->save();
 
-			// store import info in database			
-			$import->set(array(
-				'imported' => 0,
-				'created' => 0,
-				'updated' => 0,
-				'skipped' => 0					
-			))->save();			
-			
+			if ( PMXI_Plugin::$session->data['pmxi_import']['action'] != 'continue' ){
+				// store import info in database
+				$import->set(array(
+					'imported' => 0,
+					'created' => 0,
+					'updated' => 0,
+					'skipped' => 0,		
+					'current_post_ids' => ''	
+				))->update();			
+			}								
+
+			foreach ( get_taxonomies() as $tax ) 
+				delete_transient("pmxi_{$tax}_terms");
+
 			do_action( 'pmxi_before_xml_import', $import->id );	
 
 			PMXI_Plugin::$session['pmxi_import']['update_previous'] = $import->id;
@@ -1278,79 +1248,206 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					'import_id' => $import->id,
 					'path' => PMXI_Plugin::$session->data['pmxi_import']['filePath'],
 					'contents' => $this->get_xml(),
-					'registered_on' => date('Y-m-d H:i:s'),
+					'registered_on' => date('Y-m-d H:i:s')
 				))->save();
-			}					
+			}																	
+
+			/*
+				Split file up into 1000 record chunks.			
+				This option will decrease the amount of slowdown experienced at the end of large imports. 
+				The slowdown is partially caused by the need for WP All Import to read deeper and deeper into the file on each successive iteration. 
+				Splitting the file into pieces means that, for example, instead of having to read 19000 records into a 20000 record file when importing the last 1000 records, 
+				WP All Import will just split it into 20 chunks, and then read the last chunk from the beginning.
+			*/
+			if ( "ajax" == $import->options['import_processing'] and $import->count > PMXI_Plugin::getInstance()->getOption('large_feed_limit') and $import->options['chuncking'] ){ 
+
+				$chunk_files = array();
+
+				if (!empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])){
+
+					$records_count = 0;
+					$chunk_records_count = 0;
+
+					$feed = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . "<pmxi_records>";
+
+					foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {
+
+						$file = new PMXI_Chunk($path, array('element' => $import->root_element, 'encoding' => $import->options['encoding']));												
+
+					    // loop through the file until all lines are read				    				    			   			   	    			    			    
+					    while ($xml = $file->read()) {				    	
+
+					    	if ( ! empty($xml) )
+					      	{
+					      		PMXI_Import_Record::preprocessXml($xml);
+					      		$chunk = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . $xml;					      		
+						      					      		
+						      	$dom = new DOMDocument('1.0', $import->options['encoding']);
+								$old = libxml_use_internal_errors(true);
+								$dom->loadXML($chunk); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load											
+								libxml_use_internal_errors($old);
+								$xpath = new DOMXPath($dom);								
+
+								if ($elements = @$xpath->query($import->xpath) and $elements->length){		
+									$records_count += $elements->length;
+									$chunk_records_count += $elements->length;
+									$feed .= $xml;
+								}
+							}
+
+							if ( $chunk_records_count == PMXI_Plugin::getInstance()->getOption('large_feed_limit') or $records_count == $import->count ){
+								$feed .= "</pmxi_records>";
+								$chunk_file_path = $wp_uploads['path'] . "/pmxi_chunk_" . count($chunk_files) . "_" . basename($path);
+								file_put_contents($chunk_file_path, $feed);
+								$chunk_files[] = $chunk_file_path;
+								$chunk_records_count = 0;
+								$feed = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . "<pmxi_records>";
+							}
+						}						
+					}
+					PMXI_Plugin::$session['pmxi_import']['local_paths'] = $chunk_files;
+				}								
+			}
+
+			pmxi_session_commit();
 
 			$this->render();
-			wp_ob_end_flush_all(); flush();							
+			wp_ob_end_flush_all(); flush();
+			@set_time_limit(0);	
 
-		}
+			if ( "ajax" == $import->options['import_processing'] ) die();
+		}		
 		elseif (empty($import->id)){
 			$import = new PMXI_Import_Record();
 			$import->getById(PMXI_Plugin::$session->data['pmxi_import']['update_previous']);
-		}										
+		}
+		
+		$ajax_processing = ("ajax" == $import->options['import_processing']) ? true : false;
 
 		PMXI_Plugin::$session['pmxi_import']['start_time'] = (empty(PMXI_Plugin::$session->data['pmxi_import']['start_time'])) ? time() : PMXI_Plugin::$session->data['pmxi_import']['start_time'];								
 
-		if (PMXI_Plugin::is_ajax()) {
-			
-			PMXI_Plugin::$session['pmxi_import']['current_post_ids'] = (empty(PMXI_Plugin::$session->data['pmxi_import']['current_post_ids'])) ? array() : PMXI_Plugin::$session->data['pmxi_import']['current_post_ids'];			
-			PMXI_Plugin::$session['pmxi_import']['pointer'] = (empty(PMXI_Plugin::$session->data['pmxi_import']['pointer'])) ? 0 : PMXI_Plugin::$session->data['pmxi_import']['pointer'];			
-			pmxi_session_commit();
+		wp_cache_flush();
 
-			$loop = 0;																
+		if ( PMXI_Plugin::is_ajax() or ! $ajax_processing ) {			
+
+			if ( "ajax" == $import->options['import_processing'] ) {
+				// HTTP headers for no cache etc
+				header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
+				header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
+				header("Cache-Control: no-store, no-cache, must-revalidate");
+				header("Cache-Control: post-check=0, pre-check=0", false);
+				header("Pragma: no-cache");									
+			}
+
+			$loop = 0;	
+			$pointer = 0;			
+			$records = array();
+
+			if ($import->options['is_import_specified']) {								
+				foreach (preg_split('% *, *%', $import->options['import_specified'], -1, PREG_SPLIT_NO_EMPTY) as $chank) {
+					if (preg_match('%^(\d+)-(\d+)$%', $chank, $mtch)) {
+						$records = array_merge($records, range(intval($mtch[1]), intval($mtch[2])));
+					} else {
+						$records = array_merge($records, array(intval($chank)));
+					}
+				}
+			}												
+
+			$records_to_import = (empty($records)) ? $import->count : $records[count($records) -1];
+
+			$records_per_request = ( ! $ajax_processing and $import->options['records_per_request'] < 50 ) ? 50 : $import->options['records_per_request'];
 
 			if (!empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])){
 
-				foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {																
+				$feed = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . "<pmxi_records>";
 
-					$file = new PMXI_Chunk($path, array('element' => PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'], 'path' => $wp_uploads['path']), PMXI_Plugin::$session->data['pmxi_import']['pointer']);							  	 					
+				foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {
 
+					$import_done = ($import->imported + $import->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'] == $records_to_import ) ? true : false;
+
+			    	if ( $import_done ) {
+			    		if (strpos($path, "pmxi_chunk_") !== false and @file_exists($path)) @unlink($path);			    		
+				    	PMXI_Plugin::$session['pmxi_import']['local_paths'] = array();
+				    	pmxi_session_commit();
+				    	break;
+				    }
+						
+					$file = new PMXI_Chunk($path, array('element' => $import->root_element, 'encoding' => $import->options['encoding'], 'pointer' => PMXI_Plugin::$session->data['pmxi_import']['pointer']));												
 				    // loop through the file until all lines are read				    				    			   			   	    			    			    
 				    while ($xml = $file->read()) {				    	
-				    	if (!empty($xml))
+
+				    	if ( ! empty($xml) )
 				      	{
-				      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>"  . "\n" . $xml;
 				      		PMXI_Import_Record::preprocessXml($xml);
+				      		$chunk = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . $xml;				      		
 					      					      		
-					      	$dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);
-							$old = libxml_use_internal_errors(true);
-							$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load
+					      	$dom = new DOMDocument('1.0', $import->options['encoding']);
+							$old = libxml_use_internal_errors(true);							
+							$dom->loadXML($chunk); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load	
 							libxml_use_internal_errors($old);
 							$xpath = new DOMXPath($dom);
-							if (($this->data['elements'] = $elements = @$xpath->query(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) and $elements->length){
-								PMXI_Plugin::$session['pmxi_import']['pointer'] = $file->pointer;																					
-								if ( ! $loop ) ob_start();								
-								do_action('pmxi_before_post_import', $import->id);								
-								$import->process($xml, $logger, PMXI_Plugin::$session->data['pmxi_import']['chunk_number']);									
-								do_action('pmxi_after_post_import', $import->id);
-								if (($import->created + $import->updated + $import->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'] == $import->count) and !in_array($import->type, array('ftp'))){					    								    
-							    	PMXI_Plugin::$session['pmxi_import']['pointer'] = 0;
-							    	array_shift(PMXI_Plugin::$session->data['pmxi_import']['local_paths']);
-							    	PMXI_Plugin::$session['pmxi_import']['local_paths'] = PMXI_Plugin::$session->data['pmxi_import']['local_paths'];
-							    	unset($dom, $xpath);
-							    	pmxi_session_commit();
-							    	exit(ob_get_clean());
-							    } 						
-								if ( $loop == PMXI_Plugin::$session->data['pmxi_import']['options']['records_per_request'] - 1 ) exit(ob_get_clean());
-								$loop++;
-							}
-					    }					    					    						
 
-					    if (($import->created + $import->updated + $import->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'] == $import->count) and !in_array($import->type, array('ftp'))){					    						    	
-					    	PMXI_Plugin::$session['pmxi_import']['pointer'] = 0;
-					    	array_shift(PMXI_Plugin::$session->data['pmxi_import']['local_paths']);
-					    	PMXI_Plugin::$session['pmxi_import']['local_paths'] = PMXI_Plugin::$session->data['pmxi_import']['local_paths'];
-					    	pmxi_session_commit();
-					    	exit(ob_get_clean());
-					    } 					    				    									
-					}															    				    																	
+							$pointer++;
+
+							if (($this->data['elements'] = $elements = @$xpath->query($import->xpath)) and $elements->length){
+									
+								// continue action
+								if ( $import->imported + $import->skipped >= PMXI_Plugin::$session->data['pmxi_import']['chunk_number'] + $elements->length - 1 ){
+									PMXI_Plugin::$session['pmxi_import']['chunk_number'] = PMXI_Plugin::$session->data['pmxi_import']['chunk_number'] + $elements->length;									
+									pmxi_session_commit();
+									continue;
+								}	
+
+								if ( ! $loop and $ajax_processing ) ob_start();								
+
+								$feed .= $xml; $loop += $elements->length;
+
+								$processed_records = $import->imported + $import->skipped + PMXI_Plugin::$session->data['pmxi_import']['errors'];
+
+								if ( $loop == $records_per_request or $processed_records + $loop == $records_to_import or $processed_records == $records_to_import) {
+
+									$feed .= "</pmxi_records>";																														
+									$import->process($feed, $logger, PMXI_Plugin::$session->data['pmxi_import']['chunk_number'], false, '/pmxi_records');																											
+									unset($dom, $xpath);									
+
+									if ( ! $ajax_processing ){
+										$feed = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . "<pmxi_records>";
+										$loop = 0;	
+									} else {
+										unset($file);
+										PMXI_Plugin::$session['pmxi_import']['pointer'] = PMXI_Plugin::$session->data['pmxi_import']['pointer'] + $pointer;
+										pmxi_session_commit();
+										wp_send_json(array(
+											'created' => $import->created,
+											'updated' => $import->updated,										
+											'percentage' => ceil(($processed_records/$import->count) * 100),
+											'warnings' => PMXI_Plugin::$session->data['pmxi_import']['warnings'],
+											'errors' => PMXI_Plugin::$session->data['pmxi_import']['errors'],
+											'log' => ob_get_clean(),
+											'done' => false 
+										));														
+									}
+								}								
+							}
+					    }
+					}						
+
+					// Move to the next file, set pointer to first element
+					if ( $ajax_processing ) {
+						
+						if (strpos($path, "pmxi_chunk_") !== false and @file_exists($path)) @unlink($path);
+
+						PMXI_Plugin::$session['pmxi_import']['pointer'] = 1;
+						$pointer = 0;
+				    	array_shift(PMXI_Plugin::$session->data['pmxi_import']['local_paths']);
+				    	PMXI_Plugin::$session['pmxi_import']['local_paths'] = PMXI_Plugin::$session->data['pmxi_import']['local_paths'];				    	
+				    	pmxi_session_commit();
+				    } 					    				    																		
 				}
 			}								
 		}			
-				
-		if ( ! PMXI_Plugin::$session->data['pmxi_import']['large_file'] or PMXI_Plugin::is_ajax()){
+		
+		if ( ( PMXI_Plugin::is_ajax() and empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths']) ) or ! $ajax_processing ){
 			
 			// Save import process log
 			$log_file = $wp_uploads['basedir'] . '/wpallimport_logs/' . $import->id . '.html';
@@ -1365,27 +1462,24 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				_get_term_hierarchy( $tax );
 			}
 			
+			$import->set('registered_on', date('Y-m-d H:i:s'))->update();				
+
 			// clear import session
 			pmxi_session_unset(); // clear session data (prevent from reimporting the same data on page refresh)
 
 			// [indicate in header process is complete]
 			$msg = addcslashes(__('Complete', 'pmxi_plugin'), "\n\r");	
 
-			ob_start();
+			if ( $ajax_processing ) ob_start();			
 
-			echo '<a id="download_pmxi_log" class="update" href="'.esc_url(add_query_arg(array('id' => $import->id, 'action' => 'log', 'page' => 'pmxi-admin-manage'), $this->baseUrl)).'">'.__('Download log','pmxi_plugin').'</a>';
+			$import->options['is_import_specified'] and $logger and call_user_func($logger, 'Done');	
 
 echo <<<COMPLETE
 <script type="text/javascript">
 //<![CDATA[
-(function($){
-	var percents = $('.import_percent:last').html();
-	if (percents != null && percents != ''){	
-		$('#center_progress').html($('.import_process_bar:last').html());
-		$('#right_progress').html(percents + '%');
-	    $('#progressbar div').css({'width': ((parseInt(percents) > 100) ? 100 : percents) + '%'});
-	}
-	$('#status').attr('rel',1).html('$msg');
+(function($){	
+	$('#status').html('$msg');
+	$('#import_finished').show();
 	window.onbeforeunload = false;
 })(jQuery);
 //]]>
@@ -1393,10 +1487,21 @@ echo <<<COMPLETE
 COMPLETE;
 // [/indicate in header process is complete]	
 			
-			exit(ob_get_clean());	
+			if ( $ajax_processing ) {
 
+				wp_send_json(array(
+					'created' => $import->created,
+					'updated' => $import->updated,				
+					'percentage' => 100,
+					'warnings' => PMXI_Plugin::$session->data['pmxi_import']['warnings'],
+					'errors' => PMXI_Plugin::$session->data['pmxi_import']['errors'],
+					'log' => ob_get_clean(),					
+					'done' => true
+				));			
+
+			}
 		}		
-	}
+	}	
 
 	protected $_sibling_limit = 20;
 	protected function get_xml_path(DOMElement $el, DOMXPath $xpath)
@@ -1491,6 +1596,23 @@ COMPLETE;
 			echo '<div class="xml-tag opening empty">&lt;<span class="xml-tag-name">' . $el->nodeName . '</span>'; $this->render_xml_attributes($el); echo '/&gt;</div>';
 		}
 		echo '</div>';
+	}
+	protected function render_xml_elements_for_filtring(DOMElement $el, $path ='', $lvl = 0){		
+		if ("" != $path){ 
+			if ($lvl > 1) $path .= "->" . $el->nodeName; else $path = $el->nodeName; 
+			echo '<option value="'.$path.'">' .$path . '</option>';
+		}
+		else $path = $el->nodeName;		
+				
+		foreach ($el->attributes as $attr) {
+			echo '<option value="'.$path . '@' . $attr->nodeName.'">'. $path . '@' . $attr->nodeName . '</option>';
+		}
+		if ($el->hasChildNodes()) {
+			foreach ($el->childNodes as $child) {
+				if ($child instanceof DOMElement) 
+					$this->render_xml_elements_for_filtring($child, $path, $lvl + 1);
+			}
+		}		
 	}
 	protected $_unique_key = array();
 	protected function find_unique_key(DOMElement $el){
@@ -1643,42 +1765,52 @@ COMPLETE;
 	    $toDom->appendChild($toDom->ownerDocument->importNode($fromDom, true));
 	}
 	
-	protected function get_xml(){
+	protected function get_xml($tagno = 0){
 		$xml = '';
+		$customXpath = PMXI_Plugin::$session->data['pmxi_import']['xpath'];
 		$wp_uploads = wp_upload_dir();			
 		$update_previous = new PMXI_Import_Record();
 
-		if ( !empty(PMXI_Plugin::$session->data['pmxi_import']['update_previous']))						
-			$update_previous->getById(PMXI_Plugin::$session->data['pmxi_import']['update_previous']);								
+		if ( ! empty(PMXI_Plugin::$session->data['pmxi_import']['update_previous'])) $update_previous->getById(PMXI_Plugin::$session->data['pmxi_import']['update_previous']);
 
-		if (!empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])) {
+		if ( ! empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths'])) {
+
+			$loop = 0;
 			foreach (PMXI_Plugin::$session->data['pmxi_import']['local_paths'] as $key => $path) {																						
 
 				if ( @file_exists($path) ){								
 					
 					$root_element = ( ! $update_previous->isEmpty() ) ? $update_previous->root_element : PMXI_Plugin::$session->data['pmxi_import']['source']['root_element'];
 
-					$file = new PMXI_Chunk($path, array('element' => $root_element, 'path' => $wp_uploads['path']), (!empty(PMXI_Plugin::$session->data['pmxi_import']['pointer'])) ? PMXI_Plugin::$session->data['pmxi_import']['pointer'] : 0);					
-				    while ($xml = $file->read()) {					      						    					    					    					    					    	
-				    	if (!empty($xml))
-				      	{										      						  					      		
-				      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>" . "\n" . $xml;
-				      		PMXI_Import_Record::preprocessXml($xml);				      		
+					$file = new PMXI_Chunk($path, array('element' => $root_element, 'encoding' => PMXI_Plugin::$session->data['pmxi_import']['encoding']));															
 
-					      	if ( '' != PMXI_Plugin::$session->data['pmxi_import']['xpath']){
+				    while ($xml = $file->read()) {					      						    					    					    					    					    					    				    					    	
+
+				    	if (!empty($xml))
+				      	{								      		
+				      		PMXI_Import_Record::preprocessXml($xml);
+				      		$xml = "<?xml version=\"1.0\" encoding=\"". PMXI_Plugin::$session->data['pmxi_import']['encoding'] ."\"?>" . "\n" . $xml;				      						      						      		
+				    					    	
+					      	if ( '' != $customXpath){
 						      	$dom = new DOMDocument('1.0', PMXI_Plugin::$session->data['pmxi_import']['encoding']);
 								$old = libxml_use_internal_errors(true);
-								$dom->loadXML(preg_replace('%xmlns\s*=\s*([\'"]).*\1%sU', '', $xml)); // FIX: libxml xpath doesn't handle default namespace properly, so remove it upon XML load
+								$dom->loadXML($xml);
 								libxml_use_internal_errors($old);
-								$xpath = new DOMXPath($dom);
-								if (($elements = @$xpath->query(PMXI_Plugin::$session->data['pmxi_import']['xpath'])) and $elements->length) break;									
+								$xpath = new DOMXPath($dom);									
+								if (($elements = $xpath->query($customXpath)) and $elements->length){
+									$this->data['dom'] = $dom;
+									$loop++;
+									if ( ! $tagno or $loop == $tagno ) break;
+								}										
 							}
 							else break;
 					    }
 					}
+					unset($file);		
+
 				}
-			}
-		}						
+			}			
+		}			
 		return $xml;
 	}
 }

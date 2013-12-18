@@ -17,9 +17,11 @@ $config = array(
 	"html_entities" => 0,
 	"utf8_decode" => 0,
 	"cron_job_key" => url_title(rand_char(12)),
-	"chunk_size" => 64,
+	"chunk_size" => 32,
 	"pingbacks" => 1,
 	"legacy_special_character_handling" => 1,
 	"case_sensitive" => 1,
-	"session_mode" => 'default'
+	"session_mode" => 'default',
+	"enable_ftp_import" => 0,
+	"large_feed_limit" => 1000
 );

@@ -25,6 +25,26 @@ function pmxi_admin_notices() {
 			) ?>
 		</p></div>
 		<?php
+	}	
+
+	if ( class_exists( 'PMWI_Plugin' ) and ( version_compare(PMWI_VERSION, '1.2.3') <= 0 and PMWI_EDITION == 'paid' or version_compare(PMWI_FREE_VERSION, '1.1.0') < 0 and PMWI_EDITION == 'free') ) {
+		?>
+		<div class="error"><p>
+			<?php printf(
+					__('<b>%s Plugin</b>: Please update your WP All Import WooCommerce add-on to the latest version</a>', 'pmwi_plugin'),
+					PMWI_Plugin::getInstance()->getName()
+			) ?>
+		</p></div>
+		<?php
+		
+		if (PMWI_EDITION == 'paid')
+		{
+			deactivate_plugins( PMWI_ROOT_DIR . '/plugin.php');
+		}
+		else 
+		{	
+			deactivate_plugins( PMWI_FREE_ROOT_DIR . '/plugin.php');		
+		}
 	}
 
 	$input = new PMXI_Input();

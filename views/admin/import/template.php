@@ -13,6 +13,8 @@
 
 	<h3><?php _e('Drag-and-drop an element from the right to the left to build your template','pmxi_plugin');?></h3>
 
+	<?php do_action('pmxi_template_header', $this->isWizard, $post); ?>
+
 	<table class="layout">
 		<tr>
 			<td class="left">
@@ -30,7 +32,7 @@
 					<div id="<?php echo user_can_richedit() ? 'postdivrich' : 'postdiv'; ?>" class="postarea">
 
 						<?php wp_editor($post['content'], 'content', array(
-								'dfw' => true,								
+								'teeny' => true,								
 								'editor_height' => 360)); 
 						?>
 						<table id="post-status-info" cellspacing="0">
@@ -49,7 +51,7 @@
 					<p style="margin-bottom:0px;">
 						<span class="header-option">
 							<input type="hidden" name="is_keep_linebreaks" value="0" />
-							<input type="checkbox" id="is_keep_linebreaks" name="is_keep_linebreaks" value="1" <?php echo $post['is_keep_linebreaks'] ? 'checked="checked"' : '' ?> />
+							<input type="checkbox" id="is_keep_linebreaks" name="is_keep_linebreaks" class="fix_checkbox" value="1" <?php echo $post['is_keep_linebreaks'] ? 'checked="checked"' : '' ?> />
 							<label for="is_keep_linebreaks"><?php _e('Keep line breaks from XML', 'pmxi_plugin') ?></label>
 						</span>						
 					</p>
@@ -58,7 +60,7 @@
 					<p style="margin-bottom:0px; margin-top:2px;">
 						<span class="header-option">
 							<input type="hidden" name="is_leave_html" value="0" />
-							<input type="checkbox" id="is_leave_html" name="is_leave_html" value="1" <?php echo $post['is_leave_html'] ? 'checked="checked"' : '' ?> style="position:relative;"/>
+							<input type="checkbox" id="is_leave_html" name="is_leave_html" class="fix_checkbox" value="1" <?php echo $post['is_leave_html'] ? 'checked="checked"' : '' ?> style="position:relative;"/>
 							<label for="is_leave_html"><?php _e('Decode HTML entities with <b>html_entity_decode</b>', 'pmxi_plugin') ?></label>
 							<a class="help" href="#help" original-title="If HTML code is showing up in your posts, use this option. You can also use <br /><br /><i>[html_entity_decode({my/xpath})]</i><br /><br /> or <br /><br /><i>[htmlentities({my/xpath})]</i><br /><br /> to decode or encode HTML in your file.">?</a>
 						</span>						
@@ -70,7 +72,7 @@
 
 				<div class="input">
 					<p style="margin-top:0px;">
-						<input type="checkbox" id="save_template_as" name="save_template_as" value="1" <?php echo ( ! empty($post['save_template_as'])) ? 'checked="checked"' : '' ?> /> 
+						<input type="checkbox" id="save_template_as" name="save_template_as" class="fix_checkbox" value="1" <?php echo ( ! empty($post['save_template_as'])) ? 'checked="checked"' : '' ?> /> 
 						<label for="save_template_as"><?php _e('Save template as:','pmxi_plugin');?></label> &nbsp;
 						<input type="text" name="name" title="<?php _e('Save Template As...', 'pmxi_plugin') ?>" style="vertical-align:middle; font-size:13px;" value="<?php echo esc_attr($post['name']) ?>" />
 					</p>

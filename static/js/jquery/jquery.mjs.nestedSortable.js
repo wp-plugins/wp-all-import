@@ -343,7 +343,7 @@
 											 .match(o.expression || (/(.+)[-=_](.+)/));
 					pid = parentItem[2];
 				}
-
+				
 				if (id) {
 						ret.push({"item_id": id[2], "parent_id": pid, "delim": $(item).parents('.post_taxonomy:first').find('input.tax_delim').val(), "left": left, "right": right, "xpath":$(item).find('input.widefat').val(), "assign":$(item).find('input.assign_post:first').is(':checked'), "auto_nested":$(item).parents('.post_taxonomy:first').find('input.taxonomy_auto_nested').is(':checked')});
 				}

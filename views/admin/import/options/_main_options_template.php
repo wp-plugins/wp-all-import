@@ -1,8 +1,37 @@
 <tr>
 	<td style="border-bottom:1px solid #ccc;" colspan="3">
+
+		<?php if ($post_type != "post"):?>
+			
+		<center>
+
+			<?php if ($post_type == "product" and class_exists('PMWI_Plugin')):?>	
+				
+				<?php if (PMWI_EDITION == 'free'):?>
+					<h3>Get our WooCommerce add-on to import to Simple, Variable, Grouped, and Affiliate/External products</h3>					
+					<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-fields&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+				<?php endif; ?>
+
+				<input type="hidden" class="is_disabled" value="0"/>
+
+			<?php else: ?>
+				<h3>Please upgrade to the professional version of WP All Import to import to Custom Post Types.</h3>
+				<input type="hidden" class="is_disabled" value="1"/>
+				<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-fields&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+			<?php endif; ?>					
+
+			<hr />
+
+		</center>
+
+		<?php else: ?>
+
+		<input type="hidden" class="is_disabled" value="0"/>
+
+		<?php endif; ?>
 		
-		<input type="hidden" name="encoding" value="<?php echo ($this->isWizard) ? PMXI_Plugin::$session->data['pmxi_import']['encoding'] : $post['encoding']; ?>"/>
-		<input type="hidden" name="delimiter" value="<?php echo ($this->isWizard) ? PMXI_Plugin::$session->data['pmxi_import']['is_csv'] : $post['delimiter']; ?>"/>
+		<input type="hidden" name="encoding" value="<?php echo ($isWizard) ? PMXI_Plugin::$session->data['pmxi_import']['encoding'] : $post['encoding']; ?>"/>
+		<input type="hidden" name="delimiter" value="<?php echo ($isWizard) ? PMXI_Plugin::$session->data['pmxi_import']['is_csv'] : $post['delimiter']; ?>"/>
 
 		<?php $is_support_post_format = ( current_theme_supports( 'post-formats' ) && post_type_supports( $post_type, 'post-formats' ) ) ? true : false; ?>
 
@@ -27,7 +56,7 @@
 						</div>
 					</div>
 				</div>								
-				<div class="clear"></div>				
+				<div class="clear"></div>
 				<div class="input">
 					<input type="hidden" name="comment_status" value="closed" />
 					<input type="checkbox" id="comment_status_<?php echo $entry; ?>" name="comment_status" value="open" <?php echo 'open' == $post['comment_status'] ? 'checked="checked"' : '' ?> />
@@ -39,17 +68,19 @@
 					<label for="ping_status_<?php echo $entry; ?>"><?php _e('Allow Trackbacks and Pingbacks', 'pmxi_plugin') ?></label>
 				</div>
 			</div>														
-		</div>			
+		</div>
 		<?php if ($is_support_post_format):?>
 		<div class="col3">
 			<h3><?php _e('Post Format', 'pmxi_plugin') ?></h3>											
 			<div>
+				<?php $post_formats = get_terms( 'post_format' , array('hide_empty' => false)); ?>
+
 				<div class="input">
-					<input type="radio" id="post_format_<?php echo "standart_" . $entry; ?>" name="post_format" value="0" <?php echo (empty($post['post_format'])) ? 'checked="checked"' : '' ?> />
-					<label for="post_format_<?php echo "standart_" . $entry; ?>"><?php _e( "Standart", 'pmxi_plugin') ?></label>
+					<input type="radio" id="post_format_<?php echo "standart_" . $entry; ?>" name="post_format" value="0" <?php echo (empty($post['post_format']) or ( empty($post_formats) )) ? 'checked="checked"' : '' ?> />
+					<label for="post_format_<?php echo "standart_" . $entry; ?>"><?php _e( "Standard", 'pmxi_plugin') ?></label>
 				</div>
-				<?php			
-					$post_formats = get_terms( 'post_format' , array('hide_empty' => false));
+
+				<?php								
 					if ( ! empty($post_formats) ){
 						foreach ($post_formats as $post_format) {
 							?>

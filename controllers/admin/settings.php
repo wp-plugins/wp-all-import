@@ -106,7 +106,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		
 		$this->render();
 	}
-
+	
 	public function dismiss(){
 
 		PMXI_Plugin::getInstance()->updateOption("dismiss", 1);
@@ -128,6 +128,31 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		exit('OK');
 	}
 	
+	public function meta_values(){
+
+		global $wpdb;
+
+		$meta_key = $_POST['key'];
+
+		$r = $wpdb->get_results("
+			SELECT DISTINCT postmeta.meta_value
+			FROM ".$wpdb->postmeta." as postmeta
+			WHERE postmeta.meta_key='".$meta_key."'
+		", ARRAY_A);		
+
+		$html = '<p>'.__('No existing values were found for this field.','pmxi_plugin').'</p>';
+
+		if (!empty($r)){
+			$html = '<select class="existing_meta_values"><option value="">'.__('Existing Values...','pmxi_plugin').'</option>';
+			foreach ($r as $key => $value) { if (empty($value['meta_value'])) continue;
+				$html .= '<option value="'.$value['meta_value'].'">'.$value['meta_value'].'</option>';
+			}
+			$html .= '</select>';
+		}				
+
+		echo $html;
+	}
+
 	/**
 	 * upload.php
 	 *
@@ -151,6 +176,9 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		$uploads = wp_upload_dir();	
 
 		$targetDir = $uploads['path'];
+
+		if (! is_dir($targetDir) || ! is_writable($targetDir))
+			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => "Uploads folder is not writable."), "id" => "id")));
 
 		$cleanupTargetDir = true; // Remove old files
 		$maxFileAge = 5 * 3600; // Temp file age in seconds
@@ -258,11 +286,12 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		}
 		
 		// Return JSON-RPC response
-		exit(json_encode(array("jsonrpc" => "2.0", "result" => null, "id" => "id", "name" => $filePath)));
+		echo json_encode(array("jsonrpc" => "2.0", "result" => null, "id" => "id", "name" => $filePath)); die;
 
 	}		
 
 	public function download(){
 		PMXI_download::csv(PMXI_Plugin::ROOT_DIR.'/logs/'.$_GET['file'].'.txt');
-	}	
+	}
+
 }

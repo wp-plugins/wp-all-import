@@ -35,7 +35,7 @@ class PMXI_Helper {
 	public static function safe_glob($pattern,  $flags=0) {
 		$split = explode('/', str_replace('\\', '/', $pattern));
 		$mask = array_pop($split);
-		$path = implode('/', $split);
+		$path = implode('/', $split);			
 
 		if (($dir = @opendir($path . '/')) !== false or ($dir = @opendir($path)) !== false) {
 			$glob = array();
@@ -58,7 +58,7 @@ class PMXI_Helper {
 			if ( ! ($flags & self::GLOB_NOSORT)) sort($glob);			
 			return $glob;
 		} else {
-			return false;
+			return (strpos($pattern, "*") === false) ? array($pattern) : false;
 		}
 	}
 	

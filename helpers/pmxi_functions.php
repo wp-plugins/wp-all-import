@@ -202,6 +202,17 @@
 		}
 	}
 
+	if ( ! function_exists('getExtensionFromStr')){
+		function pmxi_getExtensionFromStr($str) 
+	    {
+	        $i = strrpos($str,".");
+	        if (!$i) return "";
+	        $l = strlen($str) - $i;
+	        $ext = substr($str,$i+1,$l);
+	        return (preg_match('%\W(jpg|jpeg|gif|png)$%i', basename($ext)) and strlen($ext) <= 4) ? $ext : "";
+		}
+	}
+
 	/**
 	 * Reading large files from remote server
 	 * @ $filePath - file URL
@@ -218,7 +229,7 @@
 
 			$uploads = wp_upload_dir();
 			$tmpname = wp_unique_filename($uploads['path'], ($type and strlen(basename($filePath)) < 30) ? basename($filePath) : time());	
-			$localPath = $uploads['path']  .'/'. $tmpname;		  	   	
+			$localPath = $uploads['path']  .'/'. url_title($tmpname) . ((!$type) ? '.tmp' : '');
 
 			$file = @fopen($filePath, "rb");
 
@@ -233,7 +244,7 @@
 				}
 				@fclose($file);
 				@fclose($fp); 	   	
-			}
+			}						
 
 		   	if (!file_exists($localPath)) {
 		   		
@@ -249,7 +260,11 @@
 					@fclose($file);	
 				}
 		   		
-		   	} 			
+		   	} 			   	
+
+			$newpath = str_replace("." . $type, "", $localPath) . '.' . $type;
+
+			if (@rename($localPath, $newpath)) $localPath = $newpath;				
 			
 			return ($detect) ? array('type' => $type, 'localPath' => $localPath) : $localPath;
 		}
@@ -261,7 +276,9 @@
 			$type = 'csv';
 			$uploads = wp_upload_dir();
 			$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time());	
-			$fp = @fopen($uploads['path']  .'/'. $tmpname, 'w');
+			$localPath = $uploads['path']  .'/'. url_title($tmpname);
+
+			$fp = @fopen($localPath, 'w');
 
 		    $file = @gzopen($filename, 'rb', $use_include_path);
 		    if ($file) {
@@ -274,69 +291,10 @@
 		        gzclose($file);
 		    }
 		    @fclose($fp);
-		    $localPath = $uploads['path']  .'/'. $tmpname;
+		   
 		    return array('type' => $type, 'localPath' => $localPath);
 		}
-	}
-
-	if ( ! function_exists('stream_notification_callback')){
-
-		function stream_notification_callback($notification_code, $severity, $message, $message_code, $bytes_transferred, $bytes_max) {
-		    static $filesize = null;
-		    
-		    $logger = create_function('$m', 'echo "$m\\n"; flush();');
-
-		    $msg = '';
-		    switch($notification_code) {
-			    case STREAM_NOTIFY_RESOLVE:
-			    case STREAM_NOTIFY_AUTH_REQUIRED:
-			    case STREAM_NOTIFY_COMPLETED:
-			    case STREAM_NOTIFY_FAILURE:
-			    case STREAM_NOTIFY_AUTH_RESULT:
-			        /* Ignore */
-			        break;
-
-			    case STREAM_NOTIFY_REDIRECTED:
-			        //$msg = "Being redirected to: ". $message;
-			        break;
-
-			    case STREAM_NOTIFY_CONNECT:
-			        //$msg = "Connected...";
-			        break;
-
-			    case STREAM_NOTIFY_FILE_SIZE_IS:
-			        $filesize = $bytes_max;
-			        //$msg = "Filesize: ". $filesize;
-			        break;
-
-			    case STREAM_NOTIFY_MIME_TYPE_IS:
-			        //$msg = "Mime-type: ". $message;
-			        break;
-
-			    case STREAM_NOTIFY_PROGRESS:
-			        if ($bytes_transferred > 0) {
-						/*$m = "<script type='text/javascript'>";
-			            if (!isset($filesize)) {
-							$m .= "document.getElementById('url_progressbar').innerHTML('Unknown filesize.. ".($bytes_transferred/1024)."d kb done..');";
-			            } else {
-							$length = (int)(($bytes_transferred/$filesize)*100);
-							$m .= "document.getElementById('url_upload_value').style.width = ".$length."%";
-							$m .= "document.getElementById('url_progressbar').innerHTML('".$length."% (".($bytes_transferred/1024)."/".($filesize/1024)." kb)');";
-			            }
-			            $m .= "</script>";*/
-
-			            //$logger and call_user_func($logger, sprintf(__('%s', 'pmxi_plugin'), ($bytes_transferred/1024)));							
-
-						/*echo(str_repeat(' ', 256));
-						if (@ob_get_contents()) {
-							@ob_end_flush();
-						}
-						flush();*/
-			        }
-			        break;
-		    }	    	    
-		}
-	}
+	}	
 
 	if ( ! function_exists('pmxi_strip_tags_content')){
 
@@ -374,7 +332,7 @@
 
 			$change_array = explode(',', $change);
 
-			if ( empty($change_array) or count($orig_array) != count($change_array)) return "";
+			if ( empty($change_array) or count($orig_array) != count($change_array)) return "";					
 
 			return str_replace(array_map('trim', $orig_array), array_map('trim', $change_array), $value); 
 			
@@ -386,23 +344,42 @@
 		function pmxi_convert_encoding ( $source, $target_encoding = 'ASCII' )
 		{		   
 
-		    // detect the character encoding of the incoming file
-		    $encoding = mb_detect_encoding( $source, "auto" );
-		      
-		    // escape all of the question marks so we can remove artifacts from
-		    // the unicode conversion process
-		    $target = str_replace( "?", "[question_mark]", $source );
-		    
-		    // convert the string to the target encoding
-		    $target = mb_convert_encoding( $target, $target_encoding, $encoding);
-		      
-		    // remove any question marks that have been introduced because of illegal characters
-		    $target = str_replace( "?", "", $target );
-		      
-		    // replace the token string "[question_mark]" with the symbol "?"
-		    $target = str_replace( "[question_mark]", "?", $target );
-		  	
-		    return html_entity_decode($target, ENT_COMPAT, 'UTF-8');
+			if ( function_exists('mb_detect_encoding') ){
+			    
+			    // detect the character encoding of the incoming file
+			    $encoding = mb_detect_encoding( $source, "auto" );
+			      
+			    // escape all of the question marks so we can remove artifacts from
+			    // the unicode conversion process
+			    $target = str_replace( "?", "[question_mark]", $source );
+			    
+			    // convert the string to the target encoding
+			    $target = mb_convert_encoding( $target, $target_encoding, $encoding);
+			      
+			    // remove any question marks that have been introduced because of illegal characters
+			    $target = str_replace( "?", "", $target );
+			      
+			    // replace the token string "[question_mark]" with the symbol "?"
+			    $target = str_replace( "[question_mark]", "?", $target );
+			  	
+			    return html_entity_decode($target, ENT_COMPAT, 'UTF-8');
+
+			}
+
+			return $source;
+		}
+	}
+
+	if ( ! function_exists('pmxi_imageurlencode')){
+
+		function pmxi_imageurlencode($url){
+
+		    $urlArray = parse_url($url);
+
+		    $url = ($urlArray['scheme'].'://'.$urlArray['host'].str_replace('%2F', '/', urlencode($urlArray['path'])));
+		    $url .= isset($urlArray['query']) ? '?'.$urlArray['query'] : '';
+
+		    return $url;
 		}
 	}
 
@@ -437,5 +414,7 @@
 	 * Alias of wp_session_write_close()
 	 */
 	function pmxi_session_commit() {		
-		pmxi_shutdown();
+		PMXI_Plugin::$session = PMXI_Session::get_instance();
+		PMXI_Plugin::$session->write_data();	
+		do_action( 'pmxi_session_commit' );
 	}

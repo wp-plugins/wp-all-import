@@ -1,61 +1,5 @@
 <?php 
 
-/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
-
-/**
- * contains a few csv file data access tools.
- *
- * PHP VERSION 5
- *
- * LICENSE: The MIT License
- *
- * Copyright (c) <2008> <Kazuyoshi Tlacaelel>
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- *
- * @category  File
- * @package   File_CSV_DataSource
- * @author    Kazuyoshi Tlacaelel <kazu.dev@gmail.com>
- * @copyright 2008 Kazuyoshi Tlacaelel
- * @license   The MIT License
- * @version   SVN: $Id: DataSource.php 285574 2009-03-09 15:22:24Z ktlacaelel $
- * @link      http://code.google.com/p/php-csv-parser/
- */
-
-/**
- * csv data fetcher
- *
- * Sample snippets refer to this csv file for demonstration.
- * <code>
- *   name,age,skill
- *   john,13,knows magic
- *   tanaka,8,makes sushi
- *   jose,5,dances salsa
- * </code>
- *
- * @category  File
- * @package   Csv_parse
- * @author    Kazuyoshi Tlacaelel <kazu.dev@gmail.com>
- * @copyright 2008 Kazuyoshi Tlacaelel
- * @license   The MIT License
- * @link      http://code.google.com/p/php-csv-parser/
- */
 class PMXI_CsvParser
 {
     public
@@ -876,7 +820,8 @@ class PMXI_CsvParser
             return utf8_encode($in_str);
         }
 
-        return $in_str;
+        return $in_str;        
+
         
     } // fixEncoding 
 
@@ -965,7 +910,7 @@ class PMXI_CsvParser
         $wp_uploads = wp_upload_dir();
         if ($this->large_import){
             $tmpname = wp_unique_filename($wp_uploads['path'], str_replace("csv", "xml", basename($this->_filename)));
-            if ('' == $this->xml_path) $this->xml_path = $wp_uploads['path']  .'/'. $tmpname;            
+            if ('' == $this->xml_path) $this->xml_path = $wp_uploads['path']  .'/'. url_title($tmpname);
             $fp = fopen($this->xml_path, 'w');
             fwrite($fp, "<?xml version=\"1.0\" encoding=\"".$this->csv_encoding."\"?><data>");
         }
@@ -990,16 +935,13 @@ class PMXI_CsvParser
             } 
 
             if ($c or $create_new_headers) {                                            
-                if (!$this->large_import and empty($_POST['large_file'])) {                    
-                    array_push($this->rows, $keys);
-                }
-                else if (!empty($keys)){                                   
+               if (!empty($keys)){                                   
 
                     $chunk = array();
                     
                     foreach ($this->headers as $key => $header) {                                                
                         if ($this->auto_encoding)
-                            $chunk[$header] = $this->fixEncoding( ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key] );
+                            $chunk[$header] = $this->fixEncoding( ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key] );                            
                         else
                             $chunk[$header] = ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key];
                     }

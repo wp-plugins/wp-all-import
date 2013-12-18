@@ -11,8 +11,8 @@
 		<div class="title">
 			<?php printf(__('Variation Record #<strong>%s</strong> out of <strong>%s</strong>', 'pmxi_plugin'), $tagno + 1, $variation_list_count); ?>
 			<div class="navigation">
-				<?php if ($tagno > 0): ?><a href="#variation_prev">&lang;&lang;</a><?php else: ?><span>&lang;&lang;</span><?php endif ?>
-				<?php if ($tagno < $variation_list_count - 1): ?><a href="#variation_next">&rang;&rang;</a><?php else: ?><span>&rang;&rang;</span><?php endif ?>
+				<?php if ($tagno > 0): ?><a href="#variation_prev">&laquo;</a><?php else: ?><span>&laquo;</span><?php endif ?>
+				<?php if ($tagno < $variation_list_count - 1): ?><a href="#variation_next">&raquo;</a><?php else: ?><span>&raquo;</span><?php endif ?>
 			</div>
 		</div>
 		<div class="clear"></div>

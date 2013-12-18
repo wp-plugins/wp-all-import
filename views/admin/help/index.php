@@ -12,7 +12,7 @@
 
 			<p style='font-size: 1.3em;'>We are able to provide limited technical support to free version users. Support is not guaranteed, and is based on availability</p>
 
-			<p style='font-size: 1.3em;'><b>Please note we are unable to provide technical support via the WordPress.org community forums.</b></p>
+			<p style='font-size: 1.3em;'><b>Please note we generally do not provide technical support via the WordPress.org community forums.</b></p>
 
 			<p style='font-size: 1.3em;'><a href='http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=support&utm_campaign=free+plugin' target='_blank'>For premium support, please upgrade to the professional edition of WP All Import.</a></p>
 

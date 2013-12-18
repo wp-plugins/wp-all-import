@@ -39,9 +39,12 @@ $columns = array(
 	'post_count'	=> __('Records', 'pmxi_plugin'),
 	'first_import'	=> __('First Import', 'pmxi_plugin'),
 	'registered_on'	=> __('Last Import', 'pmxi_plugin'),
-	/*'scheduled'		=> __('Reimport Schedule', 'pmxi_plugin'),
+	/*'scheduled'		=> __('Reimport Schedule', 'pmxi_plugin'),	
 	'next_import'	=> __('Next Import', 'pmxi_plugin'),*/
 );
+
+$columns = apply_filters('pmxi_manage_imports_columns', $columns);
+
 ?>
 <form method="post" id="import-list" action="<?php echo remove_query_arg('pmxi_nt') ?>">
 	<input type="hidden" name="action" value="bulk" />
@@ -106,7 +109,21 @@ $columns = array(
 				<td colspan="<?php echo count($columns) + 1 ?>"><?php _e('No previous imports found.', 'pmxi_plugin') ?></td>
 			</tr>
 		<?php else: ?>
-			<?php $class = ''; foreach ($list as $item): ?>
+			<?php
+			$periods = array( // scheduling periods
+				'*/5 * * * *' => __('every 5 min'),
+				'*/10 * * * *' => __('every 10 min'),
+				'*/30 * * * *' => __('half-hourly'),
+				'0 * * * *' => __('hourly'),
+				'0 */4 * * *' => __('every 4 hours'),
+				'0 */12 * * *' => __('half-daily'),
+				'0 0 * * *' => __('daily'),
+				'0 0 * * 1' => __('weekly'),
+				'0 0 1 * 1' => __('monthly'),
+			);
+			$class = '';
+			?>
+			<?php foreach ($list as $item): ?>
 				<?php $class = ('alternate' == $class) ? '' : 'alternate'; ?>
 				<tr class="<?php echo $class; ?>" valign="middle">
 					<th scope="row" class="check-column">
@@ -120,6 +137,13 @@ $columns = array(
 								<th valign="top" scope="row">
 									<?php echo $item['id'] ?>
 								</th>
+								<?php
+								break;
+							case 'scheduled':
+								?>
+								<td>
+									<?php echo $item['scheduled'] ? $periods[$item['scheduled']] : '' ?>
+								</td>
 								<?php
 								break;
 							case 'first_import':
@@ -162,19 +186,26 @@ $columns = array(
 							case 'name':
 								?>
 								<td>
-									<strong><?php echo (!empty($item['friendly_name'])) ? $item['friendly_name'] : $item['name']; ?></strong> <br>
+									<strong><?php echo apply_filters("pmxi_import_name", (!empty($item['friendly_name'])) ? $item['friendly_name'] : $item['name'], $item['id']); ?></strong> <?php if ( (int) $item['triggered']) _e("<i> -> Import triggered...</i>"); if ( (int) $item['processing']) _e("<i> -> Import currently in progress....</i>");  ?><br>
 									<?php if ($item['path']): ?>
 										<em><?php echo str_replace("\\", '/', preg_replace('%^(\w+://[^:]+:)[^@]+@%', '$1*****@', $item['path'])); ?></em>
 									<?php endif ?>
 									<div class="row-actions">
 
+										<?php do_action('pmxi_import_menu', $item['id'], $this->baseUrl); ?>
+
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl)) ?>"><?php _e('Edit Template', 'pmxi_plugin') ?></a></span> |
 										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"><?php _e('Edit Options', 'pmxi_plugin') ?></a></span> |
 										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"><?php _e('Re-Run Import', 'pmxi_plugin') ?></a></span> |
+
+										<?php if ( in_array($item['type'], array('url', 'ftp', 'file'))): ?>
+											<!--span class="edit get_cron_url"><a class="edit" href="javascript:void(0);" rel='<?php echo "wget -q -O /dev/null \"".home_url()."?import_key=".PMXI_Plugin::getInstance()->getOption('cron_job_key')."&import_id=".$item['id']."&action=processing\"\n" . "wget -q -O /dev/null "."\"".home_url()."?import_key=".PMXI_Plugin::getInstance()->getOption('cron_job_key')."&import_id=".$item['id']."&action=trigger"."\"";?>'><?php _e('Get Cron URL', 'pmxi_plugin') ?></a></span> |-->
+											<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'scheduling'), $this->baseUrl)) ?>"><?php _e('Cron Scheduling', 'pmxi_plugin') ?></a></span> |
+										<?php endif; ?>
 										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php'))) ?>"><?php _e('Re-Run With New File', 'pmxi_plugin') ?></a></span> |
 										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'log'), $this->baseUrl)) ?>"><?php _e('Download Log', 'pmxi_plugin') ?></a></span> |
 										<span class="delete"><a class="delete" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'delete'), $this->baseUrl)) ?>"><?php _e('Delete', 'pmxi_plugin') ?></a></span>
-										<?php if ( "Yes" == $item['large_import'] and (($item['imported'] + $item['skipped']) != $item['count'] and ! $item['options']['is_import_specified']) ):?>
+										<?php if ( ($item['imported'] + $item['skipped']) < $item['count'] and ! $item['options']['is_import_specified'] and ! (int) $item['triggered'] ):?>
 										| <span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update', 'type' => 'continue'), $this->baseUrl)) ?>"><?php _e('Continue import', 'pmxi_plugin') ?></a></span>
 										<?php endif; ?>
 									</div>
@@ -198,7 +229,7 @@ $columns = array(
 							default:
 								?>
 								<td>
-									<?php echo $item[$column_id] ?>
+									<?php do_action('pmxi_manage_imports_column', $column_id, $item); ?>
 								</td>
 								<?php
 								break;
@@ -206,6 +237,7 @@ $columns = array(
 						?>
 					<?php endforeach; ?>
 				</tr>
+				<?php do_action('pmxi_manage_imports', $item, $class); ?>
 			<?php endforeach; ?>
 		<?php endif ?>
 		</tbody>
@@ -217,7 +249,7 @@ $columns = array(
 		<div class="alignleft actions">
 			<select name="bulk-action2">
 				<option value="" selected="selected"><?php _e('Bulk Actions', 'pmxi_plugin') ?></option>
-				<?php if ('trash' != $type): ?>
+				<?php if ( empty($type) or 'trash' != $type): ?>
 					<option value="delete"><?php _e('Delete', 'pmxi_plugin') ?></option>
 				<?php else: ?>
 					<option value="restore"><?php _e('Restore', 'pmxi_plugin')?></option>
@@ -242,5 +274,5 @@ $columns = array(
 	?>
 
 	<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=manage&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Find out more about the professional edition of WP All Import.</a></p>
-
+	
 </form>

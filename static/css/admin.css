@@ -76,6 +76,7 @@
 	/*line-height: 25px;
 	height: 25px;*/
 	min-height: 21px;
+	font-size: 12px !important;
 }
 	.pmxi_plugin div.input > * {
 		vertical-align: middle;
@@ -83,6 +84,7 @@
 .pmxi_plugin .options input[type=text], .pmxi_plugin .options select {
 	/*background: #fafafa !important;*/
 	border: 1px solid #aaa !important;
+	font-size: 12px !important;
 }
 .pmxi_plugin .note {
 	color: #666666;
@@ -102,6 +104,7 @@
 	.pmxi_plugin table.layout td {
 		vertical-align: top;
 		border: none;		
+		font-size: 12px !important;
 	}
 	.pmxi_plugin table.layout td.left {
 		min-width: 490px;
@@ -259,7 +262,7 @@
 }
 	.pmxi_plugin table.form-table td,
 	.pmxi_plugin table.form-table th {
-		padding: 0;
+		/*padding: 0;*/
 		vertical-align: top;
 	}
 	.pmxi_plugin .post-type-options table.form-table th {
@@ -305,6 +308,13 @@
 		color: #464646;
 		background: #DFDFDF;
 		font-size: 12px;
+		border-top: 1px solid #DFDFDF;
+		-moz-border-radius-topleft: 4px;
+		-webkit-border-top-left-radius: 4px;
+		 border-top-left-radius: 4px;
+		-moz-border-radius-topright: 4px;
+		-webkit-border-top-right-radius: 4px;
+		border-top-right-radius: 4px;
 	}
 	.pmxi_plugin .tag .xml {
 		max-height: 525px;
@@ -320,7 +330,7 @@
 	}
 	.pmxi_plugin .tag .navigation {
 		float: right;
-		margin: -2px -12px 0 0;
+		margin: 2px -12px 0 0;
 	}
 		.pmxi_plugin .tag .navigation a,
 		.pmxi_plugin .tag .navigation span {
@@ -905,12 +915,12 @@ table.xml table {
 	color: red;
 	text-align: center;
 }
-.pmxi_plugin #reimported_notify{
+.pmxi_plugin .reimported_notify{
 	border: 1px solid #AFAFAF;
 	margin-bottom: 20px;
 	padding: 10px 20px;
 }
-.pmxi_plugin #reimported_notify p span{
+.pmxi_plugin .reimported_notify p span{
 	color:#ccc;
 }
 .pmxi_plugin .action_buttons{
@@ -979,36 +989,34 @@ table.xml table {
 	border: 1px solid #C5DBEC;*/
 	height: 40px;
 	line-height: 39px;
-	margin-left: 10px;
+	margin-left: 10px;	
 	/*width: 90px;*/
 }
 .pmxi_plugin .drag-element .assign_post{
 	float: left;
+	margin-top: 2px;
 }
 .pmxi_plugin .drag-element .widefat{
 	margin-left: 1%;
 	width: 85%;
 }
-.pmxi_plugin .upgrade_link{
-	color: #21759B;
+.pmxi_plugin .ui-tabs-hide{
+	display: none !important;
 }
-.pmxi_plugin .pmxi_stars{
-	display: inline-block;
-	background: url("../img/stars.png") no-repeat;
-	width: 125px;
-	height: 24px;
-	position: relative;
-	top:10px;
+.pmxi_plugin .auto_nested{
+	float: left;
+	margin-left: 3px;
 }
-.pmxi_plugin .updated_bottom{
-	background-color: #FFFFE0;
-	border-color: #E6DB55;
-	margin: 5px 0 15px;
-	padding: 0 0.6em;
-	-moz-border-radius: 3px 3px 3px 3px;
-	border-radius: 3px;
-	border-style: solid;
-	border-width: 1px;
+.pmxi_plugin .existing_meta_values{
+	clear: both;
+	display: block;
+	margin: 15px;
+}
+.pmxi_plugin .custom-params tr td{
+	width: 50%;
+}
+.pmxi_plugin .custom-params tr td.action{
+	width:100% !important;
 }
 .pmxi_plugin .load_options{
 	height: 0;
@@ -1024,6 +1032,7 @@ table.xml table {
 .pmxi_plugin .form-field textarea{
 	width:80%;
 }
+
 /* Tabs */
 .pmxi_plugin .nav-tab-wrapper{
 	display: none;
@@ -1103,7 +1112,7 @@ table.xml table {
 }
 .pmxi_plugin .fix_checkbox{
 	position: relative;
-	/*top: -2px;*/
+	margin: 0px !important;
 }
 .pmxi_plugin .newline{
 	line-height: 16px;
@@ -1147,4 +1156,203 @@ table.xml table {
 	padding-left: 15px;
 	position: absolute;
 	top: 0;
+}
+.pmxi_plugin .chosen-container-multi .chosen-choices li.search-field input[type="text"]{
+	height: 25px !important;
+	width: auto !important;
+}
+.pmxi_plugin .chosen-container-multi .chosen-choices{
+	margin: 5px 0px !important;
+}
+.pmxi_plugin .pmxi_tips_pointer{
+	position: absolute;
+	right: 0;
+}
+.pmxi_plugin .wp-pointer-content{
+	padding: 10px;
+}
+.pmxi_plugin .wp-pointer-content ul{
+	margin-left: 20px;
+}
+.pmxi_plugin .processing_info{
+	display: none;
+}
+.pmxi_plugin input[type="text"][name="tagno"]{
+	margin-left: 5px;
+	padding: 3px;
+	width: 40px;
+	border: 1px solid #BBBBBB;
+	-moz-border-radius: 3px;
+	-khtml-border-radius: 3px;
+	-webkit-border-radius: 3px;
+	border-radius: 3px;	
+	text-align: center;
+}
+#post-preview div.title{
+	text-align:right; 
+	border-bottom: 2px solid #ccc; 
+	padding-bottom:5px; 
+	font-style:italic;
+}
+.pmxi_plugin .pl17{
+	padding-left:17px;
+}
+
+/*--------------------------------------------------------------------------
+*
+*	Add-Ons
+*	
+*-------------------------------------------------------------------------*/
+
+.pmxi_plugin #pmxi-add-ons {
+	margin-bottom: 20px;
+}
+
+.pmxi_plugin .pmxi-add-on-group {
+	margin-top: 20px;
+	padding-top: 20px;
+	border-top: #F5F5F5 solid 1px;	
+}
+
+.pmxi_plugin .pmxi-add-on-group:first-child {
+	margin-top: 0;
+	padding-top: 0;
+	border-top: 0 none;	
+}
+
+.pmxi_plugin .pmxi-add-on {
+	float: left;
+	width: 220px;
+	margin: 10px;
+}
+
+.pmxi_plugin .pmxi-add-on h3 {
+	margin-top: 0.5em;
+}
+
+.pmxi_plugin .pmxi-add-on h3 a {
+	color: inherit;
+	text-decoration: none;
+}
+
+.pmxi_plugin .pmxi-add-on .inner {
+	min-height: 145px;
+}
+
+.pmxi_plugin .pmxi-add-on-active .button {
+	padding-left: 4px;
+}
+
+.pmxi_plugin .pmxi-sprite-tick {
+	width: 14px;
+	height: 14px;
+	margin: 4px 5px 0 0;
+	background-position: 0px -300px;
+}
+
+.pmxi_plugin .wp-box {
+    background: none repeat scroll 0 0 #FFFFFF;
+    border: 1px solid #E1E1E1;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+.pmxi_plugin .wp-box .inner {
+    padding: 15px;
+}
+.pmxi_plugin .wp-box .footer{
+	background: none repeat scroll 0 0 #F5F5F5;
+	border-top: 1px solid #E1E1E1;
+	overflow: hidden;
+	padding: 10px;	
+	position: absolute;
+	bottom:0;	
+	width:91%;
+}
+
+#pmxi-add-ons .pmxi-add-on-title {
+	float: left;
+	width: 100%;
+	margin: 25px 0 25px;
+	border-top: #F5F5F5 solid 1px;
+}
+.pmxi_plugin .form-table td{
+	padding: 0px;
+}
+.pmxi_plugin #pmxi_value{
+	display: inline-block;
+	height: 28px;
+	margin: 0;
+	padding: 3px;
+	position: relative;
+	top: 2px;
+	width: 50px;
+}
+.pmxi_plugin #pmxi_add_rule{
+	display: block;
+	float: right;
+	margin: 5px;
+}
+.pmxi_plugin #filtering_rules{
+	border: 1px solid;
+	margin: 15px 0;
+	position: relative;
+}
+.pmxi_plugin .filtering_rules li{
+	position: relative;
+}
+.pmxi_plugin .filtering_rules li .condition{
+	padding: 2px;
+	display: block;
+}
+.pmxi_plugin .filtering_rules li .condition label{
+	margin: 0px 3px;
+}
+.pmxi_plugin .pmxi_group_rule{
+	margin-left: -55px;	
+}
+.pmxi_plugin #apply_filters{
+	float: right;
+}
+.pmxi_plugin .filtering_rules li strong{
+	text-transform: uppercase;
+}
+.pmxi_plugin #pmxi_xml_element{
+	width:180px;
+}
+.pmxi_plugin div.input label, .pmxi_plugin .form-field{
+	font-size: 12px !important;
+}
+.pmxi_plugin input[type="radio"]{
+	margin-left: 4px; 
+}
+.pmxi_plugin .main_choise{
+	float: left;
+	margin-right: 5px;
+	padding: 5px 0;
+}
+
+.pmxi_plugin .pmxi_stars{
+	display: inline-block;
+	background: url("../img/stars.png") no-repeat;
+	width: 125px;
+	height: 24px;
+	position: relative;
+	top:10px;
+}
+.pmxi_plugin .updated_bottom{
+	background-color: #FFFFE0;
+	border-color: #E6DB55;
+	margin: 15px 0 15px;
+	padding: 0 0.6em;
+	-moz-border-radius: 3px 3px 3px 3px;
+	border-radius: 3px;
+	border-style: solid;
+	border-width: 1px;
+}
+.pmxi_plugin .upgrade_link{
+	color: #21759B;
+	font-size: 1.3em;
+}
+.pmxi_plugin .ui-progressbar{
+	height: 32px;
 }

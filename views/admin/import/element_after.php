@@ -10,7 +10,7 @@
 </div>
 <table class="layout">
 	<tr>
-		<td class="left">
+		<td class="left" style="width:60%;">			
 			<fieldset class="widefat">
 				<legend><?php _e('Current XML tree', 'pmxi_plugin');?></legend>
 				<div class="action_buttons">
@@ -23,11 +23,7 @@
 					if ($is_csv !== false){
 						?>										
 						<ul class="set_csv_delimiter">
-							<li>Set delimiter for CSV fields: </li>
-							<!--li> <a href="javascript:void(0);" rel="," <?php if ($is_csv == ','):?>class="delimiter_selected"<?php endif;?>><?php _e('comma', 'pmxi_plugin');?></a> </li>
-							<li> <a href="javascript:void(0);" rel=";" <?php if ($is_csv == ';'):?>class="delimiter_selected"<?php endif;?>><?php _e('semicolon', 'pmxi_plugin');?></a> </li>
-							<li> <a href="javascript:void(0);" rel="|" <?php if ($is_csv == '|'):?>class="delimiter_selected"<?php endif;?>><?php _e('pipe', 'pmxi_plugin');?></a> </li>
-							<li> <a href="javascript:void(0);" rel="\t" <?php if ($is_csv == '\t'):?>class="delimiter_selected"<?php endif;?>><?php _e('tabulation', 'pmxi_plugin');?></a> </li-->
+							<li><?php _e("Set delimiter for CSV fields:",'pmxi_plugin');?> </li>							
 							<li> <input type="text" value="<?php echo $is_csv;?>" name="delimiter"/> <input type="button" name="apply_delimiter" value="Apply"/></li>
 						</ul>
 						<?php
@@ -44,10 +40,10 @@
 				</div>
 			</fieldset>
 		</td>
-		<td class="right">
-			<fieldset class="widefat">
-				<legend><?php _e('Advanced','pmxi_plugin');?></legend>
-				<p><?php _e('Current XPath:','pmxi_plugin');?></p>
+		<td class="right" style="width:40%;">
+			<fieldset class="widefat">				
+				<legend><?php _e('Fitering Options','pmxi_plugin');?></legend>
+				<p><?php _e('Manual XPath:','pmxi_plugin');?></p>
 				<div>
 					<input type="text" name="xpath" value="<?php echo esc_attr($post['xpath']) ?>" style="max-width:none;" />					
 					<input type="hidden" id="root_element" name="root_element" value="<?php echo PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']; ?>"/>
@@ -63,7 +59,25 @@
 					}
 					?>
 					&nbsp; <br/><br/>or <a href="javascript:void(0);" rel="<?php echo esc_attr($post['xpath']) ?>" root="<?php echo PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']; ?>" id="get_default_xpath"><?php _e('get default xPath','pmxi_plugin');?></a>
-				</div> <br><br>				
+				</div>
+				<p><?php _e('Filters:','pmxi_plugin');?></p>
+				<div>
+					<select id="pmxi_xml_element">
+						<option value=""><?php _e('Select Element', 'pmxi_plugin'); ?></option>
+						<?php $this->render_xml_elements_for_filtring($elements->item(0)); ?>
+					</select>
+					<select id="pmxi_rule">
+						<option value=""><?php _e('Select Rule', 'pmxi_plugin'); ?></option>
+						<option value="equals"><?php _e('equals', 'pmxi_plugin'); ?></option>
+						<option value="greater"><?php _e('greater than', 'pmxi_plugin');?></option>
+						<option value="less"><?php _e('less than', 'pmxi_plugin'); ?></option>
+						<option value="contains"><?php _e('contains', 'pmxi_plugin'); ?></option>
+					</select>
+					<input id="pmxi_value" type="text" placeholder="value" value=""/>
+					<a id="pmxi_add_rule" href="javascript:void(0);"><?php _e('Add rule', 'pmxi_plugin');?></a>
+				</div>
+				<div class="clear"></div>
+				<br><br>				
 				<a href="http://www.w3schools.com/xpath/default.asp" target='_blank'><?php _e('XPath Tutorial','pmxi_plugin');?></a> - <?php _e('For further help','pmxi_plugin');?>, <a href="http://www.wpallimport.com/support" target='_blank'><?php _e('contact us','pmxi_plugin');?></a>.
 			</fieldset>
 			<p class="submit-buttons" style="text-align:right;">

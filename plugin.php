@@ -2,8 +2,8 @@
 /*
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
-Description:  The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. Perform scheduled updates and overwrite of existing import jobs. Free lite edition.
-Version: 3.0.4
+Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. A paid upgrade to WP All Import Pro is available for support and additional features.
+Version: 3.1.0
 Author: Soflyy
 */
 
@@ -28,7 +28,7 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('PMXI_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.0.4');
+define('PMXI_VERSION', '3.1.0');
 
 define('PMXI_EDITION', 'free');
 
@@ -75,7 +75,7 @@ final class PMXI_Plugin {
 	 * Max allowed file size (bytes) to import in default mode
 	 * @var int
 	 */
-	const LARGE_SIZE = 0; // all files will importing in large import mode
+	const LARGE_SIZE = 0; // all files will importing in large import mode	
 
 	public static $session;		
 
@@ -84,7 +84,6 @@ final class PMXI_Plugin {
 	public static $is_csv = false;
 
 	public static $csv_path = false;
-	
 	/**
 	 * Return singletone instance
 	 * @return PMXI_Plugin
@@ -150,7 +149,9 @@ final class PMXI_Plugin {
 	 */
 	public function getTablePrefix() {
 		global $wpdb;
-		return ($this->isNetwork() ? $wpdb->base_prefix : $wpdb->prefix) . self::PREFIX;
+		
+		//return ($this->isNetwork() ? $wpdb->base_prefix : $wpdb->prefix) . self::PREFIX;
+		return $wpdb->prefix . self::PREFIX;
 	}
 
 	/**
@@ -159,7 +160,7 @@ final class PMXI_Plugin {
 	 */
 	public function getWPPrefix() {
 		global $wpdb;
-		return ($this->isNetwork() ? $wpdb->base_prefix : $wpdb->prefix);
+		return ($this->isNetwork()) ? $wpdb->base_prefix : $wpdb->prefix;
 	}
 
 	/**
@@ -168,8 +169,8 @@ final class PMXI_Plugin {
 	 * @param string $pluginFilePath Plugin main file
 	 */
 	protected function __construct() {
-
-		// create/update required database tables
+		
+		$this->load_plugin_textdomain();
 
 		// regirster autoloading method
 		if (function_exists('__autoload') and ! in_array('__autoload', spl_autoload_functions())) { // make sure old way of autoloading classes is not broken
@@ -233,8 +234,75 @@ final class PMXI_Plugin {
 		}
 
 		// register admin page pre-dispatcher
-		add_action('admin_init', array($this, '__adminInit'));		
+		add_action('admin_init', array($this, '__adminInit'));									
+		add_action('admin_init', array($this, '_fix_options'));		
 
+		global $wpdb;
+
+		if (function_exists('is_multisite') && is_multisite()) {
+	        // check if it is a network activation - if so, run the activation function for each blog id
+	        if (isset($_GET['networkwide']) && ($_GET['networkwide'] == 1)) {
+	            $old_blog = $wpdb->blogid;
+	            // Get all blog ids
+	            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
+	            foreach ($blogids as $blog_id) {
+	                switch_to_blog($blog_id);
+	                $this->__add_feed_type_fix(); // feature to version 2.22
+	            }
+	            switch_to_blog($old_blog);		            
+            	return;
+	        }
+	    }
+
+		$this->__add_feed_type_fix(); // feature to version 2.22
+	}
+
+	/**
+	 * convert imports options
+	 * compatibility with version 3.3
+	 */
+	public function _fix_options(){
+		$imports = new PMXI_Import_List();
+		$post = new PMXI_Post_Record();
+		
+		foreach ($imports->setColumns($imports->getTable() . '.*')->getBy(array('large_import' => 'Yes'))->convertRecords() as $imp){
+			
+			$imp->getById($imp->id);				
+			
+			if ( ! $imp->isEmpty() and empty($imp->options['converted_options'])){									
+
+				$options = $imp->options;
+
+				$options['update_all_data'] = 'no';
+				$options['create_new_records'] = ( ! empty($options['not_create_records'])) ? 0 : 1;
+				$options['is_update_status'] = ( ! empty($options['is_keep_status']) ) ? 0 : 1;
+				$options['is_update_content'] = ( ! empty($options['is_keep_content'])) ? 0 : 1;
+				$options['is_update_title'] = ( ! empty($options['is_keep_title'])) ? 0 : 1;
+				$options['is_update_excerpt'] = ( ! empty($options['is_keep_excerpt'])) ? 0 : 1;
+				$options['is_update_categories'] = ( ! empty($options['is_keep_categories'])) ? 0 : 1;
+				$options['is_update_attachments'] = ( ! empty($options['is_keep_attachments_on_update'])) ? 0 : 1;
+				$options['is_update_images'] = ( ! empty($options['is_keep_images'])) ? 0 : 1;
+				$options['is_update_dates'] = ( ! empty($options['is_keep_dates'])) ? 0 : 1;
+				$options['is_update_menu_order'] = ( ! empty($options['is_keep_menu_order'])) ? 0 : 1;
+				$options['is_update_parent'] = ( ! empty($options['is_keep_parent'])) ? 0 : 1;
+				$options['is_update_custom_fields'] = ( ! empty($options['keep_custom_fields'])) ? 0 : 1;					
+				if ("" != $options['keep_custom_fields_specific'] or "" != $options['keep_custom_fields_except']){ 
+					$options['custom_fields_list'] = ( ! empty($options['keep_custom_fields'])) ? explode(',', $options['keep_custom_fields_except']) : explode(',', $options['keep_custom_fields_specific']);						
+					$options['update_custom_fields_logic'] = ( ! empty($options['is_update_custom_fields'])) ? 'only' : 'all_except';						
+				}
+				if ( ! empty($options['is_keep_categories']) and ! empty($options['is_add_newest_categories'])){
+					$options['is_update_categories'] = 1;
+					$options['update_categories_logic'] = 'add_new';
+						
+				}
+				$options['converted_options'] = 1;
+				$imp->set(array(
+					'options' => $options
+				))->update();
+				
+			}
+		}
+		
 	}
 
 	/**
@@ -362,7 +430,7 @@ final class PMXI_Plugin {
 				}
 			}
 		}
-
+		
 		return FALSE;
 	}
 
@@ -496,6 +564,22 @@ final class PMXI_Plugin {
 		}
 	}	
 
+	public function __add_feed_type_fix(){
+
+		$table = $this->getTablePrefix() . 'imports';
+		global $wpdb;
+		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
+		$parent_import_id = false;
+		
+		// Check if field exists
+		foreach ($tablefields as $tablefield) {
+			if ('parent_import_id' == $tablefield->Field) $parent_import_id = true;				
+		}
+		
+		if (!$parent_import_id) $wpdb->query("ALTER TABLE {$table} ADD `parent_import_id` BIGINT(20) NOT NULL DEFAULT 0;");						
+
+	}	
+
 	/**
 	 * Method returns default import options, main utility of the method is to avoid warnings when new
 	 * option is introduced but already registered imports don't have it
@@ -527,6 +611,8 @@ final class PMXI_Plugin {
 			'ping_status' => 'open',
 			'create_draft' => 'no',
 			'author' => '',
+			'post_excerpt' => '',
+			'post_slug' => '',
 			'featured_image' => '',
 			'attachments' => '',
 			'is_import_specified' => 0,
@@ -536,46 +622,51 @@ final class PMXI_Plugin {
 			'unique_key' => '',
 			'feed_type' => 'auto',
 
+			'create_new_records' => 1,
 			'is_delete_missing' => 0,
+			'set_missing_to_draft' => 0,
 			'is_update_missing_cf' => 0,
-			'is_keep_former_posts' => 'no',
-			'is_keep_status' => 0,
-			'is_keep_content' => 0,
-			'is_keep_title' => 0,
-			'is_keep_excerpt' => 0,
-			'is_keep_categories' => 0,
-			'is_keep_attachments' => 0,
-			'is_keep_images' => 0,
-			'is_duplicates' => 0,
-			'is_keep_dates' => 0,
-			'is_keep_menu_order' => 0,
-			'is_keep_parent' => 0,
-			'is_keep_attachments_on_update' => 0,
-			'records_per_request' => 10,
-			'not_create_records' => 0,
-			'no_create_featured_image' => 0,
-
-			'duplicate_indicator' => 'title',
-			'duplicate_action' => 'keep',
-			'is_update_previous' => 0,
-			'is_scheduled' => '',
-			'scheduled_period' => '',
-			'post_excerpt' => '',
-			'post_slug' => '',
-			'keep_custom_fields' => 0,
-			'keep_custom_fields_specific' => '',
-			'keep_custom_fields_except' => '',
-			'friendly_name' => '',
-			'custom_duplicate_name' => '',
-			'custom_duplicate_value' => '',
-			'duplicate_matching' => 'auto',
-			'create_chunks' => 0,
 			'update_missing_cf_name' => '',
 			'update_missing_cf_value' => '',
+
+			'is_keep_former_posts' => 'no',				
+			'is_update_status' => 1,
+			'is_update_content' => 1,
+			'is_update_title' => 1,
+			'is_update_slug' => 1,
+			'is_update_excerpt' => 1,
+			'is_update_categories' => 1,
+			'update_categories_logic' => 'full_update',
+			'taxonomies_list' => array(),
+			'taxonomies_only_list' => array(),
+			'taxonomies_except_list' => array(),
+			'is_update_attachments' => 1,
+			'is_update_images' => 1,
+			'update_images_logic' => 'full_update',				
+			'is_update_dates' => 1,
+			'is_update_menu_order' => 1,
+			'is_update_parent' => 1,			
+			'is_keep_attachments' => 0,
+			'is_keep_imgs' => 0,
+			
+			'is_update_custom_fields' => 1,
+			'update_custom_fields_logic' => 'full_update',
+			'custom_fields_list' => array(),				
+			'custom_fields_only_list' => array(),				
+			'custom_fields_except_list' => array(),								
+
+			'duplicate_matching' => 'auto',
+			'duplicate_indicator' => 'title',								
+			'custom_duplicate_name' => '',
+			'custom_duplicate_value' => '',
+			'is_update_previous' => 0,
+			'is_scheduled' => '',
+			'scheduled_period' => '',										
+			'friendly_name' => '',				
+			'records_per_request' => 20,
 			'auto_rename_images' => 0,
 			'auto_rename_images_suffix' => '',
-			'images_name' => 'filename',
-			'is_add_newest_categories' => 0,
+			'images_name' => 'filename',				
 			'post_format' => 'standard',
 			'encoding' => 'UTF-8',
 			'delimiter' => '',
@@ -589,12 +680,17 @@ final class PMXI_Plugin {
 			'image_meta_description' => '',
 			'image_meta_description_delim' => '',
 			'status_xpath' => '',
-			'download_images' => 1
+			'download_images' => 1,															
+			'converted_options' => 0,
+			'update_all_data' => 'yes',
+			'is_fast_mode' => 0,
+			'chuncking' => 1,
+			'import_processing' => 'ajax'
 		);
 	}
 
 	/*
-	 * Convert csv to xml using yahoo API
+	 * Convert csv to xml
 	 */
 	public static function csv_to_xml($csv_url){
 

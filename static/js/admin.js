@@ -33,13 +33,70 @@
 		$(this).attr('original-title', $(this).attr('title'));
 		$(this).removeAttr('title');
 	});
+
+	if ($('#pmxi_tabs').length){ 		
+		if ($('form.options').length){
+			$('.nav-tab').removeClass('nav-tab-active');
+			if ($('#selected_post_type').val() != ''){
+				var post_type_founded = false;
+				$('.pmxi_tab').hide();				
+				$('input[name=custom_type]').each(function(i){					
+					if ($(this).val() == $('#selected_post_type').val()) { 												
+						$('.nav-tab[rel='+ $(this).val() +']').addClass('nav-tab-active');
+						$(this).parents('.pmxi_tab:first').show(); 
+						post_type_founded = true; 
+					}
+				});
+				if ( ! post_type_founded){
+					if ($('#selected_type').val() == 'post'){
+						$('.nav-tab[rel=posts]').addClass('nav-tab-active');
+						$('div#posts').show();				
+					}	
+					else{
+						$('.nav-tab[rel=pages]').addClass('nav-tab-active');
+						$('div#pages').show();
+					}					
+				}
+			}
+			else if ($('#selected_type').val() != ''){
+				if ($('#selected_type').val() == 'post'){
+					$('.nav-tab[rel=posts]').addClass('nav-tab-active');
+					$('div#posts').show();				
+				}	
+				else{
+					$('.nav-tab[rel=pages]').addClass('nav-tab-active');
+					$('div#pages').show();
+				}				
+			}
+			$('.nav-tab-wrapper').show();
+		}
+		else
+			$('#pmxi_tabs').tabs().show();
+	}
+
+	$('.pmxi_plugin').find('.nav-tab').click(function(){
+		$('.nav-tab').removeClass('nav-tab-active');
+		$(this).addClass('nav-tab-active');
+		$('.pmxi_tab').hide();
+		$('div#' + $(this).attr('rel')).fadeIn();		
+
+		if ( parseInt($('div#' + $(this).attr('rel')).find('.is_disabled').val()) ) {
+			$('div#' + $(this).attr('rel')).find('input, select, textarea').attr('disabled','disabled'); 			
+		} 
+		else { 
+			$('div#' + $(this).attr('rel')).find('input, select, textarea').removeAttr('disabled');			
+		}
+
+	});	
 	
 	// swither show/hide logic
-	$('input.switcher').change(function (e) {
+	$('input.switcher').live('change', function (e) {	
+
 		if ($(this).is(':radio:checked')) {
 			$(this).parents('form').find('input.switcher:radio[name="' + $(this).attr('name') + '"]').not(this).change();
 		}
 		var $targets = $('.switcher-target-' + $(this).attr('id'));
+
 		var is_show = $(this).is(':checked'); if ($(this).is('.switcher-reversed')) is_show = ! is_show;
 		if (is_show) {
 			$targets.fadeIn();
@@ -104,6 +161,15 @@
 	$('form.no-enter-submit').find('input,select,textarea').not('*[type="submit"]').keydown(function (e) {
 		if (13 == e.keyCode) e.preventDefault();
 	});
+
+	// enter-submit form on step 1
+	if ($('.pmxi_step_1').length){
+		$('body').keydown(function (e) {
+			if (13 == e.keyCode){
+				$('form.choose-file').submit();
+			}
+		});
+	}
 	
 	// choose file form: option selection dynamic
 	// options form: highlight options of selected post type
@@ -117,10 +183,12 @@
 	// template form: auto submit when `load template` list value is picked
 	$('form.template, form.options').find('select[name="load_template"]').change(function () {
 		$(this).parents('form').submit();
-	});	
+	});		
+
 	// template form: preview button
 	$('form.template').each(function () {
 		var $form = $(this);
+		var $preview = $('#post-preview');		
 		var set_encoding = false;
 		var $modal = $('<div></div>').dialog({
 			autoOpen: false,
@@ -137,6 +205,55 @@
 			if (tinyMCE != undefined) tinyMCE.triggerSave(false, false);
 			$.post('admin.php?page=pmxi-admin-import&action=preview', $form.serialize(), function (response) {
 				$modal.removeClass('loading').html(response).dialog('option', 'position', 'center');
+				var $tag = $('.tag');
+				var tagno = parseInt($tag.find('input[name="tagno"]').val());
+				$preview.find('.navigation a').live('click', function () {
+					tagno += '#prev' == $(this).attr('href') ? -1 : 1;						
+					$tag.addClass('loading').css('opacity', 0.7);
+					$.post('admin.php?page=pmxi-admin-import&action=tag', {tagno: tagno}, function (data) {
+						var $indicator = $('<span />').insertBefore($tag);
+						$tag.replaceWith(data);
+						$indicator.next().tag().prevObject.remove();
+						if ($('#variations_xpath').length){						
+							$('#variations_xpath').data('checkedValue', '').change();
+						}
+						if ($('.layout').length){
+					    	var offset = $('.layout').offset();
+					        if ($(document).scrollTop() > offset.top)
+					            $('.tag').css({'top':(($(document).scrollTop() - offset.top) ? $(document).scrollTop() - offset.top : 0) + 'px'});        
+					        else
+					        	$('.tag').css({'top':''});
+					    }
+					    $preview.find('input[name="tagno"]').die();
+					    $preview.find('.navigation a').die('click');
+					    $form.find('.preview').click();
+					}, 'html');
+					return false;
+				});
+				$preview.find('input[name="tagno"]').live('change', function () {
+					tagno = (parseInt($(this).val()) > parseInt($preview.find('.pmxi_count').html())) ? $preview.find('.pmxi_count').html() : ( (parseInt($(this).val())) ? $(this).val() : 1 );									
+					$tag.addClass('loading').css('opacity', 0.7);
+					$.post('admin.php?page=pmxi-admin-import&action=tag', {tagno: tagno}, function (data) {
+						var $indicator = $('<span />').insertBefore($tag);
+						$tag.replaceWith(data);
+						$indicator.next().tag().prevObject.remove();
+						if ($('#variations_xpath').length){						
+							$('#variations_xpath').data('checkedValue', '').change();
+						}
+						if ($('.layout').length){
+					    	var offset = $('.layout').offset();
+					        if ($(document).scrollTop() > offset.top)
+					            $('.tag').css({'top':(($(document).scrollTop() - offset.top) ? $(document).scrollTop() - offset.top : 0) + 'px'});        
+					        else
+					        	$('.tag').css({'top':''});
+					    }
+					    $preview.find('input[name="tagno"]').die();
+					    $preview.find('.navigation a').die('click');
+					    $form.find('.preview').click();
+					}, 'html');
+					return false;
+				});
+
 				if (set_encoding){
 					var $tag = $('.tag');
 					$tag.addClass('loading').css('opacity', 0.7);
@@ -153,7 +270,7 @@
 					    }
 					    set_encoding = false;
 					}, 'html');
-				}
+				}				
 			});
 			return false;
 		});
@@ -352,10 +469,7 @@
 		});
 		var xpathChanged = function () {
 			if ($input.val() == $input.data('checkedValue')) return;			
-			var xpath_elements = $input.val().split('[');			
-			var xpath_parts = xpath_elements[0].split('/');
-			xpath_elements[0] = '';			
-			$input.val('/' + xpath_parts[xpath_parts.length - 1] + ((xpath_elements.length) ? xpath_elements.join('[') : ''));
+			
 			$form.addClass('loading');			
 			$form.find('.xml-element.selected').removeClass('selected'); // clear current selection
 			// request server to return elements which correspond to xpath entered
@@ -364,21 +478,29 @@
 			$xml.parents('fieldset:first').addClass('preload');
 			go_to_template = false;
 			$submit.hide();
-			var evaluate = function(pointer, chunk){
-				$.post('admin.php?page=pmxi-admin-import&action=evaluate', {xpath: $input.val(), show_element: $goto_element.val(), root_element:$root_element.val(), delimiter:$csv_delimiter.val(), pointer:pointer, chunk:chunk}, function (response) {					
+			var evaluate = function(){
+				$.post('admin.php?page=pmxi-admin-import&action=evaluate', {xpath: $input.val(), show_element: $goto_element.val(), root_element:$root_element.val(), delimiter:$csv_delimiter.val()}, function (response) {					
 					if (response.result){
 						$('.ajax-console').html(response.html);
 						$input.attr('readonly', false).change(function(){$goto_element.val(1); xpathChanged();});
 						$form.removeClass('loading');
 						$xml.parents('fieldset:first').removeClass('preload');
-						go_to_template = true;
-						$submit.show();				
+						go_to_template = true;		
+						$('#pmxi_xml_element').find('option').each(function(){
+							if ($(this).val() != "") $(this).remove();
+						});
+						$('#pmxi_xml_element').append(response.render_element);
+						$submit.show();
 					}
-					else evaluate(response.pointer, response.chunk);
+				}, "json").fail(function() { 					
+					
+					$xml.parents('fieldset:first').removeClass('preload');
+					$form.removeClass('loading');
+					$('.ajax-console').html('<div class="error inline"><p>No matching elements found for XPath expression specified.</p></div>');
 
-				}, "json");
+				});		
 			}
-			evaluate(0, 0);
+			evaluate();
 		};
 		$next_element.live('click', function(){
 			var matches_count = ($('.matches_count').length) ? parseInt($('.matches_count').html()) : 0;
@@ -394,9 +516,24 @@
 			var show_element = Math.max(Math.min(parseInt($goto_element.val()), matches_count), 1);
 			$goto_element.val(show_element); $input.data('checkedValue', ''); xpathChanged();			
 		});
-		$get_default_xpath.click(function(){$root_element.val($(this).attr('root')); $goto_element.val(1); $input.val($(this).attr('rel')); xpathChanged();});
+
+		var reset_filters = function(){
+			$('#apply_filters').hide();
+			$('.filtering_rules').empty();	
+			$('#filtering_rules').find('p').show();	
+		}
+
+		$get_default_xpath.click(function(){
+			$input.val($(this).attr('rel'));
+			if ($input.val() == $input.data('checkedValue')) return;									
+			reset_filters();
+			$root_element.val($(this).attr('root')); $goto_element.val(1);  xpathChanged();
+		});
 		$('.change_root_element').click(function(){
-			$root_element.val($(this).attr('rel')); $goto_element.val(1); $input.val('/' + $(this).attr('rel')); xpathChanged();
+			$input.val('/' + $(this).attr('rel'));
+			if ($input.val() == $input.data('checkedValue')) return;						
+			reset_filters();
+			$root_element.val($(this).attr('rel')); $goto_element.val(1); xpathChanged();
 		});
 		$input.change(function(){$goto_element.val(1); xpathChanged();}).change();
 		$input.keyup(function (e) {
@@ -408,6 +545,156 @@
 				$('input[name="xpath"]').data('checkedValue','');
 				xpathChanged();
 			}
+		});
+
+		/* Advanced Filtering */
+
+		$('.filtering_rules').nestedSortable({
+	        handle: 'div',
+	        items: 'li',
+	        toleranceElement: '> div',
+	        update: function () {	        
+	        	$('.filtering_rules').find('.condition').show();
+	        	$('.filtering_rules').find('.condition:last').hide();     								
+		    }
+	    });
+
+	    $('#pmxi_add_rule').click(function(){    	
+
+	    	var $el = $('#pmxi_xml_element');
+	    	var $rule = $('#pmxi_rule');
+	    	var $val = $('#pmxi_value');
+
+	    	if ($el.val() == "" || $rule.val() == "") return;    	
+
+	    	if ($rule.val() != 'is_empty' && $rule.val() != "is_not_empty" && $val.val() == "") return;
+
+	    	var relunumber = $('.filtering_rules').find('li').length;
+
+	    	var html = '<li><div class="drag-element">';
+	    		html += '<input type="hidden" value="'+ $el.val() +'" class="pmxi_xml_element"/>';
+	    		html += '<input type="hidden" value="'+ $rule.val() +'" class="pmxi_rule"/>';
+	    		html += '<input type="hidden" value="'+ $val.val() +'" class="pmxi_value"/>';
+	    		html += '<span>' + $el.val() + ' <strong>' + $rule.find('option:selected').html() + '</strong> "' + $val.val() +'"</span>';
+	    		html += '<span class="condition"> <label for="rule_and_'+relunumber+'">AND</label><input id="rule_and_'+relunumber+'" type="radio" value="and" name="rule_'+relunumber+'" checked="checked" class="rule_condition"/><label for="rule_or_'+relunumber+'">OR</label><input id="rule_or_'+relunumber+'" type="radio" value="or" name="rule_'+relunumber+'" class="rule_condition"/> </span>';
+	    		html += '</div><a href="javascript:void(0);" class="icon-item remove-ico"></a></li>';
+
+	    	$('#apply_filters').show();
+	    	$('#filtering_rules').find('p').hide();    	
+
+	    	$('.filtering_rules').append(html);
+
+	    	$('.filtering_rules').find('.condition').show();
+	        $('.filtering_rules').find('.condition:last').hide();
+
+	    	$el.prop('selectedIndex',0);	
+	    	$rule.prop('selectedIndex',0);	
+	    	$val.val('');	    	
+	    	$('#pmxi_value').show();	    	
+
+	    });
+
+		$('.filtering_rules').find('.remove-ico').live('click', function(){
+			$(this).parents('li:first').remove();
+			if (!$('.filtering_rules').find('li').length){
+				$('#apply_filters').hide();
+	    		$('#filtering_rules').find('p').show();			
+			}
+		});
+
+		$('#pmxi_rule').change(function(){
+			if ($(this).val() == 'is_empty' || $(this).val() == 'is_not_empty')
+				$('#pmxi_value').hide();
+			else
+				$('#pmxi_value').show();
+		});
+
+		var filter = '[';
+
+		var xpath_builder = function(rules_box, lvl){						
+
+			var rules = rules_box.children('li');			
+
+			if (lvl && rules.length > 1) filter += ' (';
+
+			rules.each(function(){
+				
+				var node = $(this).children('.drag-element').find('.pmxi_xml_element').val();
+				var condition = $(this).children('.drag-element').find('.pmxi_rule').val();
+				var value = $(this).children('.drag-element').find('.pmxi_value').val();
+
+				var clause = ($(this).children('.drag-element').find('.condition').is(':visible')) ? $(this).children('.drag-element').find('input.rule_condition:checked').val() : false;				
+
+				var is_attr = false;
+
+				if (node.indexOf('@') != -1){
+					is_attr = true;
+					node_name = node.split('@')[0];
+					attr_name = node.split('@')[1];
+				}
+
+				filter += (is_attr) ? node_name.replace(/->/g, '/') : node.replace(/->/g, '/');
+
+				if (is_attr) filter += '[@' + attr_name;
+ 
+				switch (condition){
+					case 'equals':
+						filter += ' = %s';
+						break;
+					case 'greater':
+						filter += ' > %s';
+						break;
+					case 'equals_or_greater':
+						filter += ' >= %s';
+						break;
+					case 'less':
+						filter += ' < %s';
+						break;
+					case 'equals_or_less':
+						filter += ' =< %s';
+						break;
+					case 'contains':
+						filter += '[contains(.,"%s")]';
+						break;
+					case 'is_empty':
+						filter += '[not(text())]';
+						break;
+					case 'is_not_empty':
+						filter += '[text()]';
+						break;
+				}
+
+				filter = filter.replace('%s', value);
+
+				if (is_attr) filter += ']';
+
+				if (clause) filter += ' ' + clause + ' ';				
+
+				if ($(this).children('ol').length){
+					$(this).children('ol').each(function(){						
+						if ($(this).children('li').length) xpath_builder($(this), 1);
+					});				
+				}
+			});
+	
+			if (lvl && rules.length > 1) filter += ') ';	
+
+		}	
+
+		$('#apply_filters').click(function(){
+
+			var xpath = $('input[name=xpath]').val();
+
+			filter = '[';
+
+			xpath_builder($('.filtering_rules'), 0);
+
+			filter += ']';
+
+			$input.val( $input.val().split('[')[0] + filter);
+
+			$input.data('checkedValue', ''); xpathChanged();
+
 		});
 	});
 	
@@ -424,6 +711,27 @@
 			var tagno = parseInt($tag.find('input[name="tagno"]').val());
 			$tag.find('.navigation a').live('click', function () {
 				tagno += '#prev' == $(this).attr('href') ? -1 : 1;				
+				$tag.addClass('loading').css('opacity', 0.7);
+				$.post('admin.php?page=pmxi-admin-import&action=tag', {tagno: tagno}, function (data) {
+					var $indicator = $('<span />').insertBefore($tag);
+					$tag.replaceWith(data);
+					$indicator.next().tag().prevObject.remove();
+					if ($('#variations_xpath').length){						
+						$('#variations_xpath').data('checkedValue', '').change();
+					}
+					if ($('.layout').length){
+				    	var offset = $('.layout').offset();
+				        if ($(document).scrollTop() > offset.top)
+				            $('.tag').css({'top':(($(document).scrollTop() - offset.top) ? $(document).scrollTop() - offset.top : 0) + 'px'});        
+				        else
+				        	$('.tag').css({'top':''});
+				    }
+				}, 'html');
+				return false;
+			});
+			$tag.find('input[name="tagno"]').live('change', function () {
+				tagno = (parseInt($(this).val()) > parseInt($tag.find('.pmxi_count').html())) ? $tag.find('.pmxi_count').html() : ( (parseInt($(this).val())) ? $(this).val() : 1 );				
+				$(this).val(tagno);
 				$tag.addClass('loading').css('opacity', 0.7);
 				$.post('admin.php?page=pmxi-admin-import&action=tag', {tagno: tagno}, function (data) {
 					var $indicator = $('<span />').insertBefore($tag);
@@ -501,7 +809,7 @@
 	 	if (parent_td.find('input:first').val() == '') parent_td.find('.hierarhy-output').val('');	 			 	
 	});
 
-	$('.add-new-ico').click(function(){		
+	$('.add-new-ico').live('click', function(){		
 		var count = $(this).parents('tr:first').find('ol.sortable').find('li').length + 1;
 		$(this).parents('tr:first').find('ol.sortable').append('<li id="item_'+count+'"><div class="drag-element"><input type="checkbox" class="assign_post" checked="checked"/><input type="text" value="" class="widefat"></div><a class="icon-item remove-ico" href="javascript:void(0);"></a></li>');
 		$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
@@ -522,12 +830,31 @@
 	    	if ( ! $(this).is(':checked') && ! $(this).parents('.form-field:first').hasClass('template')){	    		
 	    		$(this).val('0').attr('checked','checked');
 	    	}
-	    });
+	    });		
 
 		$(this).parents('form:first').submit();
 	});
 
-	/* END Categories hierarchy */		
+	/* END Categories hierarchy */	
+
+	// manage screen: cron url
+	$('.get_cron_url').each(function () {
+		var $form = $(this);
+		var $modal = $('<div></div>').dialog({
+			autoOpen: false,
+			modal: true,
+			title: 'Cron URLs',
+			width: 760,
+			maxHeight: 600,
+			open: function(event, ui) {
+				$(this).dialog('option', 'height', 'auto').css({'max-height': $(this).dialog('option', 'maxHeight') - $(this).prev().height() - 24, 'overflow-y': 'auto'}); 
+	    	}
+		});	
+		$form.find('a').click(function () {
+			$modal.addClass('loading').empty().dialog('open').dialog('option', 'position', 'center');									
+			$modal.removeClass('loading').html('<textarea style="width:100%; height:100%;">' + $form.find('a').attr('rel') + '</textarea>').dialog('option', 'position', 'center');
+		});
+	});
 	
 	// chunk files upload
 	if ($('#plupload-ui').length)
@@ -557,54 +884,52 @@
 
 	$('#large_import_toggle').click(function(){
 		$('#large_import_xpath').slideToggle();
-	});		
-
-	$('.pmxi_plugin').find('.nav-tab').click(function(){
-		$('.nav-tab').removeClass('nav-tab-active');
-		$(this).addClass('nav-tab-active');
-		$('.pmxi_tab').hide();
-		$('div#' + $(this).attr('rel')).fadeIn();
 	});
 
-	if ($('#pmxi_tabs').length){ 		
-		if ($('form.options').length){
-			$('.nav-tab').removeClass('nav-tab-active');
-			if ($('#selected_post_type').val() != ''){
-				var post_type_founded = false;
-				$('.pmxi_tab').hide();				
-				$('input[name=custom_type]').each(function(i){					
-					if ($(this).val() == $('#selected_post_type').val()) { 												
-						$('.nav-tab[rel='+ $(this).val() +']').addClass('nav-tab-active');
-						$(this).parents('.pmxi_tab:first').show(); 
-						post_type_founded = true; 
-					}
-				});
-				if ( ! post_type_founded){
-					if ($('#selected_type').val() == 'post'){
-						$('.nav-tab[rel=posts]').addClass('nav-tab-active');
-						$('div#posts').show();				
-					}	
-					else{
-						$('.nav-tab[rel=pages]').addClass('nav-tab-active');
-						$('div#pages').show();
-					}					
-				}
-			}
-			else if ($('#selected_type').val() != ''){
-				if ($('#selected_type').val() == 'post'){
-					$('.nav-tab[rel=posts]').addClass('nav-tab-active');
-					$('div#posts').show();				
-				}	
-				else{
-					$('.nav-tab[rel=pages]').addClass('nav-tab-active');
-					$('div#pages').show();
-				}				
-			}
-			$('.nav-tab-wrapper').show();
+	// Step 4 - custom meta keys helper
+	$('.existing_meta_keys').change(function(){
+		var parent_fieldset = $(this).parents('fieldset');
+		var key = $(this).find('option:selected').val();
+		
+		if ("" != $(this).val()) {
+			parent_fieldset.find('input[name^=custom_name]:visible').each(function(){
+				if ("" == $(this).val()) $(this).parents('tr:first').remove();
+			});
+			parent_fieldset.find('a.action[href="#add"]').click();
+			parent_fieldset.find('input[name^=custom_name]:visible:last').val($(this).val());						
+
+			$(this).prop('selectedIndex',0);	
+
+			parent_fieldset.addClass('loading');		
+		
+			$.post('admin.php?page=pmxi-admin-settings&action=meta_values', {key: key}, function (data) {
+					
+				parent_fieldset.find('input[name^=custom_name]:visible:last').after(data);
+
+				parent_fieldset.removeClass('loading');		
+
+			}, 'html');
 		}
-		else
-			$('#pmxi_tabs').tabs().show();
-	}
+	});
+
+	$('input[name^=custom_name]').live('change', function(){
+		var $ths = $(this);
+		$ths.parents('fieldset:first').addClass('loading');
+		$.post('admin.php?page=pmxi-admin-settings&action=meta_values', {key: $ths.val()}, function (data) {
+			$ths.nextAll().remove();
+			$ths.after(data);
+			$ths.parents('fieldset:first').removeClass('loading');
+		}, 'html');
+
+	});
+
+	$('.existing_meta_values').live('change', function(){
+		var parent_fieldset = $(this).parents('.form-field:first');
+		if ($(this).val() != ""){
+			parent_fieldset.find('textarea').val($(this).val());
+			$(this).prop('selectedIndex', 0);
+		}
+	});	
 
 	if ($('#upload_process').length){ 
 		$('#upload_process').progressbar({ value: (($('#progressbar').html() != '') ? 100 : 0) });
@@ -657,5 +982,26 @@
 	$('input[name=keep_custom_fields]').click(function(){
 		$(this).parents('.input:first').find('.keep_except').slideToggle();
 	});		
+	
+    $('.pmxi_choosen').each(function(){    	
+    	$(this).find(".choosen_input").select2({tags: $(this).find('.choosen_values').html().split(',')});
+    });
+
+	$('.pmxi_tips_pointer').click(function(){		
+		$(this).pointer({
+            content: $('#record_matching_pointer').html(),
+            position: {
+                edge: 'right',
+                align: 'center'                
+            },
+            pointerWidth: 715,
+            close: function() {
+                $.post( ajaxurl, {
+                    pointer: 'pksn1',
+                    action: 'dismiss-wp-pointer'
+                });
+            }
+        }).pointer('open');
+	});	
 
 });})(jQuery);
