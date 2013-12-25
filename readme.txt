@@ -9,20 +9,29 @@ WP All Import is an extremely powerful plugin that makes it easy to import any X
 
 == Description ==
 
-WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress.
+*“It's a wonderful plugin that does so much, so well that it's hard to list all of the features. But I'll tell you this, I was able to import the content of a pair of websites running the ModX CMS into a WordPress install in less than 30 minutes. No joke!”*
+Alex Vasquez
+Co-Founder @ [DigiSavvy](http://www.digisavvy.com/) & Organizer @ [WordCamp Los Angeles](http://2013.la.wordcamp.org/)
 
 WP All Import has a four step import process and an intuitive drag & drop interface that makes complicated import tasks simple and fast.
 
 There are no special requirements that the elements in your file must be laid out in a certain way. WP All Import really can import any XML or CSV file.
 
-WP All Import can be used for everything from building a store with an affiliate datafeed to displaying live stock quotes or sports scores to building a real estate portal.
+WP All Import can be used for everything from migrating content from a legacy CMS to WordPress to building a store with an affiliate datafeed to displaying live stock quotes or sports scores to building a real estate portal.
+
+= Support & Documentation = 
+Our YouTube channel has many [videos showing WP All Import in action.](http://www.youtube.com/soflyyplugins)
+
+You may also enjoy our [documentation of advanced features.](http://www.wpallimport.com/documentation/)
+
+For technical support from the developers, please consider purchasing WP All Import Pro.
 
 = WP All Import Professional Edition =
 [youtube http://www.youtube.com/watch?v=3LfbN7uWcTA /]
 
-*WP All Import Pro* is a $99 upgrade that adds the following features to the free version of WP All Import:
+*WP All Import Pro* is a paid upgrade that includes premium support and adds the following features to WP All Import:
 
-* Import to Custom Post Types - commonly used to import to Automotiv, OpenHouse, Listings, and WooCommerce, as well as any other theme or plugin that makes use of Custom Post Types.
+* Import to Custom Post Types - commonly used to import to Automotiv, OpenHouse, Listings, as well as any other theme or plugin that makes use of Custom Post Types.
 
 * Cron Job/Recurring Imports - WP All Import pro can check periodically check a file for updates, and add, edit, and delete to the imported posts accordingly.
 
@@ -30,9 +39,7 @@ WP All Import can be used for everything from building a store with an affiliate
 
 * Import images to the post media gallery - WP All Import can download images from URLs in an XML or CSV file and put them in the media gallery.
 
-* Import files from a URL or FTP server - Download and import files from external websites or FTP servers, even if they are password protected. FTP imports support wildcard patterns, i.e. *.xml, so for example you could download and import all XML files in a certain folder.
-
-* URL and FTP imports are integrated with the recurring/cron imports feature, so WP All Import can periodically re-download the files and add, edit, and delete posts accordingly.
+* Import files from a URL - Download and import files from external websites, even if they are password protected with HTTP authentication. URL imports are integrated with the recurring/cron imports feature, so WP All Import can periodically re-download the files and add, edit, and delete posts accordingly.
 
 * Execution of Custom PHP Functions on data, i.e. use something like [my_function({xpath/to/a/field[1]})] in your template, to pass the value of {xpath/to/a/field[1]} to my_function and display whatever it returns.
 
@@ -61,14 +68,15 @@ Either: -
 * Upload the plugin from the Plugins page in WordPress
 * Unzip wp-all-import.zip and upload the contents to /wp-content/plugins/, and then activate the plugin from the Plugins page in WordPress
 
+Still need help? Read this excellent article: http://www.wpbeginner.com/beginners-guide/step-by-step-guide-to-install-a-wordpress-plugin-for-beginners/
+
 
 == Frequently Asked Questions ==
 
-*What Size Files Can WP All Import Handle?*
-With the release of WP All Import version 3, WP All Import can now handle files of any size and any number of records, as long as the web hosting provider can too. Typically, WP All Import can comfortably import files of 200Mb and larger in most shared hosting environments (HostGator, etc). Please see this page for more details: http://www.wpallimport.com/how-big
+**What Size Files Can WP All Import Handle?**
+It depends on your hosting provider’s settings. We’ve imported files of 200Mb and up, even on shared hosts. WP All Import splits your file into manageable chunks. 
 
-*What are the benefits of the $99 professional version?*
-Support for Custom Post Types, Custom Taxonomies, Custom Fields, cron jobs/recurring imports, download and importing of images to the post media gallery, and URL/FTP server uploads.
+Various settings are available to make it possible to import larger files or speed up your import: http://www.wpallimport.com/documentation/step-4/import-processing/
 
 *The answer to all of the following questions is yes:*
 
