@@ -5,7 +5,7 @@ Requires at least: 3.6.1
 Tested up to: 3.8
 Stable tag: 3.1.0
 
-WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress. 
+WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress.
 
 == Description ==
 
@@ -24,7 +24,7 @@ Our YouTube channel has many [videos showing WP All Import in action.](http://ww
 = WP All Import Professional Edition =
 [youtube http://www.youtube.com/watch?v=3LfbN7uWcTA /]
 
-*WP All Import Pro* is a paid upgrade that includes premium support and adds the following features to WP All Import:
+*WP All Import Pro* is a paid upgrade that includes premium support and adds the following features:
 
 * Import to Custom Post Types - commonly used to import to Automotiv, OpenHouse, Listings, as well as any other theme or plugin that makes use of Custom Post Types.
 
