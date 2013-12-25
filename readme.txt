@@ -9,8 +9,7 @@ WP All Import is an extremely powerful plugin that makes it easy to import any X
 
 == Description ==
 
-*“It's a wonderful plugin that does so much, so well that it's hard to list all of the features. But I'll tell you this, I was able to import the content of a pair of websites running the ModX CMS into a WordPress install in less than 30 minutes. No joke!”*
-**Alex Vasquez** - DigiSavvy Co-Founder & WordCamp Los Angeles Organizer
+*“It's a wonderful plugin that does so much, so well that it's hard to list all of the features. But I'll tell you this, I was able to import the content of a pair of websites running the ModX CMS into a WordPress install in less than 30 minutes. No joke!”* - **Alex Vasquez** - DigiSavvy Co-Founder & WordCamp Los Angeles Organizer
 
 WP All Import has a four step import process and an intuitive drag & drop interface that makes complicated import tasks simple and fast.
 
