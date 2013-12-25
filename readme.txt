@@ -10,8 +10,8 @@ WP All Import is an extremely powerful plugin that makes it easy to import any X
 == Description ==
 
 *“It's a wonderful plugin that does so much, so well that it's hard to list all of the features. But I'll tell you this, I was able to import the content of a pair of websites running the ModX CMS into a WordPress install in less than 30 minutes. No joke!”*
-Alex Vasquez
-Co-Founder @ [DigiSavvy](http://www.digisavvy.com/) & Organizer @ [WordCamp Los Angeles](http://2013.la.wordcamp.org/)
+
+**Alex Vasquez** - DigiSavvy Co-Founder & WordCamp Los Angeles Organizer
 
 WP All Import has a four step import process and an intuitive drag & drop interface that makes complicated import tasks simple and fast.
 
@@ -19,12 +19,7 @@ There are no special requirements that the elements in your file must be laid ou
 
 WP All Import can be used for everything from migrating content from a legacy CMS to WordPress to building a store with an affiliate datafeed to displaying live stock quotes or sports scores to building a real estate portal.
 
-= Support & Documentation = 
-Our YouTube channel has many [videos showing WP All Import in action.](http://www.youtube.com/soflyyplugins)
-
-You may also enjoy our [documentation of advanced features.](http://www.wpallimport.com/documentation/)
-
-For technical support from the developers, please consider purchasing WP All Import Pro.
+Our YouTube channel has many [videos showing WP All Import in action.](http://www.youtube.com/soflyyplugins) You may also enjoy our [documentation of advanced features.](http://www.wpallimport.com/documentation/) For technical support from the developers, please consider purchasing WP All Import Pro.
 
 = WP All Import Professional Edition =
 [youtube http://www.youtube.com/watch?v=3LfbN7uWcTA /]
