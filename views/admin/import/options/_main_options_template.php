@@ -1,28 +1,20 @@
 <tr>
 	<td style="border-bottom:1px solid #ccc;" colspan="3">
 
-		<?php if ($post_type != "post"):?>
-			
-		<center>
+		<?php if ($post_type != "post"):?>					
 
-			<?php if ($post_type == "product" and class_exists('PMWI_Plugin')):?>	
-				
-				<?php if (PMWI_EDITION == 'free'):?>
-					<h3>Get our WooCommerce add-on to import to Simple, Variable, Grouped, and Affiliate/External products</h3>					
-					<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-fields&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
-				<?php endif; ?>
+			<?php if ($post_type == "product" and class_exists('PMWI_Plugin')):?>								
 
 				<input type="hidden" class="is_disabled" value="0"/>
 
 			<?php else: ?>
-				<h3>Please upgrade to the professional version of WP All Import to import to Custom Post Types.</h3>
-				<input type="hidden" class="is_disabled" value="1"/>
-				<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-fields&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
-			<?php endif; ?>					
-
-			<hr />
-
-		</center>
+				<center>
+					<h3>Please upgrade to the professional version of WP All Import to import to Custom Post Types.</h3>
+					<input type="hidden" class="is_disabled" value="1"/>
+					<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=custom-fields&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade Now</a></p>
+					<hr />
+				</center>
+			<?php endif; ?>								
 
 		<?php else: ?>
 

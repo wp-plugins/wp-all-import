@@ -30,11 +30,11 @@
 			</div>
 			<div class="input" style="margin:3px 0px;">
 				<input type="hidden" name="download_images" value="0" />
-				<input type="checkbox" id="download_images_<?php echo $entry; ?>" name="download_images" value="1" <?php echo $post['download_images'] ? 'checked="checked"' : '' ?> class="switcher fix_checkbox" <?php if ($post_type != "product" or ! class_exists('PMWI_Plugin')):?>disabled="disabled"<?php endif; ?>/>
+				<input type="checkbox" id="download_images_<?php echo $entry; ?>" name="download_images" value="1" <?php echo $post['download_images'] ? 'checked="checked"' : '' ?> class="fix_checkbox" <?php if ($post_type != "product" or ! class_exists('PMWI_Plugin')):?>disabled="disabled"<?php endif; ?>/>
 				<label for="download_images_<?php echo $entry;?>"><?php _e('Download images','pmxi_plugin');?> </label>
 				<a href="#help" class="help" title="<?php _e('If this option enabled, then plugin will download images into the Uploads folder. If this option disabled, then plugin will search files in Uploads <strong>/wp-content/uploads/'.date("Y/m").'</strong> folder.', 'pmxi_plugin') ?>">?</a>
 			</div>
-			<div class="input switcher-target-download_images_<?php echo $entry; ?>" style="margin:3px 0px;">
+			<div class="input" style="margin:3px 0px;">
 				<input type="hidden" name="auto_rename_images" value="0" />
 				<input type="checkbox" id="auto_rename_images_<?php echo $entry; ?>" name="auto_rename_images" value="1" <?php echo $post['auto_rename_images'] ? 'checked="checked"' : '' ?> class="switcher fix_checkbox" <?php if ($post_type != "product" or ! class_exists('PMWI_Plugin')):?>disabled="disabled"<?php endif; ?>/>
 				<label for="auto_rename_images_<?php echo $entry;?>"><?php _e('Instead of using original image file name, set file name(s) to','pmxi_plugin');?> </label>

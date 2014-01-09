@@ -10,4 +10,10 @@
 }
 .pmxi_plugin .submit-buttons .large_button:hover{
 	vertical-align: baseline !important;
-};
+}
+.pmxi_plugin #titlediv #titlewrap{
+	font-size: 13px !important;	
+}
+.pmxi_plugin #titlediv #title{
+	color: #444 !important;
+}

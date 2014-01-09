@@ -345,7 +345,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					}
 				}
 			}; endif;
-			// [/custom taxonomies]								
+			// [/custom taxonomies]				
 
 			// serialized featured images
 			if ( ! (($uploads = wp_upload_dir()) && false === $uploads['error'])) {
@@ -593,7 +593,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 			}
 
-			foreach ($titles as $i => $void) {		
+			foreach ($titles as $i => $void) {						
 
 				wp_cache_flush();
 
@@ -611,7 +611,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						pmxi_session_commit();	
 						continue;										
 					}
-				}
+				}				
 					
 				$articleData = array(
 					'post_type' => $post_type,
@@ -688,10 +688,11 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						pmxi_session_commit();						
 						continue;
 					}										
-				}
-				
+				}				
+
 				// Duplicate record is founded
 				if ($post_to_update){
+
 					// Do not update already existing records option selected
 					if ("yes" == $this->options['is_keep_former_posts']) {																	
 						
@@ -953,7 +954,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 								}
 								
 							}
-						}																					
+						}						
 						
 					}
 					// [/custom fields]
@@ -981,7 +982,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					if ('post' != $articleData['post_type'] and !empty($this->options['page_template'])) update_post_meta($pid, '_wp_page_template', $this->options['page_template']);
 					
 					// [featured image]
-					if ( $articleData['post_type'] == 'product' and class_exists('PMWI_Plugin') and ! empty($uploads) and false === $uploads['error'] and !empty($featured_images[$i]) and (empty($articleData['ID']) or $this->options['update_all_data'] == "yes" or ( $this->options['update_all_data'] == "no" and $this->options['is_update_images']))) {
+					if ( ! empty($uploads) and false === $uploads['error'] and !empty($featured_images[$i]) and (empty($articleData['ID']) or $this->options['update_all_data'] == "yes" or ( $this->options['update_all_data'] == "no" and $this->options['is_update_images']))) {
 						
 						require_once(ABSPATH . 'wp-admin/includes/image.php');
 						
@@ -1040,6 +1041,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 										// keep existing and add newest images
 										if ( ! empty($articleData['ID']) and $this->options['is_update_images'] and $this->options['update_images_logic'] == "add_new" and $this->options['update_all_data'] == "no"){ 																																											
+											
 											$attachment_imgs = get_posts( array(
 												'post_type' => 'attachment',
 												'posts_per_page' => -1,
@@ -1060,26 +1062,43 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 													}
 												}												
 											}
+
 										}
 
 										if ($download_image){											
 
 											// do not download images
-											if ( ! $this->options['download_images'] ){ 																																											
-												
+											if ( ! $this->options['download_images'] ){ 		
+
 												$image_filename = $image_name;
-												$image_filepath = $uploads['path'] . '/' . url_title( $image_filename );
+												$image_filepath = $uploads['path'] . '/' . url_title( $image_filename );																																																				
 												
-												if ( @file_exists($image_filepath) ){
-													$download_image = false;																				
-													if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
-														$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'pmxi_plugin'), $image_filepath));
-														$logger and PMXI_Plugin::$session['pmxi_import']['warnings'] = ++PMXI_Plugin::$session->data['pmxi_import']['warnings'];
-														@unlink($image_filepath);
-													} else {
-														$create_image = true;											
+												$existing_attachment = $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM " . $this->wpdb->prefix ."posts WHERE guid = '%s'", $image_filepath ) );
+
+												if ( ! empty($existing_attachment->ID) ){
+
+													$download_image = false;	
+													$create_image = false;	
+
+													if ( ! has_post_thumbnail($pid) ) 
+														set_post_thumbnail($pid, $existing_attachment->ID); 											
+													else 
+														$gallery_attachment_ids[] = $existing_attachment->ID;	
+
+												}
+												else{													
+													
+													if ( @file_exists($image_filepath) ){
+														$download_image = false;																				
+														if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
+															$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'pmxi_plugin'), $image_filepath));
+															$logger and PMXI_Plugin::$session['pmxi_import']['warnings'] = ++PMXI_Plugin::$session->data['pmxi_import']['warnings'];
+															@unlink($image_filepath);
+														} else {
+															$create_image = true;											
+														}
 													}
-												}									
+												}
 											}	
 
 											if ($download_image){
@@ -1088,12 +1107,12 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 													@unlink($image_filepath); // delete file since failed upload may result in empty file created
 												} elseif( ($image_info = @getimagesize($image_filepath)) and in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
 													$create_image = true;											
-												}
+												}												
 												
 												if ( ! $create_image ){
 
 													$url = str_replace(" ", "%20", trim($img_url));
-
+													
 													if ( ! get_file_curl($url, $image_filepath) and ! @file_put_contents($image_filepath, @file_get_contents($url))) {
 														$logger and call_user_func($logger, sprintf(__('<b>WARNING</b>: File %s cannot be saved locally as %s', 'pmxi_plugin'), $url, $image_filepath));
 														$logger and PMXI_Plugin::$session['pmxi_import']['warnings'] = ++PMXI_Plugin::$session->data['pmxi_import']['warnings'];
@@ -1219,7 +1238,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					// [/attachments]
 					
 					// [custom taxonomies]
-					if ($articleData['post_type'] == 'product' and class_exists('PMWI_Plugin') and !empty($taxonomies)){	
+					if (!empty($taxonomies)){	
 
 						foreach ($taxonomies as $tx_name => $txes) {														
 
@@ -1388,7 +1407,21 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						$logger and call_user_func($logger, sprintf(__('`%s` post created successfully', 'pmxi_plugin'), $articleData['post_title']));
 					} else {						
 						$logger and call_user_func($logger, sprintf(__('`%s` post updated successfully', 'pmxi_plugin'), $articleData['post_title']));
-					}										
+					}
+
+					// [addons import]
+
+					// prepare data for import
+					$importData = array(
+						'pid' => $pid,						
+						'import' => $this,						
+						'logger' => $logger						
+					);
+
+					// deligate operation to addons
+					foreach (PMXI_Admin_Addons::get_active_addons() as $class) if ( method_exists($addons[$class], 'saved_post') ) $addons[$class]->saved_post($importData);	
+					
+					// [/addons import]										
 
 					do_action( 'pmxi_saved_post', $pid); // hook that was triggered immediately after post saved
 					
@@ -1477,9 +1510,9 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 						$this->wpdb->query( 
 							$this->wpdb->prepare($sql, '')
-						);		
+						);			
 
-						do_action('pmxi_delete_post', $missing_ids);			
+						do_action('pmxi_delete_post', $missing_ids);		
 					}								
 
 				}
@@ -1576,7 +1609,10 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			}
 			if (!empty($ids)){				
 
-				foreach ($ids as $id) wp_delete_object_term_relationships($id, get_object_taxonomies('' != $this->options['custom_type'] ? $this->options['custom_type'] : 'post'));
+				foreach ($ids as $id) {
+					do_action('pmxi_delete_post', $id);
+					wp_delete_object_term_relationships($id, get_object_taxonomies('' != $this->options['custom_type'] ? $this->options['custom_type'] : 'post'));
+				}
 
 				$sql = "delete a,b,c
 				FROM ".$this->wpdb->posts." a
@@ -1604,6 +1640,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 	public function deleteFiles() {
 		$fileList = new PMXI_File_List();
 		foreach($fileList->getBy('import_id', $this->id)->convertRecords() as $f) {
+			if ( @file_exists($f->path) ) @unlink($f->path);
 			$f->delete();
 		}
 		return $this;

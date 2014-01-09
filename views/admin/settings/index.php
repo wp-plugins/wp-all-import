@@ -44,8 +44,6 @@
 <div><?php printf(__('max_execution_time %s', 'pmxi_plugin'), ini_get('max_execution_time')) ?></div>
 <div><?php printf(__('max_input_time %s', 'pmxi_plugin'), ini_get('max_input_time')) ?></div>
 
-<h3><?php _e('Recurring & Scheduled Imports', 'pmxi_plugin') ?></h3>
-<div><?php printf(__('Cron Job Secret Key %s', 'pmxi_plugin'), '<input type="text" name="cron_job_key" value="' . esc_attr($post['cron_job_key']) . '"/>') ?></div>
 <h3><?php _e('Import Settings', 'pmxi_plugin') ?></h3>
 <p>
 	<?php printf(__('Create XML chunks, when feed contains more than %s (records)', 'pmxi_plugin'), '<input type="text" name="large_feed_limit" value="' . esc_attr($post['large_feed_limit']) . '"/>') ?></p>

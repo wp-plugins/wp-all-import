@@ -110,7 +110,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		$this->data['reimported_import'] = $import = new PMXI_Import_Record();
 		$this->data['id'] = $id = $this->input->get('id');
-		$this->data['parent_import'] = $parent_import = $this->input->get('parent_import');
+		$this->data['parent_import'] = $parent_import = $this->input->get('parent_import', 0);
 		if ($id and $import->getById($id)->isEmpty()) { // update requested but corresponding import is not found
 			wp_redirect(remove_query_arg('id', $this->baseUrl)); die();
 		}
@@ -1454,7 +1454,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			if (file_exists($log_file)) unlink($log_file);
 			@file_put_contents($log_file, PMXI_Plugin::$session->data['pmxi_import']['log']);
 
-			if (!empty(PMXI_Plugin::$session->data['pmxi_import'])) do_action( 'pmxi_after_xml_import', $import->id );									
+			if ( ! empty(PMXI_Plugin::$session->data['pmxi_import']) ) do_action( 'pmxi_after_xml_import', $import->id );									
 			
 			wp_cache_flush();
 			foreach ( get_taxonomies() as $tax ) {				

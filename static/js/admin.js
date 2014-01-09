@@ -78,14 +78,14 @@
 		$('.nav-tab').removeClass('nav-tab-active');
 		$(this).addClass('nav-tab-active');
 		$('.pmxi_tab').hide();
-		$('div#' + $(this).attr('rel')).fadeIn();		
+		$('div#' + $(this).attr('rel')).fadeIn();				
 
 		if ( parseInt($('div#' + $(this).attr('rel')).find('.is_disabled').val()) ) {
 			$('div#' + $(this).attr('rel')).find('input, select, textarea').attr('disabled','disabled'); 			
 		} 
-		else { 
-			$('div#' + $(this).attr('rel')).find('input, select, textarea').removeAttr('disabled');			
-		}
+		/*else { 
+			$('div#' + $(this).attr('rel')).find('input, select, textarea').removeAttr('readonly');			
+		}*/
 
 	});	
 	
