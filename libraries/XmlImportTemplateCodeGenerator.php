@@ -122,6 +122,7 @@ class XmlImportTemplateCodeGenerator
   {
     array_push($this->sequenceStack, $sequence);
     $result = '';
+
     if (count($sequence->getVariableDefinitions()) > 0)
     {
       $result .= $this->openPhpTag();
@@ -132,7 +133,7 @@ class XmlImportTemplateCodeGenerator
       $result .= PHP_EOL;
     }
     foreach ($sequence->getStatements() as $statement)
-    {      
+    {            
       $result .= $this->generateForStatement($statement);
     }
     array_pop($this->sequenceStack);
@@ -182,9 +183,9 @@ class XmlImportTemplateCodeGenerator
       }
       elseif ($statement instanceof XmlImportAstForeach)
       {
-        $var = '$x' . $this->xmlVariableNumber++;
-        $result .= PHP_EOL . 'foreach (' . $this->generateForExpression($statement->getXPath()) .
-          ' as ' . $var . ') :' . PHP_EOL;
+        $var = '$x' . $this->xmlVariableNumber++;                    
+        $result .= PHP_EOL . 'foreach (' . $this->generateForExpression($statement->getXPath(), false) .
+          ' as ' . $var . ') :' . PHP_EOL;       
         array_push($this->xmlStack, $var);
         $result .= $this->generateForSequence($statement->getBody());
         $result .= $this->openPhpTag() . PHP_EOL . 'endforeach;' . PHP_EOL;        
@@ -194,13 +195,14 @@ class XmlImportTemplateCodeGenerator
       {                
         $result .= PHP_EOL . 'if (' . $this->generateForExpression($statement->getCondition()) .  ') :' . PHP_EOL;
         $result .= $this->generateForSequence($statement->getIfBody());
+
         foreach ($statement->getElseIfs() as $elseif)
         {
           $result .= $this->openPhpTag() . PHP_EOL . 'elseif (' . $this->generateForExpression($elseif->getCondition()) . ') :' . PHP_EOL;
           $result .= $this->generateForSequence($elseif->getBody());
         }
         if (!is_null($body = $statement->getElseBody()))
-        {
+        {          
           $result .= $this->openPhpTag() . PHP_EOL . 'else :' . PHP_EOL;
           $result .= $this->generateForSequence($body);
         }
@@ -224,7 +226,7 @@ class XmlImportTemplateCodeGenerator
 	
     switch (get_class($expression))
     {
-      case 'XmlImportAstString':
+      case 'XmlImportAstString':        
         $result = '"' . $this->getEscapedValue($expression->getValue()) . '"';
         break;
 
@@ -235,18 +237,18 @@ class XmlImportTemplateCodeGenerator
 
       case 'XmlImportAstXPath':        
         if ($inPrint)
-        {
+        {          
           $variables = $this->sequenceStack[count($this->sequenceStack) - 1]->getVariables();          
           $result = '$this->getValue(' . $variables[$expression->getValue()] . ')';          
         }
         else
         {          
-          $variables = $this->sequenceStack[count($this->sequenceStack) - 1]->getVariables();                                      
+          $variables = $this->sequenceStack[count($this->sequenceStack) - 1]->getVariables();          
           $result = $variables[$expression->getValue()];                              
         }
         break;
 
-      case 'XmlImportAstFunction':
+      case 'XmlImportAstFunction':      
         $result = $this->generateForFunction($expression);
 		    break;
   	  
@@ -268,7 +270,7 @@ class XmlImportTemplateCodeGenerator
    * @return string
    */
   private function generateForFunction(XmlImportAstFunction $function)
-  {
+  {    
     $result = $function->getName() . '(';
     $arguments = $function->getArguments();
     

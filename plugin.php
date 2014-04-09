@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. A paid upgrade to WP All Import Pro is available for support and additional features.
-Version: 3.1.1
+Version: 3.1.2
 Author: Soflyy
 */
 
@@ -28,7 +28,7 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('PMXI_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.1.1');
+define('PMXI_VERSION', '3.1.2');
 
 define('PMXI_EDITION', 'free');
 
@@ -83,7 +83,8 @@ final class PMXI_Plugin {
 
 	public static $is_csv = false;
 
-	public static $csv_path = false;
+	public static $csv_path = false;		
+
 	/**
 	 * Return singletone instance
 	 * @return PMXI_Plugin
@@ -358,7 +359,13 @@ final class PMXI_Plugin {
 				throw new Exception('There is no previousely buffered content to display.');
 			}
 		} else {
-			$controllerName =  preg_replace('%(^' . preg_quote(self::PREFIX, '%') . '|_).%e', 'strtoupper("$0")', str_replace('-', '_', $page)); // capitalize prefix and first letters of class name parts
+			// capitalize prefix and first letters of class name parts	
+			if (function_exists('preg_replace_callback')){
+				$controllerName = preg_replace_callback('%(^' . preg_quote(self::PREFIX, '%') . '|_).%', array($this, "replace_callback"),str_replace('-', '_', $page));
+			}
+			else{
+				$controllerName =  preg_replace('%(^' . preg_quote(self::PREFIX, '%') . '|_).%e', 'strtoupper("$0")', str_replace('-', '_', $page)); 
+			}
 			$actionName = str_replace('-', '_', $action);
 			if (method_exists($controllerName, $actionName)) {
 				$this->_admin_current_screen = (object)array(
@@ -384,7 +391,7 @@ final class PMXI_Plugin {
 				} elseif ( ! $controller->isInline) {
 					ob_start();
 					$controller->$action();
-					$buffer = ob_get_clean();
+					$buffer = ob_get_clean();						
 				} else {
 					$buffer_callback = array($controller, $action);
 				}
@@ -392,6 +399,10 @@ final class PMXI_Plugin {
 				wp_redirect(admin_url()); die();
 			}
 		}
+	}
+
+	public function replace_callback($matches){
+		return strtoupper($matches[0]);
 	}
 
 	protected $_admin_current_screen = NULL;
@@ -570,14 +581,27 @@ final class PMXI_Plugin {
 		global $wpdb;
 		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
 		$parent_import_id = false;
-		
+		$iteration = false;
+
 		// Check if field exists
 		foreach ($tablefields as $tablefield) {
 			if ('parent_import_id' == $tablefield->Field) $parent_import_id = true;				
+			if ('iteration' == $tablefield->Field) $iteration = true;				
 		}
 		
 		if (!$parent_import_id) $wpdb->query("ALTER TABLE {$table} ADD `parent_import_id` BIGINT(20) NOT NULL DEFAULT 0;");						
+		if (!$iteration) $wpdb->query("ALTER TABLE {$table} ADD `iteration` BIGINT(20) NOT NULL DEFAULT 0;");						
 
+		$table = $this->getTablePrefix() . 'posts';
+		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
+		$iteration = false;
+
+		// Check if field exists
+		foreach ($tablefields as $tablefield) {			
+			if ('iteration' == $tablefield->Field) $iteration = true;				
+		}
+
+		if (!$iteration) $wpdb->query("ALTER TABLE {$table} ADD `iteration` BIGINT(20) NOT NULL DEFAULT 0;");
 	}	
 
 	/**
@@ -607,6 +631,8 @@ final class PMXI_Plugin {
 			'date_end' => 'now',
 			'custom_name' => array(),
 			'custom_value' => array(),
+			'custom_format' => array(),
+			'serialized_values' => array(),
 			'comment_status' => 'open',
 			'ping_status' => 'open',
 			'create_draft' => 'no',
@@ -685,7 +711,7 @@ final class PMXI_Plugin {
 			'update_all_data' => 'yes',
 			'is_fast_mode' => 0,
 			'chuncking' => 1,
-			'import_processing' => 'ajax'
+			'import_processing' => 'ajax'				
 		);
 	}
 

@@ -128,4 +128,3 @@ function pmxi_insert_attachment($object, $file = false, $parent = 0) {
 
 	return $post_ID;
 }
-?>

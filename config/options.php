@@ -3,7 +3,7 @@
  * List of plugin optins, contains only default values, actual values are stored in database
  * and can be changed by corresponding wordpress function calls
  */
-$config = array(	
+$config = array(		
 	"history_file_count" => 10000,
 	"history_file_age" => 365,
 	"highlight_limit" => 10000,
@@ -23,5 +23,7 @@ $config = array(
 	"case_sensitive" => 1,
 	"session_mode" => 'default',
 	"enable_ftp_import" => 0,
-	"large_feed_limit" => 1000
+	"large_feed_limit" => 1000,
+	"enable_cron_processing_time_limit" => 0,
+	"cron_processing_time_limit" => 120	
 );

@@ -184,5 +184,3 @@ function pmxi_insert_post($postarr, $wp_error = false){
 
 	return $post_ID;
 }
-
-?>

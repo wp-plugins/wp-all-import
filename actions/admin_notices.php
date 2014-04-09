@@ -25,9 +25,9 @@ function pmxi_admin_notices() {
 			) ?>
 		</p></div>
 		<?php
-	}	
+	}
 
-	if ( class_exists( 'PMWI_Plugin' ) and ( version_compare(PMWI_VERSION, '1.2.3') <= 0 and PMWI_EDITION == 'paid' or version_compare(PMWI_FREE_VERSION, '1.1.0') < 0 and PMWI_EDITION == 'free') ) {
+	if ( class_exists( 'PMWI_Plugin' ) and ( defined('PMWI_VERSION') and version_compare(PMWI_VERSION, '1.2.8') <= 0 and PMWI_EDITION == 'paid' or defined('PMWI_FREE_VERSION') and version_compare(PMWI_FREE_VERSION, '1.1.1') <= 0 and PMWI_EDITION == 'free') ) {
 		?>
 		<div class="error"><p>
 			<?php printf(
@@ -36,8 +36,8 @@ function pmxi_admin_notices() {
 			) ?>
 		</p></div>
 		<?php
-		
-		if (PMWI_EDITION == 'paid')
+			
+		if (defined('PMWI_EDITION') and PMWI_EDITION == 'paid')
 		{
 			deactivate_plugins( PMWI_ROOT_DIR . '/plugin.php');
 		}
@@ -45,6 +45,7 @@ function pmxi_admin_notices() {
 		{	
 			deactivate_plugins( PMWI_FREE_ROOT_DIR . '/plugin.php');		
 		}
+		
 	}
 
 	$input = new PMXI_Input();

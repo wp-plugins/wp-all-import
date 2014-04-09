@@ -7,4 +7,3 @@ if (!function_exists('is_exists_term')){
 		
 	}
 }
-?>

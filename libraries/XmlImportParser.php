@@ -83,12 +83,11 @@ class XmlImportParser {
 	    		
 		for ($i = 0; $i < count($rootNodes); $i++) {
 			if (empty($records) or in_array($i + 1, $records)) {                
-				$rootNode = $rootNodes[$i];
+				$rootNode = $rootNodes[$i];				
 				$template = new XmlImportTemplate($rootNode, $this->cachedTemplate);
 				$result[] = $template->parse();
 			}
-		}
-		
+		}				
 		return $result;
 	}
 

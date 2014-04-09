@@ -46,15 +46,7 @@
 
 <h3><?php _e('Import Settings', 'pmxi_plugin') ?></h3>
 <p>
-	<?php printf(__('Create XML chunks, when feed contains more than %s (records)', 'pmxi_plugin'), '<input type="text" name="large_feed_limit" value="' . esc_attr($post['large_feed_limit']) . '"/>') ?></p>
-<p>
-	<input type="hidden" name="legacy_special_character_handling" value="0"/>
-	<?php printf(__('%s <label for="legacy_special_character_handling">My CSV files contain HTML code</label>', 'pmxi_plugin'), '<input type="checkbox" name="legacy_special_character_handling" id="legacy_special_character_handling" value="1"  style="position:relative; top:-2px;" '. (($post['legacy_special_character_handling']) ? 'checked="checked"' : '') .'/>') ?>
-	<a href="#help" class="help" title="<?php _e('By default WP All Import does not encode the content of a CSV feed using htmlspecialchars(). Enable this option, and WP All Import will use htmlspecialchars() on the CSV content. Try this option if you get errors when importing CSV files in Step 1.', 'pmxi_plugin') ?>">?</a>
-</p>
-<p>
-	<input type="hidden" name="case_sensitive" value="0"/>
-	<?php printf(__('%s <label for="case_sensitive">Enable case-sensitivity mode</label>', 'pmxi_plugin'), '<input type="checkbox" name="case_sensitive" id="case_sensitive" value="1"  style="position:relative; top:-2px;" '. (($post['case_sensitive']) ? 'checked="checked"' : '') .'/>') ?>
+	<?php printf(__('Create XML chunks, when feed contains more than %s (records)', 'pmxi_plugin'), '<input type="text" name="large_feed_limit" value="' . esc_attr($post['large_feed_limit']) . '"/>') ?>
 </p>
 <p>
 	<input type="hidden" name="pingbacks" value="0"/>

@@ -125,7 +125,7 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 			?>
 			<?php foreach ($list as $item): ?>
 				<?php $class = ('alternate' == $class) ? '' : 'alternate'; ?>
-				<tr class="<?php echo $class; ?>" valign="middle">
+				<tr class="<?php echo $class; ?>" valign="middle">					
 					<th scope="row" class="check-column">
 						<input type="checkbox" id="item_<?php echo $item['id'] ?>" name="items[]" value="<?php echo esc_attr($item['id']) ?>" />
 					</th>
@@ -194,20 +194,75 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 
 										<?php do_action('pmxi_import_menu', $item['id'], $this->baseUrl); ?>
 
-										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl)) ?>"><?php _e('Edit Template', 'pmxi_plugin') ?></a></span> |
-										<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl)) ?>"><?php _e('Edit Options', 'pmxi_plugin') ?></a></span> |
-										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl)) ?>"><?php _e('Re-Run Import', 'pmxi_plugin') ?></a></span> |
+										<?php
 
-										<?php if ( in_array($item['type'], array('url', 'ftp', 'file'))): ?>
-											<!--span class="edit get_cron_url"><a class="edit" href="javascript:void(0);" rel='<?php echo "wget -q -O /dev/null \"".home_url()."?import_key=".PMXI_Plugin::getInstance()->getOption('cron_job_key')."&import_id=".$item['id']."&action=processing\"\n" . "wget -q -O /dev/null "."\"".home_url()."?import_key=".PMXI_Plugin::getInstance()->getOption('cron_job_key')."&import_id=".$item['id']."&action=trigger"."\"";?>'><?php _e('Get Cron URL', 'pmxi_plugin') ?></a></span> |-->
-											<span class="edit"><a class="edit" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'scheduling'), $this->baseUrl)) ?>"><?php _e('Cron Scheduling', 'pmxi_plugin') ?></a></span> |
-										<?php endif; ?>
-										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php'))) ?>"><?php _e('Re-Run With New File', 'pmxi_plugin') ?></a></span> |
-										<span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'log'), $this->baseUrl)) ?>"><?php _e('Download Log', 'pmxi_plugin') ?></a></span> |
-										<span class="delete"><a class="delete" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'delete'), $this->baseUrl)) ?>"><?php _e('Delete', 'pmxi_plugin') ?></a></span>
+											$import_actions = array(
+												'edit_template' => array( 
+													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl),  
+													'title' => __('Edit Template', 'pmxi_plugin'), 
+													'class' => 'edit'
+												),												
+												'edit_options' => array( 
+													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl),  
+													'title' => __('Edit Options', 'pmxi_plugin'), 
+													'class' => 'edit'
+												),												
+												're_run' => array( 
+													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl),  
+													'title' => __('Re-Run Import', 'pmxi_plugin'), 
+													'class' => 'update'
+												),												
+												'scheduling' => array( 
+													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'scheduling'), $this->baseUrl),  
+													'title' => __('Cron Scheduling', 'pmxi_plugin'), 
+													'class' => 'edit'
+												),												
+												're_run_with_new_file' => array( 
+													'url' => add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php')),  
+													'title' => __('Re-Run With New File', 'pmxi_plugin'), 
+													'class' => 'update'
+												),												
+												'log' => array( 
+													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'log'), $this->baseUrl),  
+													'title' => __('Download Log', 'pmxi_plugin'), 
+													'class' => 'update'
+												),												
+												'delete' => array( 
+													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'delete'), $this->baseUrl),  
+													'title' => __('Delete', 'pmxi_plugin'), 
+													'class' => 'delete'
+												),												
+											);
+											
+											$import_actions = apply_filters('pmxi_import_actions', $import_actions, $item );
+
+											$ai = 1;
+											foreach ($import_actions as $key => $action) {
+												switch ($key) {
+													case 'scheduling':
+														if ( in_array($item['type'], array('url', 'ftp', 'file'))):
+															?>
+															<span class="<?php echo $action['class']; ?>"><a class="<?php echo $action['class']; ?>" href="<?php echo esc_url($action['url']); ?>"><?php echo $action['title']; ?></a></span> <?php if ($ai != count($import_actions)): ?>|<?php endif; ?>
+															<?php
+														endif; 
+
+														break;
+
+													default:
+														?>
+														<span class="<?php echo $action['class']; ?>"><a class="<?php echo $action['class']; ?>" href="<?php echo esc_url($action['url']); ?>"><?php echo $action['title']; ?></a></span> <?php if ($ai != count($import_actions)): ?>|<?php endif; ?>
+														<?php
+														break;
+												}												
+												$ai++;		
+											}	
+
+										?>
+										
 										<?php if ( ($item['imported'] + $item['skipped']) < $item['count'] and ! $item['options']['is_import_specified'] and ! (int) $item['triggered'] ):?>
 										| <span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update', 'type' => 'continue'), $this->baseUrl)) ?>"><?php _e('Continue import', 'pmxi_plugin') ?></a></span>
 										<?php endif; ?>
+
 									</div>
 								</td>
 								<?php
@@ -236,7 +291,7 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 						endswitch;
 						?>
 					<?php endforeach; ?>
-				</tr>
+				</tr>				
 				<?php do_action('pmxi_manage_imports', $item, $class); ?>
 			<?php endforeach; ?>
 		<?php endif ?>

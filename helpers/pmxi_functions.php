@@ -162,7 +162,7 @@
 				$response = wp_remote_get($filePath);
 				$headers = wp_remote_retrieve_headers( $response );
 				
-				if (preg_match("/filename=\".*\"/i", $headers['content-disposition'], $matches)){
+				if (!empty($headers['content-disposition']) and preg_match("/filename=\".*\"/i", $headers['content-disposition'], $matches)){
 					$remote_file_name = str_replace(array('filename=','"'), '', $matches[0]);
 					if (!empty($remote_file_name)){
 						$type = (preg_match('%\W(csv)$%i', basename($remote_file_name))) ? 'csv' : false;
@@ -180,14 +180,13 @@
 	if ( ! function_exists('pmxi_get_remote_image_ext')){
 
 		function pmxi_get_remote_image_ext($filePath){
-			$ext = pmxi_getExtension($filePath);
-
-			if ("" != $ext) return $ext;
+			
 			$response = wp_remote_get($filePath);
 			$headers = wp_remote_retrieve_headers( $response );
-			$content_type = explode('/',$headers['content-type']);		
+			$content_type = (!empty($headers['content-type'])) ? explode('/', $headers['content-type']) : false;		
 
-			return (!empty($content_type[1])) ? $content_type[1] : '';
+			return ( ! empty($content_type[1]) ) ? $content_type[1] : '';
+
 		}
 	}
 
@@ -198,18 +197,18 @@
 	        if (!$i) return "";
 	        $l = strlen($str) - $i;        
 	        $ext = substr($str,$i+1,$l);
-	        return ($l <= 4) ? $ext : "";
+	        return (strlen($ext) <= 4) ? $ext : "";
 		}
 	}
 
-	if ( ! function_exists('getExtensionFromStr')){
+	if ( ! function_exists('pmxi_getExtensionFromStr')){
 		function pmxi_getExtensionFromStr($str) 
 	    {
 	        $i = strrpos($str,".");
-	        if (!$i) return "";
+	        if ($i === false) return "";
 	        $l = strlen($str) - $i;
-	        $ext = substr($str,$i+1,$l);
-	        return (preg_match('%\W(jpg|jpeg|gif|png)$%i', basename($ext)) and strlen($ext) <= 4) ? $ext : "";
+	        $ext = substr($str,$i+1,$l);	       
+	        return (preg_match('%(jpg|jpeg|gif|png)$%i', $ext) and strlen($ext) <= 4) ? $ext : "";
 		}
 	}
 
@@ -221,22 +220,20 @@
 	if ( ! function_exists('pmxi_copy_url_file')){
 
 		function pmxi_copy_url_file($filePath, $detect = false){
-			/*$ctx = stream_context_create();
-			stream_context_set_params($ctx, array("notification" => "stream_notification_callback"));*/
 			
 			$type = (preg_match('%\W(csv|txt|dat|psv)$%i', basename($filePath))) ? 'csv' : false;
 			if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
 
 			$uploads = wp_upload_dir();
 			$tmpname = wp_unique_filename($uploads['path'], ($type and strlen(basename($filePath)) < 30) ? basename($filePath) : time());	
-			$localPath = $uploads['path']  .'/'. url_title($tmpname) . ((!$type) ? '.tmp' : '');
+			$localPath = $uploads['path']  .'/'. urldecode(sanitize_file_name($tmpname)) . ((!$type) ? '.tmp' : '');			
 
 			$file = @fopen($filePath, "rb");
 
 	   		if (is_resource($file)){   			
 	   			$fp = @fopen($localPath, 'w');
 			   	$first_chunk = true;
-				while (!feof($file)) {
+				while ( ! @feof($file) ) {
 					$chunk = @fread($file, 1024);				
 					if (!$type and $first_chunk and strpos($chunk, "<") !== false) $type = 'xml'; elseif (!$type and $first_chunk) $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file
 					$first_chunk = false;
@@ -246,51 +243,92 @@
 				@fclose($fp); 	   	
 			}						
 
-		   	if (!file_exists($localPath)) {
+		   	if ( ! file_exists($localPath) ) {
 		   		
-		   		get_file_curl($filePath, $localPath);
+		   		$request = get_file_curl($filePath, $localPath);
+		   		
+		   		if ( ! is_wp_error($request) ){
 
-		   		if (!$type){	   			
-			   		$file = @fopen($localPath, "rb");	   		
-					while (!feof($file)) {
-						$chunk = @fread($file, 1024);					
-						if (strpos($chunk, "<?") !== false) $type = 'xml'; else $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file					
-					 	break;		 	
+			   		if ( ! $type ){	   			
+				   		$file = @fopen($localPath, "rb");	   		
+						while (!@feof($file)) {
+							$chunk = @fread($file, 1024);					
+							if (strpos($chunk, "<?") !== false) $type = 'xml'; else $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file					
+						 	break;		 	
+						}
+						@fclose($file);	
 					}
-					@fclose($file);	
 				}
+				else return $request;
 		   		
-		   	} 			   	
+		   	} 		
 
-			$newpath = str_replace("." . $type, "", $localPath) . '.' . $type;
-
-			if (@rename($localPath, $newpath)) $localPath = $newpath;				
+		   	if ( ! preg_match('%\W('. $type .')$%i', basename($localPath)) ){
+				if (@rename($localPath, $localPath . '.' . $type))
+			    	$localPath = $localPath . '.' . $type;
+			}
 			
 			return ($detect) ? array('type' => $type, 'localPath' => $localPath) : $localPath;
 		}
 	}
 
 	if ( ! function_exists('pmxi_gzfile_get_contents')){
-		function pmxi_gzfile_get_contents($filename, $use_include_path = 0) {
+		function pmxi_gzfile_get_contents($filename, $use_include_path = 0) {					
 
 			$type = 'csv';
-			$uploads = wp_upload_dir();
-			$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time());	
-			$localPath = $uploads['path']  .'/'. url_title($tmpname);
+			$uploads = wp_upload_dir();			
 
-			$fp = @fopen($localPath, 'w');
+			$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time() );	
+			$localPath = $uploads['path']  .'/'. urldecode(sanitize_file_name($tmpname));
 
+			$fp = @fopen($localPath, 'w');			
 		    $file = @gzopen($filename, 'rb', $use_include_path);
+		    
 		    if ($file) {
 		        $first_chunk = true;
 		        while (!gzeof($file)) {
-		            $chunk = gzread($file, 1024);
+		            $chunk = gzread($file, 1024);		            
 		            if ($first_chunk and strpos($chunk, "<?") !== false) { $type = 'xml'; $first_chunk = false; } // if it's a 1st chunk, then chunk <? symbols to detect XML file
 		            @fwrite($fp, $chunk);
 		        }
 		        gzclose($file);
+		    } 
+		    else{
+
+		    	$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time() );	
+		    	$localGZpath = $uploads['path']  .'/'. urldecode(sanitize_file_name($tmpname));
+				$request = get_file_curl($filename, $localGZpath, false, true);				
+
+				if ( ! is_wp_error($request) ){
+
+					$file = @gzopen($localGZpath, 'rb', $use_include_path);
+
+					if ($file) {
+				        $first_chunk = true;
+				        while (!gzeof($file)) {
+				            $chunk = gzread($file, 1024);			            
+				            if ($first_chunk and strpos($chunk, "<?") !== false) { $type = 'xml'; $first_chunk = false; } // if it's a 1st chunk, then chunk <? symbols to detect XML file
+				            @fwrite($fp, $chunk);
+				        }
+				        gzclose($file);
+				    } 
+
+				    @unlink($localGZpath);
+
+				}
+				else return $request;
+
 		    }
 		    @fclose($fp);
+
+		    if (preg_match('%\W(gz)$%i', basename($localPath))){		    	
+			    if (@rename($localPath, str_replace('.gz', '.' . $type, $localPath)))
+			    	$localPath = str_replace('.gz', '.' . $type, $localPath);
+			}
+			else{
+				if (@rename($localPath, $localPath . '.' . $type))
+			    	$localPath = $localPath . '.' . $type;
+			}
 		   
 		    return array('type' => $type, 'localPath' => $localPath);
 		}
@@ -317,26 +355,33 @@
 		  return $text;
 		} 
 	}
+	
+	if( !function_exists('wpai_util_map') ){
 
-	/*	
-	* $value = {property/type[1]}
-	* Would return Rent if $value is 1, $Buy if $value is 2, Unavailable if $value is 3.
-	*/
-	if ( ! function_exists('wpai_util_map')){
+		function wpai_util_map( $orig, $change, $source ){
+	  		
+	  		$orig = html_entity_decode($orig);
+	  		$change = html_entity_decode($change);
+	  		$source = html_entity_decode($source);
+	  		$original_array = array_map('trim',explode(',',$orig));
+	  
+	  		if ( empty($original_array) ) return "";
+	  
+	  		$change_array = array_map('trim',explode(',',$change));
+	  
+	  		if ( empty($change_array) or count($original_array) != count($change_array)) return ""; 
+	   
+	  		if( count($change_array) == count($original_array) ){
+	   			$replacement = array();
+	   			foreach ($original_array as $key => $el){
+	    			$replacement[$el] = $change_array[$key];
+	   			}
+	   			$result = strtr($source,$replacement);
+	  		}
+	  		return $result;
 
-		function wpai_util_map($orig, $change, $value) {
-			
-			$orig_array = explode(',', $orig);
+	 	}
 
-			if ( empty($orig_array) ) return "";
-
-			$change_array = explode(',', $change);
-
-			if ( empty($change_array) or count($orig_array) != count($change_array)) return "";					
-
-			return str_replace(array_map('trim', $orig_array), array_map('trim', $change_array), $value); 
-			
-		}
 	}
 
 	if ( ! function_exists('pmxi_convert_encoding')){
@@ -367,6 +412,16 @@
 			}
 
 			return $source;
+		}
+	}
+
+	if ( ! function_exists('pmxi_translate_uri') ){
+		function pmxi_translate_uri($uri) {
+		    $parts = explode('/', $uri);
+		    for ($i = 1; $i < count($parts); $i++) {
+		      $parts[$i] = rawurlencode($parts[$i]);
+		    }
+		    return implode('/', $parts);
 		}
 	}
 

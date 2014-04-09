@@ -35,7 +35,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		$by = array('parent_import_id' => 0);
 		if ('' != $s) {
 			$like = '%' . preg_replace('%\s+%', '%', preg_replace('/[%?]/', '\\\\$0', $s)) . '%';
-			$by[] = array(array('name LIKE' => $like, 'type LIKE' => $like, 'path LIKE' => $like), 'OR');
+			$by[] = array(array('name LIKE' => $like, 'type LIKE' => $like, 'path LIKE' => $like, 'friendly_name LIKE' => $like), 'OR');
 		}
 		
 		$this->data['list'] = $list->join($post->getTable(), $list->getTable() . '.id = ' . $post->getTable() . '.import_id', 'LEFT')
@@ -113,13 +113,13 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		
 		pmxi_session_unset();
 
+		$chunks = 0;
+
 		if ($this->input->post('is_confirmed')) {
 
 			check_admin_referer('update-import', '_wpnonce_update-import');		
 		
-			$uploads = wp_upload_dir();		
-
-			$chunks = 0;		
+			$uploads = wp_upload_dir();			
 
 			if ( empty(PMXI_Plugin::$session->data['pmxi_import']['chunk_number']) ) {			
 				
@@ -181,21 +181,24 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 					} elseif ( preg_match('%\W(csv|txt|dat|psv)$%i', trim($item->path))) { // If CSV file uploaded										
 						if($uploads['error']){
 							 $this->errors->add('form-validation', __('Can not create upload folder. Permision denied', 'pmxi_plugin'));
-						}									
-		    			$filePath = $post['filepath'];																		
+						}											    																			
 						include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
 						$csv = new PMXI_CsvParser($item->path, true, '', ( ! empty($item->options['delimiter']) ) ? $item->options['delimiter'] : '', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : '');					
 						$filePath = $csv->xml_path;						
 
 					} elseif(preg_match('%\W(gz)$%i', trim($item->path))){ // If gz file uploaded
 						$fileInfo = pmxi_gzfile_get_contents($item->path);
-						$filePath = $fileInfo['localPath'];				
-						// detect CSV or XML 
-						if ( $fileInfo['type'] == 'csv') { // it is CSV file																
-							include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
-							$csv = new PMXI_CsvParser($filePath, true, '', ( ! empty($item->options['delimiter']) ) ? $item->options['delimiter'] : '', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : ''); // create chunks
-							$filePath = $csv->xml_path;																			
+						if ( ! is_wp_error($fileInfo) ){
+							$filePath = $fileInfo['localPath'];				
+							// detect CSV or XML 
+							if ( $fileInfo['type'] == 'csv') { // it is CSV file																
+								include_once(PMXI_Plugin::ROOT_DIR.'/libraries/XmlImportCsvParse.php');					
+								$csv = new PMXI_CsvParser($filePath, true, '', ( ! empty($item->options['delimiter']) ) ? $item->options['delimiter'] : '', ( ! empty($item->options['encoding']) ) ? $item->options['encoding'] : ''); // create chunks
+								$filePath = $csv->xml_path;																			
+							}
 						}
+						else $this->errors->add('form-validation', $fileInfo->get_error_message());
+
 					} else { // If XML file uploaded					
 						
 						$filePath = $item->path;
@@ -204,8 +207,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 
 				}																						
 
-				@set_time_limit(0);			
-											
+				@set_time_limit(0);															
 				$local_paths = !empty($local_paths) ? $local_paths : array($filePath);								
 
 				foreach ($local_paths as $key => $path) {
@@ -266,8 +268,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						'encoding' => (!empty($item->options['encoding'])) ? $item->options['encoding'] : 'UTF-8',
 						'is_csv' => (!empty($item->options['delimiter'])) ? $item->options['delimiter'] : PMXI_Plugin::$is_csv,
 						'csv_path' => PMXI_Plugin::$csv_path,
-						'scheduled' => $item->scheduled,				
-						'current_post_ids' => '',						
+						'scheduled' => $item->scheduled,														
 						'chunk_number' => 1,						
 						'log' => '',						
 						'warnings' => 0,
@@ -305,9 +306,9 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		
 		if ($this->input->post('is_confirmed')) {
 			check_admin_referer('delete-import', '_wpnonce_delete-import');
-
-			do_action('pmxi_before_import_delete', $item, $this->input->post('is_delete_posts'));
 			
+			do_action('pmxi_before_import_delete', $item, $this->input->post('is_delete_posts'));
+
 			$item->delete( ! $this->input->post('is_delete_posts'));
 			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Import deleted', 'pmxi_plugin')), $this->baseUrl)); die();
 		}

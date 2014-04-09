@@ -65,7 +65,7 @@
 	border-radius: 4px;
     border-style: solid;
     border-width: 1px;
-	font-family: "Lucida Grande",Verdana,Arial,"Bitstream Vera Sans",sans-serif;
+	/*font-family: "Lucida Grande",Verdana,Arial,"Bitstream Vera Sans",sans-serif;*/
 	text-decoration: none;
 }
 .pmxi_plugin a.add-new:hover {
@@ -278,7 +278,7 @@
 	.pmxi_plugin table.form-table.custom-params input {
 		margin-left: 0;
 	} 
-	.pmxi_plugin table.form-table tr.template {
+	.pmxi_plugin table.form-table tr.template, .pmxi_plugin table.form-table ol li.template {
 		display: none;
 	}
 /*@*/
@@ -542,18 +542,23 @@ table.xml table {
 	list-style: none;
 }
 .pmxi_plugin .no-margin{ margin:0px; }
-.pmxi_plugin .icon-item, .pmxi_plugin .add-new-custom{
+.pmxi_plugin .icon-item, .pmxi_plugin .add-new-custom, .pmxi_plugin .add-new-key{
 	display: inline-block;
 	width: 16px;
 	height: 16px;
 	margin: 0px 3px;
 }
-.pmxi_plugin .add-new-ico, .pmxi_plugin .add-new-custom{ 
+.pmxi_plugin .add-new-ico, .pmxi_plugin .add-new-custom, .pmxi_plugin .add-new-key{ 
 	background: url("../img/ico-add-new.png") no-repeat 0px 4px;
 	width:70px;
 	height:25px;
-	padding-left: 15px;
+	padding-left: 20px;
 	color:#21759B;
+	font-family: "Open Sans",​sans-serif;
+	padding-top: 2px;
+	text-decoration: underline;
+	display: block;
+	margin: 0 auto;	
 }
 
 .pmxi_plugin .remove-ico{
@@ -809,6 +814,7 @@ table.xml table {
 	height: 16px;
 	position: absolute;
 	right: 20px;
+	top:0;
 	width: 16px;
 }
 .pmxi_plugin .switcher-target-is_keep_former_posts{
@@ -989,7 +995,7 @@ table.xml table {
 	border: 1px solid #C5DBEC;*/
 	height: 40px;
 	line-height: 39px;
-	margin-left: 10px;	
+	margin-left: 10px;
 	/*width: 90px;*/
 }
 .pmxi_plugin .drag-element .assign_post{
@@ -1016,7 +1022,9 @@ table.xml table {
 	width: 50%;
 }
 .pmxi_plugin .custom-params tr td.action{
-	width:100% !important;
+	width:100% !important;	
+	position: relative;
+	display: block;
 }
 .pmxi_plugin .load_options{
 	height: 0;
@@ -1330,6 +1338,21 @@ table.xml table {
 	margin-right: 5px;
 	padding: 5px 0;
 }
+.pmxi_plugin .to_the_left{
+	margin-top: 5px;
+	margin-left: 12px;
+	text-align: left;
+}
+.pmxi_plugin .to_the_left label{
+	margin: 0 10px 0 0 !important;
+}
+.pmxi_plugin .custom_type table{
+	width: 80%;
+	margin: 0 auto;	
+}
+.pmxi_plugin span.remove{
+	position: static !important;
+}
 
 .pmxi_plugin .pmxi_stars{
 	display: inline-block;
@@ -1352,7 +1375,4 @@ table.xml table {
 .pmxi_plugin .upgrade_link{
 	color: #21759B;
 	font-size: 1.3em;
-}
-.pmxi_plugin .ui-progressbar{
-	height: 32px;
 }

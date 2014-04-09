@@ -1,7 +1,7 @@
 <tr>
 	<td style="border-bottom:1px solid #ccc;" colspan="3">
 
-		<?php if ($post_type != "post"):?>					
+		<?php if ($post_type != "post" and $post_type != 'page'):?>					
 
 			<?php if ($post_type == "product" and class_exists('PMWI_Plugin')):?>								
 
@@ -43,7 +43,7 @@
 					<label for="status_xpath_<?php echo $entry; ?>"><?php _e('Set with XPath', 'pmxi_plugin' )?></label> <br>
 					<div class="switcher-target-status_xpath_<?php echo $entry; ?> set_xpath">
 						<div class="input">
-							&nbsp;<input type="text" class="smaller-text" name="status_xpath" style="width:150px; float:left;" value="<?php echo esc_attr($post['status_xpath']) ?>"/>
+							&nbsp;<input type="text" class="smaller-text" name="status_xpath" style="width:150px; float:left; margin-left:10px;" value="<?php echo esc_attr($post['status_xpath']) ?>"/>
 							<a href="#help" class="help" title="<?php _e('The value of presented XPath should be one of the following: (\'publish\', \'draft\', \'trash\').', 'pmxi_plugin') ?>" style="position:relative; top:2px;">?</a>
 						</div>
 					</div>
@@ -60,7 +60,7 @@
 					<label for="ping_status_<?php echo $entry; ?>"><?php _e('Allow Trackbacks and Pingbacks', 'pmxi_plugin') ?></label>
 				</div>
 			</div>														
-		</div>
+		</div>			
 		<?php if ($is_support_post_format):?>
 		<div class="col3">
 			<h3><?php _e('Post Format', 'pmxi_plugin') ?></h3>											
@@ -103,7 +103,7 @@
 				<label for="date_type_random_<?php echo $entry; ?>">
 					<?php _e('Random dates', 'pmxi_plugin') ?><a href="#help" class="help" title="<?php _e('Posts will be randomly assigned dates in this range. WordPress ensures posts with dates in the future will not appear until their date has been reached.', 'pmxi_plugin') ?>">?</a>
 				</label> <br>
-				<span class="switcher-target-date_type_random_<?php echo $entry; ?>" style="vertical-align:middle">
+				<span class="switcher-target-date_type_random_<?php echo $entry; ?>" style="vertical-align:middle; display:inline-block; margin-top:10px;">
 					<input type="text" class="datepicker" name="date_start" value="<?php echo esc_attr($post['date_start']) ?>" />
 					<?php _e('and', 'pmxi_plugin') ?>
 					<input type="text" class="datepicker" name="date_end" value="<?php echo esc_attr($post['date_end']) ?>" />

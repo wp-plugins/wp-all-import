@@ -74,6 +74,7 @@
 						<option value="less"><?php _e('less than', 'pmxi_plugin'); ?></option>
 						<option value="equals_or_less"><?php _e('equals or less than', 'pmxi_plugin'); ?></option>
 						<option value="contains"><?php _e('contains', 'pmxi_plugin'); ?></option>
+						<option value="not_contains"><?php _e('not contains', 'pmxi_plugin'); ?></option>
 						<option value="is_empty"><?php _e('is empty', 'pmxi_plugin'); ?></option>
 						<option value="is_not_empty"><?php _e('is not empty', 'pmxi_plugin'); ?></option>
 					</select>

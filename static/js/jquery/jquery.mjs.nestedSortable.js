@@ -345,7 +345,7 @@
 				}
 				
 				if (id) {
-						ret.push({"item_id": id[2], "parent_id": pid, "delim": $(item).parents('.post_taxonomy:first').find('input.tax_delim').val(), "left": left, "right": right, "xpath":$(item).find('input.widefat').val(), "assign":$(item).find('input.assign_post:first').is(':checked'), "auto_nested":$(item).parents('.post_taxonomy:first').find('input.taxonomy_auto_nested').is(':checked')});
+						ret.push({"item_id": id[2], "parent_id": pid, "delim": $(item).parents('.post_taxonomy:first').find('input.tax_delim').val(), "left": left, "right": right, "xpath":$(item).find('input.xpath_field').val(), "assign":$(item).find('input.assign_post:first').is(':checked'), "auto_nested":$(item).parents('.post_taxonomy:first').find('input.taxonomy_auto_nested').is(':checked'), "mapping":$(item).parents('.post_taxonomy:first').find('input[type=checkbox][name=categories_mapping]').is(':checked'), "mapping_rules":$(item).parents('.post_taxonomy:first').find('input[name=mapping_rules]').val()});
 				}
 
 				left = right + 1;

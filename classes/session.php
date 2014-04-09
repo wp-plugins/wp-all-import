@@ -72,6 +72,10 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 	 * @uses apply_filters Calls `wp_session_expiration` to determine how long until sessions expire.
 	 */
 	protected function __construct() {
+
+		if ( (version_compare(phpversion(), '5.4.0') >= 0 and session_status() == PHP_SESSION_DISABLED) or ('default' == PMXI_Plugin::getInstance()->getOption('session_mode') and !session_id() and !@session_start())){
+			PMXI_Plugin::getInstance()->updateOption(array('session_mode' => 'files'));
+		}		
 		
 		$this->session_mode = PMXI_Plugin::getInstance()->getOption('session_mode');
 		

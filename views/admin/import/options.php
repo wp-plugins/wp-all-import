@@ -1,6 +1,9 @@
 <?php
 
-	$custom_types = get_post_types(array('_builtin' => false), 'objects'); 
+	$custom_types = get_post_types(array('_builtin' => true), 'objects') + get_post_types(array('_builtin' => false), 'objects'); 
+	foreach ($custom_types as $key => $ct) {
+		if (in_array($key, array('attachment', 'revision', 'nav_menu_item'))) unset($custom_types[$key]);
+	}
 	$isWizard = $this->isWizard;
 	$baseUrl  = $this->baseUrl;
 	
@@ -41,143 +44,83 @@
 					</select>
 				</div>
 			</form>
-			<h2 class="nav-tab-wrapper woo-nav-tab-wrapper">
-				<a class="nav-tab nav-tab-active" rel="posts" href="javascript:void(0);"><?php _e('Posts','pmxi_plugin');?></a>
-				<a class="nav-tab" rel="pages" href="javascript:void(0);"><?php _e('Pages','pmxi_plugin');?></a>
+			<h2 class="woo-nav-tab-wrapper">				
 				<?php $custom_types = apply_filters( 'pmxi_custom_types', $custom_types );?>
 				<?php if (count($custom_types)): ?>
 					<?php foreach ($custom_types as $key => $ct):?>
-					<a class="nav-tab" rel="<?php echo $key; ?>" href="javascript:void(0);"><?php echo $ct->labels->name ?></a>					
+					<a class="nav-tab <?php if ($key == $get['pmxi-cpt']) echo 'nav-tab-active'; ?>" rel="<?php echo $key; ?>" href="<?php echo add_query_arg(array('action' => 'options', 'pmxi-cpt' => $key), $this->baseUrl); ?>"><?php echo $ct->labels->name ?></a>					
 					<?php endforeach ?>
 				<?php endif ?>				
 				<?php do_action('pmxi_custom_menu_item'); ?>			
 			</h2>
 			<div id="pmxi_tabs">			
 				<div class="left">			   
-
-				    <!-- Post Options -->
-
-				    <div id="posts" class="pmxi_tab"> <!-- Basic -->
-					    <form class="options <?php echo ! $isWizard ? 'edit' : '' ?>" method="post">
-					    	<input type="hidden" name="type" value="post"/>
-					    	<input type="hidden" name="custom_type" value=""/>
-							<div class="post-type-options">
-								<table class="form-table" style="max-width:none;">
-									<?php
-										$post_type = 'post';
-										$entry = 'post';
-
-										include( 'options/_main_options_template.php' );
-										do_action('pmxi_extend_options_main', $entry);
-										include( 'options/_taxonomies_template.php' );
-										do_action('pmxi_extend_options_taxonomies', $entry);
-										include( 'options/_categories_template.php' );
-										do_action('pmxi_extend_options_categories', $entry);
-										include( 'options/_custom_fields_template.php' );																		
-										do_action('pmxi_extend_options_custom_fields', $entry);
-										include( 'options/_featured_template.php' );
-										do_action('pmxi_extend_options_featured', $entry);
-										include( 'options/_author_template.php' );		
-										do_action('pmxi_extend_options_author', $entry);								
-										include( 'options/_reimport_template.php' );									
-										include( 'options/_settings_template.php' );
-									?>
-								</table>
-							</div>
-
-							<?php include( 'options/_buttons_template.php' ); ?>
-
-						</form>
-					</div>
-
-					<!-- Page Options -->
-
-					<div id="pages" class="pmxi_tab">
-						<form class="options <?php echo ! $isWizard ? 'edit' : '' ?>" method="post">
-							<input type="hidden" name="type" value="page"/>
-							<input type="hidden" name="custom_type" value=""/>						
-							<div class="post-type-options">
-								<table class="form-table" style="max-width:none;">
-
-									<?php 
-										$post_type = 'post';
-										$entry = 'page';
-										include( 'options/_main_options_template.php' ); 
-									?>
-
-									<tr>
-										<td align="center" width="33%">
-											<label><?php _e('Page Template', 'pmxi_plugin') ?></label> <br>
-											<select name="page_template" id="page_template">
-												<option value='default'><?php _e('Default', 'pmxi_plugin') ?></option>
-												<?php page_template_dropdown($post['page_template']); ?>
-											</select>
-										</td>
-										<td align="center" width="33%">
-											<label><?php _e('Parent Page', 'pmxi_plugin') ?></label> <br>
-											<?php wp_dropdown_pages(array('post_type' => 'page', 'selected' => $post['parent'], 'name' => 'parent', 'show_option_none' => __('(no parent)', 'pmxi_plugin'), 'sort_column'=> 'menu_order, post_title',)) ?>
-										</td>
-										<td align="center" width="33%">
-											<label><?php _e('Order', 'pmxi_plugin') ?></label> <br>
-											<input type="text" class="" name="order" value="<?php echo esc_attr($post['order']) ?>" />
-										</td>
-									</tr>
-									<?php		
-										do_action('pmxi_extend_options_main', $entry);
-										include( 'options/_custom_fields_template.php' );
-										do_action('pmxi_extend_options_custom_fields', $entry);
-										include( 'options/_taxonomies_template.php' );
-										do_action('pmxi_extend_options_taxonomies', $entry);
-										include( 'options/_featured_template.php' );
-										do_action('pmxi_extend_options_featured', $entry);
-										include( 'options/_author_template.php' );
-										do_action('pmxi_extend_options_author', $entry);
-										include( 'options/_reimport_template.php' );									
-										include( 'options/_settings_template.php' );
-									?>
-								</table>
-							</div>
-
-							<?php include( 'options/_buttons_template.php' ); ?>
-
-						</form>
-					</div>
-
+				   
 					<!-- Custom Post Types -->
-
 					<?php 				
 					if (count($custom_types)): ?>
 						<?php foreach ($custom_types as $key => $ct):?>
-							<div id="<?php echo $key;?>" class="pmxi_tab">
-								<form class="options <?php echo ! $isWizard ? 'edit' : '' ?>" method="post">
-									<input type="hidden" name="custom_type" value="<?php echo $key; ?>"/>
-									<input type="hidden" name="type" value="post"/>
-									<div class="post-type-options">
-										<table class="form-table" style="max-width:none;">
-											<?php
-												$post_type = $entry = $key;
-												include( 'options/_main_options_template.php' );
-												do_action('pmxi_extend_options_main', $entry);
-												include( 'options/_taxonomies_template.php' );
-												do_action('pmxi_extend_options_taxonomies', $entry);
-												include( 'options/_categories_template.php' );
-												do_action('pmxi_extend_options_categories', $entry);
-												include( 'options/_custom_fields_template.php' );
-												do_action('pmxi_extend_options_custom_fields', $entry);																								
-												include( 'options/_featured_template.php' );
-												do_action('pmxi_extend_options_featured', $entry);
-												include( 'options/_author_template.php' );
-												do_action('pmxi_extend_options_author', $entry);
-												include( 'options/_reimport_template.php' );											
-												include( 'options/_settings_template.php' );
-											?>
-										</table>
-									</div>
+							<?php if ( $key == $get['pmxi-cpt'] ): ?>
+								<div id="<?php echo $key;?>" class="">
+									<form class="options <?php echo ! $isWizard ? 'edit' : '' ?>" method="post">
+										<input type="hidden" name="custom_type" value="<?php echo $key; ?>"/>
+										<input type="hidden" name="type" value="post"/>
+										<div class="post-type-options">
+											<table class="form-table" style="max-width:none;">
+												<?php
+													$post_type = $entry = $key;
+													include( 'options/_main_options_template.php' );												
+													
+													if ( 'page' == $key ):
 
-									<?php include( 'options/_buttons_template.php' ); ?>
+														$entry = 'page';
+													?>
+														<tr>
+															<td align="center" width="33%" style="padding-bottom:20px;">
+																<label><?php _e('Page Template', 'pmxi_plugin') ?></label> <br>
+																<select name="page_template" id="page_template">
+																	<option value='default'><?php _e('Default', 'pmxi_plugin') ?></option>
+																	<?php page_template_dropdown($post['page_template']); ?>
+																</select>
+															</td>
+															<td align="center" width="33%">
+																<label><?php _e('Parent Page', 'pmxi_plugin') ?></label> <br>
+																<?php wp_dropdown_pages(array('post_type' => 'page', 'selected' => $post['parent'], 'name' => 'parent', 'show_option_none' => __('(no parent)', 'pmxi_plugin'), 'sort_column'=> 'menu_order, post_title',)) ?>
+															</td>
+															<td align="center" width="33%">
+																<label><?php _e('Order', 'pmxi_plugin') ?></label> <br>
+																<input type="text" class="" name="order" value="<?php echo esc_attr($post['order']) ?>" />
+															</td>
+														</tr>
+													<?php
+													endif;
 
-								</form>
-							</div>
+													do_action('pmxi_extend_options_main', $entry);
+													include( 'options/_taxonomies_template.php' );
+													do_action('pmxi_extend_options_taxonomies', $entry);
+													
+													if ( ! in_array($entry, array('page', 'product')) ){
+														include( 'options/_categories_template.php' );
+														do_action('pmxi_extend_options_categories', $entry);
+													}
+
+													include( 'options/_custom_fields_template.php' );
+													do_action('pmxi_extend_options_custom_fields', $entry);																								
+													include( 'options/_featured_template.php' );
+													do_action('pmxi_extend_options_featured', $entry);
+													include( 'options/_author_template.php' );
+													do_action('pmxi_extend_options_author', $entry);
+													include( 'options/_reimport_template.php' );											
+													include( 'options/_settings_template.php' );
+												?>
+											</table>
+										</div>
+
+										<?php include( 'options/_buttons_template.php' ); ?>
+
+									</form>
+								</div>
+							<?php endif ?>
 						<?php endforeach ?>
 					<?php endif ?>
 					

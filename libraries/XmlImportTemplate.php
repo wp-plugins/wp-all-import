@@ -64,11 +64,11 @@ class XmlImportTemplate {
 				
 		if (is_array($xpath) && count($xpath) > 0) {
 			$result = array();
-			foreach ($xpath as $xp) { // cancatenate multiple elements into 1 string
+			foreach ($xpath as $xp) { // cancatenate multiple elements into 1 string				
 				ob_start();
 				echo $xp;
 				$result[] = trim(ob_get_clean());
-			}
+			}			
 			return implode(XmlImportConfig::getInstance()->getMultiGlue(), $result);
 		} else {
 			// return null if nothing found

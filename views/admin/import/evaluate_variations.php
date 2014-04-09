@@ -24,6 +24,7 @@
 (function($){	
 	var paths = <?php echo json_encode($paths) ?>;
 	var $xml = $('#variations_xml');	
+	
 	$xml.html($('#current_xml').html()).css({'visibility':'visible'});
 	for (var i = 0; i < paths.length; i++) {
 		$xml.find('.xml-element[title="' + paths[i] + '"]').addClass('selected').parents('.xml-element').find('> .xml-content.collapsed').removeClass('collapsed').parent().find('> .xml-expander').html('-');

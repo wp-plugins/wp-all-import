@@ -25,7 +25,7 @@ class PMXI_CsvParser
 
     $large_import = false,    
 
-    $htmlentities = false,
+    $htmlentities = false,    
 
     $xml_path = '',
 
@@ -91,6 +91,8 @@ class PMXI_CsvParser
         $this->set_settings(array('delimiter' => $file_params['delimiter']['value'], 'eol' => $file_params['line_ending']['value']));        
 
         unset($file_params);
+
+        //stream_filter_register('msaccessxml', 'MSAccessXmlFilter');
 
         $this->load($filename);
     }
@@ -811,17 +813,21 @@ class PMXI_CsvParser
 
     // Fixes the encoding to uf8
     function fixEncoding($in_str)
-    {
+    {   
+        
         if (function_exists('mb_detect_encoding') and function_exists('mb_check_encoding')){
-          $cur_encoding = mb_detect_encoding($in_str) ;
-          if($cur_encoding == "UTF-8" && mb_check_encoding($in_str,"UTF-8"))
-            return $in_str;
-          else
-            return utf8_encode($in_str);
+
+            $cur_encoding = mb_detect_encoding($in_str) ;
+
+            if ( $cur_encoding == "UTF-8" && mb_check_encoding($in_str,"UTF-8") ){
+                return $in_str;
+            }
+            else 
+                return utf8_encode($in_str);
+
         }
 
         return $in_str;        
-
         
     } // fixEncoding 
 
@@ -896,28 +902,45 @@ class PMXI_CsvParser
     {
         if (!$this->validates()) {            
             return false;
-        }
+        }              
+
+        $wp_uploads = wp_upload_dir();
+
+        $tmpname = wp_unique_filename($wp_uploads['path'], str_replace("csv", "xml", basename($this->_filename)));
+        if ("" == $this->xml_path) $this->xml_path = $wp_uploads['path']  .'/'. url_title($tmpname);            
+        
+        $this->toXML(true);
+
+        /*$file = new PMXI_Chunk($this->xml_path, array('element' => 'node'));
+
+        if ( empty($file->options['element']) ){
+            $this->toXML(true); // Remove non ASCII symbols and write CDATA
+        }*/
+
+        return true;
+
+    }
+
+    function toXML( $fixBrokenSymbols = false ){
 
         $c = 0;
         $d = ( "" != $this->delimiter ) ? $this->delimiter : $this->settings['delimiter'];
         $e = $this->settings['escape'];
         $l = $this->settings['length'];       
 
-        PMXI_Plugin::$is_csv = $d;         
+        PMXI_Plugin::$is_csv = $d;  
 
-        $res = fopen($this->_filename, 'rb');
+        $res = fopen($this->_filename, 'rb');                    
+
+        $xmlWriter = new XMLWriter();
+        $xmlWriter->openURI($this->xml_path);
+        $xmlWriter->setIndent(true);
+        $xmlWriter->setIndentString("\t");
+        $xmlWriter->startDocument('1.0', $this->csv_encoding);
+        $xmlWriter->startElement('data');
         
-        $wp_uploads = wp_upload_dir();
-        if ($this->large_import){
-            $tmpname = wp_unique_filename($wp_uploads['path'], str_replace("csv", "xml", basename($this->_filename)));
-            if ('' == $this->xml_path) $this->xml_path = $wp_uploads['path']  .'/'. url_title($tmpname);
-            $fp = fopen($this->xml_path, 'w');
-            fwrite($fp, "<?xml version=\"1.0\" encoding=\"".$this->csv_encoding."\"?><data>");
-        }
         $create_new_headers = false;
-        
-        $legacy_special_character_handling = PMXI_Plugin::getInstance()->getOption('legacy_special_character_handling');
-
+                
         while ($keys = fgetcsv($res, $l, $d, $e)) {
 
             if ($c == 0) {
@@ -925,7 +948,7 @@ class PMXI_CsvParser
                 foreach ($keys as $key => $value) {    
                     if (!$create_new_headers and (preg_match('%\W(http:|https:|ftp:)$%i', $value) or is_numeric($value))) $create_new_headers = true;                                                                    
                     $value = trim(strtolower(preg_replace('/^[0-9]{1}/','el_', preg_replace('/[^a-z0-9_]/i', '', $value))));                    
-                    $keys[$key] = (!empty($value)) ? $value : 'undefined'.$key;                    
+                    $keys[$key] = (!empty($value)) ? $value : 'undefined' . $key;
                 }            
                 $this->headers = $keys;                                
                 if ($create_new_headers){ 
@@ -934,35 +957,44 @@ class PMXI_CsvParser
                 }
             } 
 
-            if ($c or $create_new_headers) {                                            
+            if ( $c or $create_new_headers ) {
+
                if (!empty($keys)){                                   
 
                     $chunk = array();
                     
-                    foreach ($this->headers as $key => $header) {                                                
-                        if ($this->auto_encoding)
-                            $chunk[$header] = $this->fixEncoding( ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key] );                            
-                        else
-                            $chunk[$header] = ($legacy_special_character_handling) ? htmlspecialchars($keys[$key], ENT_COMPAT, $this->csv_encoding) : $keys[$key];
-                    }
+                    foreach ($this->headers as $key => $header) $chunk[$header] = $this->fixEncoding( $keys[$key] );
 
-                    if (!empty($chunk))
-                    {                                                                
-                        fwrite($fp, "<node>"); 
-                        foreach ($chunk as $header => $value) fwrite($fp, "<".$header.">".$value."</".$header.">");                                                                        
-                        fwrite($fp, "</node>");
+                    if ( ! empty($chunk) )
+                    {                                                                                        
+                        $xmlWriter->startElement('node');
+                        foreach ($chunk as $header => $value) 
+                        {
+                            $xmlWriter->startElement($header);
+                                if ($fixBrokenSymbols){
+                                    // Remove non ASCII symbols and write CDATA
+                                    $xmlWriter->writeCData(preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $value));                                
+                                }
+                                else{
+                                    $xmlWriter->writeCData($value);                                
+                                }
+                            $xmlWriter->endElement();
+                        }                            
+                        $xmlWriter->endElement();                        
                     }                                        
                 }
             }
 
             $c ++;
         }
-        fwrite($fp, '</data>');
-        fclose($fp);
         fclose($res);
-        $this->removeEmpty();             
+        
+        $xmlWriter->endElement();
 
-        return true;       
+        $xmlWriter->flush(true);    
+
+        return true;    
+
     }
 
     /**
@@ -1061,12 +1093,7 @@ class PMXI_CsvParser
     {
         $this->rows    = array();
         $this->headers = array();
-    }
-
-    public function toXml() {          
-        $this->symmetrize();     
-        return ArrayToXML::toXml($this->getRawArray());
-    }
+    }    
 
     function analyse_file($file, $capture_limit_in_kb = 10) {
         // capture starting memory usage
@@ -1076,7 +1103,7 @@ class PMXI_CsvParser
         $output['read_kb']                 = $capture_limit_in_kb;
        
         // read in file
-        $fh = fopen($file, 'r');
+        $fh = fopen($file, 'r');        
             $contents = fgets($fh);
         fclose($fh);
        
@@ -1137,67 +1164,9 @@ class PMXI_CsvParser
        
         // capture ending memory usage
         $output['peak_mem']['end'] = memory_get_peak_usage(true);
+
         return $output;
     }
-
-}
-
-class ArrayToXML
-    {
-    /**
-    * The main function for converting to an XML document.
-    * Pass in a multi dimensional array and this recrusively loops through and builds up an XML document.
-    *
-    * @param array $data
-    * @param string $rootNodeName - what you want the root node to be - defaultsto data.
-    * @param SimpleXMLElement $xml - should only be used recursively
-    * @return string XML
-    */
-    public static function toXml($data, $rootNodeName = 'data', $xml=null)
-    {                
-        // turn off compatibility mode as simple xml throws a wobbly if you don't.
-        if (ini_get('zend.ze1_compatibility_mode') == 1)
-        {
-            ini_set ('zend.ze1_compatibility_mode', 0);
-        }
-     
-        if ($xml == null)
-        {
-            $xml = simplexml_load_string('<?xml version="1.0" encoding="utf-8"?><'.$rootNodeName .'/>');
-        }
-     
-        // loop through the data passed in.
-        foreach($data as $key => $value)
-        {
-            // no numeric keys in our xml please!
-            if (is_numeric($key))
-            {
-                // make string key...
-                $key = "node";
-            }
-            
-            // replace anything not alpha numeric
-            $key = preg_replace('/[^a-z0-9_]/i', '', $key);
-             
-            // if there is another array found recrusively call this function
-            if (is_array($value) or is_object($value))
-            {
-                $node = $xml->addChild($key);
-                // recrusive call.
-                ArrayToXML::toXml($value, $rootNodeName, $node);
-            }
-            else
-            {                
-                // add single node.
-                $value =  htmlspecialchars($value);
-                $xml->addChild($key,$value);
-            }
-            
-        }
-        // pass back as string. or simple xml object if you want!
-        return $xml->asXML();
-    }
-
 
 }
 

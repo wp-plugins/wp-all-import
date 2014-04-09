@@ -39,7 +39,7 @@ class PMXI_Model_Record extends PMXI_Model {
 		}
 		return $this;
 	}
-	
+
 	/**
 	 * Ger records related to current one
 	 * @param string $model Class name of model of related records
@@ -69,12 +69,12 @@ class PMXI_Model_Record extends PMXI_Model {
 	 * @return PMXI_Model_Record
 	 */
 	public function insert() {
-		if ($this->wpdb->insert($this->table, $this->toArray(TRUE))) {
+		if ($this->wpdb->insert($this->table, $this->toArray(TRUE))) {						
 			if (isset($this->auto_increment)) {
 				$this[$this->primary[0]] = $this->wpdb->insert_id;
-			}
+			}			
 			return $this;
-		} else {
+		} else {					
 			throw new Exception($this->wpdb->last_error);
 		}
 	}

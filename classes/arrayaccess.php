@@ -138,4 +138,3 @@ class PMXI_ArrayAccess implements ArrayAccess {
 		$this->dirty = true;
 	}
 }
-?>

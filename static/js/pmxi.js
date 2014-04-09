@@ -10,7 +10,7 @@
 			
 		}, 'html');
 	});
-	
+
 	$('#dismiss_manage_top').click(function(){
 
 		$(this).parents('div.updated:first').slideUp();

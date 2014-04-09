@@ -113,7 +113,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 
 		exit('OK');
 	}
-
+	
 	public function dismiss_manage_top(){
 
 		PMXI_Plugin::getInstance()->updateOption("dismiss_manage_top", 1);
@@ -140,15 +140,18 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 			WHERE postmeta.meta_key='".$meta_key."'
 		", ARRAY_A);		
 
-		$html = '<p>'.__('No existing values were found for this field.','pmxi_plugin').'</p>';
-
+		$html = '<div class="input ex_values">';		
+		
 		if (!empty($r)){
-			$html = '<select class="existing_meta_values"><option value="">'.__('Existing Values...','pmxi_plugin').'</option>';
+			$html .= '<select class="existing_meta_values"><option value="">'.__('Existing Values...','pmxi_plugin').'</option>';
 			foreach ($r as $key => $value) { if (empty($value['meta_value'])) continue;
-				$html .= '<option value="'.$value['meta_value'].'">'.$value['meta_value'].'</option>';
+				$html .= '<option value="'.esc_html($value['meta_value']).'">'.$value['meta_value'].'</option>';
 			}
 			$html .= '</select>';
 		}				
+		else $html .= '<p>' . __('No existing values were found for this field.','pmxi_plugin') . '</p>';
+
+		$html .= '</div>';
 
 		echo $html;
 	}

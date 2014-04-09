@@ -133,8 +133,9 @@
 				} 
 				else parse_element();
 
-			}, 'json').fail(function() { 					
-				
+			}, 'json').fail(function(data) { 												
+
+				$('#loglist').append(data.responseText);
 				$('#process_notice').hide();				
 				$('#download_log').show();
 				$('#download_log_separator').show();

@@ -10,8 +10,9 @@ function pmxi_findDuplicates($articleData, $custom_duplicate_name = '', $custom_
 	if ('custom field' == $duplicate_indicator){
 		$duplicate_ids = array();
 		$args = array(
-			'post_type' => $articleData['post_type'],
-			'meta_query' => array(
+			'post_type'   => ((class_exists('PMWI_Plugin') and $articleData['post_type'] == 'product') ? array('product', 'product_variation') : $articleData['post_type']),
+			'post_status' => array('draft', 'publish', 'trash', 'pending', 'future', 'private'),
+			'meta_query'  => array(
 				array(
 					'key' => $custom_duplicate_name,
 					'value' => $custom_duplicate_value,						
@@ -58,5 +59,3 @@ function pmxi_findDuplicates($articleData, $custom_duplicate_name = '', $custom_
 		));
 	}
 }
-
-?>

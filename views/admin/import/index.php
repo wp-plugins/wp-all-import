@@ -39,7 +39,7 @@ $l10n = array(
 			<?php
 				if ( ! $reimported_import->isEmpty()):
 				?>
-					<div id="reimported_notify">
+					<div class="reimported_notify">
 						<p><?php _e( 'You are importing a new file for: <b>' . $reimported_import->name . '</b>' , 'pmxi_plugin' );?></p>
 						<p><span><?php _e( 'Last imported on ' . date("m-d-Y H:i:s", strtotime($reimported_import->registered_on)) , 'pmxi_plugin' ); ?></span></p>
 					</div>
@@ -47,9 +47,9 @@ $l10n = array(
 				endif;
 			?>
 			<?php do_action('pmxi_choose_file_header'); ?>
-	        <form method="post" class="choose-file no-enter-submit" enctype="multipart/form-data" autocomplete="off">
+	        <form method="post" class="choose-file enter-submit" enctype="multipart/form-data" autocomplete="off">
 				<input type="hidden" name="is_submitted" value="1" />
-				<?php wp_nonce_field('upload-xml', '_wpnonce_upload-xml') ?>
+				<?php wp_nonce_field('upload-xml', '_wpnonce_upload-xml') ?>				
 				<div class="file-type-container">
 					<h3>
 						<input type="radio" id="type_upload" name="type" value="upload" checked="checked" />
@@ -102,7 +102,7 @@ $l10n = array(
 						<a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=step-1&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade to the professional edition of WP All Import to use this feature.</a>
 					</div>
 				</div>
-				<div id="url_upload_status"></div>
+				<div id="url_upload_status"></div>					
 				<p class="submit-buttons">
 					<input type="hidden" name="is_submitted" value="1" />
 					<?php wp_nonce_field('choose-file', '_wpnonce_choose-file') ?>

@@ -190,6 +190,8 @@
   //   extract() : Extract the content of the archive
   //   properties() : List the properties of the archive
   // --------------------------------------------------------------------------------
+  if (!class_exists('PclZip')):
+
   class PclZip
   {
     // ----- Filename of the zip file
@@ -5387,6 +5389,8 @@
   // --------------------------------------------------------------------------------
 
   }
+
+endif;
   // End of class
   // --------------------------------------------------------------------------------
 
@@ -5396,6 +5400,7 @@
   // Parameters :
   // Return Values :
   // --------------------------------------------------------------------------------
+if (!function_exists('PclZipUtilPathReduction')):
   function PclZipUtilPathReduction($p_dir)
   {
     $v_result = "";
@@ -5460,6 +5465,8 @@
     // ----- Return
     return $v_result;
   }
+endif;
+  
   // --------------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------------
@@ -5477,6 +5484,7 @@
   //   1 if $p_path is inside directory $p_dir
   //   2 if $p_path is exactly the same as $p_dir
   // --------------------------------------------------------------------------------
+if (!function_exists('PclZipUtilPathInclusion')):
   function PclZipUtilPathInclusion($p_dir, $p_path)
   {
     $v_result = 1;
@@ -5541,6 +5549,7 @@
     // ----- Return
     return $v_result;
   }
+endif;
   // --------------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------------
@@ -5554,6 +5563,7 @@
   //             3 : src & dest gzip
   // Return Values :
   // --------------------------------------------------------------------------------
+if (!function_exists('PclZipUtilCopyBlock')):
   function PclZipUtilCopyBlock($p_src, $p_dest, $p_size, $p_mode=0)
   {
     $v_result = 1;
@@ -5602,6 +5612,7 @@
     // ----- Return
     return $v_result;
   }
+endif;
   // --------------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------------
@@ -5616,6 +5627,7 @@
   // Return Values :
   //   1 on success, 0 on failure.
   // --------------------------------------------------------------------------------
+if (!function_exists('PclZipUtilRename')):
   function PclZipUtilRename($p_src, $p_dest)
   {
     $v_result = 1;
@@ -5635,6 +5647,7 @@
     // ----- Return
     return $v_result;
   }
+endif;
   // --------------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------------
@@ -5646,6 +5659,7 @@
   // Return Values :
   //   The option text value.
   // --------------------------------------------------------------------------------
+if (!function_exists('PclZipUtilOptionText')):
   function PclZipUtilOptionText($p_option)
   {
     
@@ -5664,6 +5678,7 @@
 
     return $v_result;
   }
+endif;
   // --------------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------------
@@ -5677,6 +5692,7 @@
   // Return Values :
   //   The path translated.
   // --------------------------------------------------------------------------------
+if (!function_exists('PclZipUtilTranslateWinPath')):
   function PclZipUtilTranslateWinPath($p_path, $p_remove_disk_letter=true)
   {
     if (stristr(php_uname(), 'windows')) {
@@ -5691,6 +5707,7 @@
     }
     return $p_path;
   }
+endif;
   // --------------------------------------------------------------------------------
 
 

@@ -5,6 +5,7 @@
 	<div id="pmxi-add-ons" class="clear">
 		
 		<div class="pmxi-add-on-group clear">
+			<h3><?php _e('Premium Add-ons', 'pmxi_plugin'); ?></h3>
 			<?php foreach( $premium as $addon ): ?>
 			<div class="pmxi-add-on wp-box <?php if( $addon['active'] ): ?>pmxi-add-on-active<?php endif; ?>">
 				<a target="_blank" href="<?php echo $addon['url']; ?>">
@@ -45,6 +46,7 @@
 		</div>
 		
 		<div class="pmxi-add-on-group clear">
+			<h3><?php _e('Free Add-ons', 'pmxi_plugin'); ?></h3>
 			<?php foreach( $free as $addon ): ?>
 			<div class="pmxi-add-on wp-box <?php if( $addon['active'] ): ?>pmxi-add-on-active<?php endif; ?>">
 				<a target="_blank" href="<?php echo $addon['url']; ?>">

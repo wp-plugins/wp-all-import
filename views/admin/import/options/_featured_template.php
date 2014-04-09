@@ -32,7 +32,7 @@
 				<input type="hidden" name="download_images" value="0" />
 				<input type="checkbox" id="download_images_<?php echo $entry; ?>" name="download_images" value="1" <?php echo $post['download_images'] ? 'checked="checked"' : '' ?> class="fix_checkbox" <?php if ($post_type != "product" or ! class_exists('PMWI_Plugin')):?>disabled="disabled"<?php endif; ?>/>
 				<label for="download_images_<?php echo $entry;?>"><?php _e('Download images','pmxi_plugin');?> </label>
-				<a href="#help" class="help" title="<?php _e('If this option enabled, then plugin will download images into the Uploads folder. If this option disabled, then plugin will search files in Uploads <strong>/wp-content/uploads/'.date("Y/m").'</strong> folder.', 'pmxi_plugin') ?>">?</a>
+				<a href="#help" class="help" title="<?php _e('Enable this option and WP All Import will download images into the Uploads folder. If this option is disabled, then WP All Import will search for files in the <strong>/wp-content/uploads/'.date("Y/m").'</strong> folder, and if no matching image is found, only then will WP All Import attempt to download it', 'pmxi_plugin') ?>">?</a>
 			</div>
 			<div class="input" style="margin:3px 0px;">
 				<input type="hidden" name="auto_rename_images" value="0" />
@@ -70,8 +70,7 @@
 					<label for="image_meta_description_delim_<?php echo $entry;?>"><?php _e('Separated by', 'pmxi_plugin');?></label>
 					<input type="text" class="small" id="image_meta_description_delim_<?php echo $entry;?>" name="image_meta_description_delim" value="<?php echo esc_attr($post['image_meta_description_delim']) ?>" style="width:5%; text-align:center;" <?php if ($post_type != "product" or ! class_exists('PMWI_Plugin')):?>disabled="disabled"<?php endif; ?>/> <span>(<?php _e('or newline','pmxi_plugin');?>)</span>						
 				</div>
-			</div>		
-
+			</div>											
 		</fieldset>								
 	</td>
 </tr>

@@ -26,4 +26,3 @@ if (!function_exists('import_custom_meta_box')){
 		<?php
 	}
 }
-?>

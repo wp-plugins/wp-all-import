@@ -55,14 +55,14 @@ CREATE TABLE {$table_prefix}imports (
   	root_element VARCHAR(255) DEFAULT '',
   	processing BOOL NOT NULL DEFAULT 0,
   	triggered BOOL NOT NULL DEFAULT 0,
-  	queue_chunk_number BIGINT(20) NOT NULL DEFAULT 0,
-  	current_post_ids LONGBLOB,  	
+  	queue_chunk_number BIGINT(20) NOT NULL DEFAULT 0,  	
   	first_import TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,	
   	count BIGINT(20) NOT NULL DEFAULT 0,
   	imported BIGINT(20) NOT NULL DEFAULT 0,
   	created BIGINT(20) NOT NULL DEFAULT 0,
   	updated BIGINT(20) NOT NULL DEFAULT 0,
   	skipped BIGINT(20) NOT NULL DEFAULT 0,
+  	iteration BIGINT(20) NOT NULL DEFAULT 0,
 	PRIMARY KEY  (id)
 ) $charset_collate;
 CREATE TABLE {$table_prefix}posts (
@@ -71,6 +71,7 @@ CREATE TABLE {$table_prefix}posts (
 	import_id BIGINT(20) UNSIGNED NOT NULL,
 	unique_key TEXT,
 	product_key TEXT,
+	iteration BIGINT(20) NOT NULL DEFAULT 0,
 	PRIMARY KEY  (id)	
 ) $charset_collate;
 CREATE TABLE {$table_prefix}files (

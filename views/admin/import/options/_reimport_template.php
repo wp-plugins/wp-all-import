@@ -39,45 +39,47 @@
 				<input type="checkbox" id="create_new_records_<?php echo $entry; ?>" name="create_new_records" value="1" <?php echo $post['create_new_records'] ? 'checked="checked"' : '' ?> />
 				<label for="create_new_records_<?php echo $entry; ?>"><?php _e('Create new posts from records newly present in your file', 'pmxi_plugin') ?></label>
 			</div>
-			<div class="input">
-				<input type="hidden" name="is_delete_missing" value="0" />
-				<input type="checkbox" id="is_delete_missing_<?php echo $entry; ?>" name="is_delete_missing" value="1" <?php echo $post['is_delete_missing'] ? 'checked="checked"': '' ?> class="switcher"/>
-				<label for="is_delete_missing_<?php echo $entry; ?>"><?php _e('Delete posts that are no longer present in your file', 'pmxi_plugin') ?></label>
-				<a href="#help" class="help" title="<?php _e('Check this option if you want to delete posts from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>
-			</div>
-			<div class="switcher-target-is_delete_missing_<?php echo $entry; ?>" style="padding-left:17px;">
+			<div class="switcher-target-auto_matching_<?php echo $entry; ?>">
 				<div class="input">
-					<input type="hidden" name="is_keep_attachments" value="0" />
-					<input type="checkbox" id="is_keep_attachments_<?php echo $entry; ?>" name="is_keep_attachments" value="1" <?php echo $post['is_keep_attachments'] ? 'checked="checked"': '' ?> />
-					<label for="is_keep_attachments_<?php echo $entry; ?>"><?php _e('Do not remove attachments', 'pmxi_plugin') ?></label>
-					<a href="#help" class="help" title="<?php _e('Check this option if you want attachments like *.pdf or *.doc files to be kept in media library after parent post or page is removed or replaced during reimport operation.', 'pmxi_plugin') ?>">?</a>
+					<input type="hidden" name="is_delete_missing" value="0" />
+					<input type="checkbox" id="is_delete_missing_<?php echo $entry; ?>" name="is_delete_missing" value="1" <?php echo $post['is_delete_missing'] ? 'checked="checked"': '' ?> class="switcher"/>
+					<label for="is_delete_missing_<?php echo $entry; ?>"><?php _e('Delete posts that are no longer present in your file', 'pmxi_plugin') ?></label>
+					<a href="#help" class="help" title="<?php _e('Check this option if you want to delete posts from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>
 				</div>
-				<div class="input">
-					<input type="hidden" name="is_keep_imgs" value="0" />
-					<input type="checkbox" id="is_keep_imgs_<?php echo $entry; ?>" name="is_keep_imgs" value="1" <?php echo $post['is_keep_imgs'] ? 'checked="checked"': '' ?> />
-					<label for="is_keep_imgs_<?php echo $entry; ?>"><?php _e('Do not remove images', 'pmxi_plugin') ?></label>
-					<a href="#help" class="help" title="<?php _e('Check this option if you want images like featured image to be kept in media library after parent post or page is removed or replaced during reimport operation.', 'pmxi_plugin') ?>">?</a>
-				</div>
-				<div class="input">
-					<input type="hidden" name="is_update_missing_cf" value="0" />
-					<input type="checkbox" id="is_update_missing_cf_<?php echo $entry; ?>" name="is_update_missing_cf" value="1" <?php echo $post['is_update_missing_cf'] ? 'checked="checked"': '' ?> class="switcher"/>
-					<label for="is_update_missing_cf_<?php echo $entry; ?>"><?php _e('Instead of deletion, set Custom Field', 'pmxi_plugin') ?></label>
-					<a href="#help" class="help" title="<?php _e('Check this option if you want to update posts custom fields from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>			
-					<div class="switcher-target-is_update_missing_cf_<?php echo $entry; ?>" style="padding-left:17px;">
-						<div class="input">
-							<?php _e('Name', 'pmxi_plugin') ?>
-							<input type="text" name="update_missing_cf_name" value="<?php echo esc_attr($post['update_missing_cf_name']) ?>" />
-							<?php _e('Value', 'pmxi_plugin') ?>
-							<input type="text" name="update_missing_cf_value" value="<?php echo esc_attr($post['update_missing_cf_value']) ?>" />									
+				<div class="switcher-target-is_delete_missing_<?php echo $entry; ?>" style="padding-left:17px;">
+					<div class="input">
+						<input type="hidden" name="is_keep_attachments" value="0" />
+						<input type="checkbox" id="is_keep_attachments_<?php echo $entry; ?>" name="is_keep_attachments" value="1" <?php echo $post['is_keep_attachments'] ? 'checked="checked"': '' ?> />
+						<label for="is_keep_attachments_<?php echo $entry; ?>"><?php _e('Do not remove attachments', 'pmxi_plugin') ?></label>
+						<a href="#help" class="help" title="<?php _e('Check this option if you want attachments like *.pdf or *.doc files to be kept in media library after parent post or page is removed or replaced during reimport operation.', 'pmxi_plugin') ?>">?</a>
+					</div>
+					<div class="input">
+						<input type="hidden" name="is_keep_imgs" value="0" />
+						<input type="checkbox" id="is_keep_imgs_<?php echo $entry; ?>" name="is_keep_imgs" value="1" <?php echo $post['is_keep_imgs'] ? 'checked="checked"': '' ?> />
+						<label for="is_keep_imgs_<?php echo $entry; ?>"><?php _e('Do not remove images', 'pmxi_plugin') ?></label>
+						<a href="#help" class="help" title="<?php _e('Check this option if you want images like featured image to be kept in media library after parent post or page is removed or replaced during reimport operation.', 'pmxi_plugin') ?>">?</a>
+					</div>
+					<div class="input">
+						<input type="hidden" name="is_update_missing_cf" value="0" />
+						<input type="checkbox" id="is_update_missing_cf_<?php echo $entry; ?>" name="is_update_missing_cf" value="1" <?php echo $post['is_update_missing_cf'] ? 'checked="checked"': '' ?> class="switcher"/>
+						<label for="is_update_missing_cf_<?php echo $entry; ?>"><?php _e('Instead of deletion, set Custom Field', 'pmxi_plugin') ?></label>
+						<a href="#help" class="help" title="<?php _e('Check this option if you want to update posts custom fields from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>			
+						<div class="switcher-target-is_update_missing_cf_<?php echo $entry; ?>" style="padding-left:17px;">
+							<div class="input">
+								<?php _e('Name', 'pmxi_plugin') ?>
+								<input type="text" name="update_missing_cf_name" value="<?php echo esc_attr($post['update_missing_cf_name']) ?>" />
+								<?php _e('Value', 'pmxi_plugin') ?>
+								<input type="text" name="update_missing_cf_value" value="<?php echo esc_attr($post['update_missing_cf_value']) ?>" />									
+							</div>
 						</div>
 					</div>
-				</div>
-				<div class="input">
-					<input type="hidden" name="set_missing_to_draft" value="0" />
-					<input type="checkbox" id="set_missing_to_draft_<?php echo $entry; ?>" name="set_missing_to_draft" value="1" <?php echo $post['set_missing_to_draft'] ? 'checked="checked"': '' ?> />
-					<label for="set_missing_to_draft_<?php echo $entry; ?>"><?php _e('Instead of deletion, change post status to Draft', 'pmxi_plugin') ?></label>					
-				</div>
-			</div>			
+					<div class="input">
+						<input type="hidden" name="set_missing_to_draft" value="0" />
+						<input type="checkbox" id="set_missing_to_draft_<?php echo $entry; ?>" name="set_missing_to_draft" value="1" <?php echo $post['set_missing_to_draft'] ? 'checked="checked"': '' ?> />
+						<label for="set_missing_to_draft_<?php echo $entry; ?>"><?php _e('Instead of deletion, change post status to Draft', 'pmxi_plugin') ?></label>					
+					</div>
+				</div>	
+			</div>		
 			<div class="input">
 				<input type="hidden" id="is_keep_former_posts_<?php echo $entry; ?>" name="is_keep_former_posts" value="yes" />				
 				<input type="checkbox" id="is_not_keep_former_posts_<?php echo $entry; ?>" name="is_keep_former_posts" value="no" <?php echo "yes" != $post['is_keep_former_posts'] ? 'checked="checked"': '' ?> class="switcher" />

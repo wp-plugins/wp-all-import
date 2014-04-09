@@ -17,3 +17,8 @@
 .pmxi_plugin #titlediv #title{
 	color: #444 !important;
 }
+.pmxi_plugin h2.woo-nav-tab-wrapper{
+	padding-bottom: 0;
+	border-bottom: 1px solid #ccc;
+	margin-bottom: 10px;
+}

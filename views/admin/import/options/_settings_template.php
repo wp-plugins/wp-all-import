@@ -45,7 +45,7 @@
 					</span>
 				</div>
 			</p>	
-			<?php if (in_array($source_type, array('ftp', 'file'))): ?>
+			<?php if (isset($source_type) and in_array($source_type, array('ftp', 'file'))): ?>
 				<p>
 					<div class="input">
 						<input type="hidden" name="is_delete_source" value="0" />

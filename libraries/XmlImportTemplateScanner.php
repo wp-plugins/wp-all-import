@@ -259,21 +259,25 @@ final class XmlImportTemplateScanner
   private function scanName(XmlImportReaderInterface $input)
   {
     $accum = $input->read();
-    while (preg_match('/[_a-z0-9]/i', $input->peek()))
+    while (preg_match('/[_a-z0-9=\s"]/i', $input->peek()))
     {
       $accum .= $input->read();
       if ($input->peek() === false)
         throw new XmlImportException("Unexpected end of function or keyword name \"$accum\"");
+    }
+    if (strpos($accum, "=") !== false or shortcode_exists($accum)){
+      $this->isLangBegin = false;  
+      return new XmlImportToken(XmlImportToken::KIND_TEXT, '[' . trim(trim($accum, "["), "]") . ']');
     }
     if (in_array(strtoupper($accum), $this->keywords))
     {
       return new XmlImportToken(strtoupper($accum));
     }
     else
-    {
+    {            
       if ($this->isLangBegin)
       {
-        $this->isLangBegin = false;
+        $this->isLangBegin = false;        
         return array(new XmlImportToken(XmlImportToken::KIND_PRINT), new XmlImportToken(XmlImportToken::KIND_FUNCTION, $accum));
       }
       else

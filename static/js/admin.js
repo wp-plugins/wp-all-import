@@ -2,7 +2,7 @@
  * plugin admin area javascript
  */
 (function($){$(function () {
-	if ( ! $('body.pmxi_plugin').length) return; // do not execute any code if we are not on plugin page
+	if ( ! $('body.pmxi_plugin').length) return; // do not execute any code if we are not on plugin page	
 
 	// fix layout position
 	setTimeout(function () {
@@ -32,63 +32,8 @@
 	}).each(function () { // fix tipsy title for IE
 		$(this).attr('original-title', $(this).attr('title'));
 		$(this).removeAttr('title');
-	});
-
-	if ($('#pmxi_tabs').length){ 		
-		if ($('form.options').length){
-			$('.nav-tab').removeClass('nav-tab-active');
-			if ($('#selected_post_type').val() != ''){
-				var post_type_founded = false;
-				$('.pmxi_tab').hide();				
-				$('input[name=custom_type]').each(function(i){					
-					if ($(this).val() == $('#selected_post_type').val()) { 												
-						$('.nav-tab[rel='+ $(this).val() +']').addClass('nav-tab-active');
-						$(this).parents('.pmxi_tab:first').show(); 
-						post_type_founded = true; 
-					}
-				});
-				if ( ! post_type_founded){
-					if ($('#selected_type').val() == 'post'){
-						$('.nav-tab[rel=posts]').addClass('nav-tab-active');
-						$('div#posts').show();				
-					}	
-					else{
-						$('.nav-tab[rel=pages]').addClass('nav-tab-active');
-						$('div#pages').show();
-					}					
-				}
-			}
-			else if ($('#selected_type').val() != ''){
-				if ($('#selected_type').val() == 'post'){
-					$('.nav-tab[rel=posts]').addClass('nav-tab-active');
-					$('div#posts').show();				
-				}	
-				else{
-					$('.nav-tab[rel=pages]').addClass('nav-tab-active');
-					$('div#pages').show();
-				}				
-			}
-			$('.nav-tab-wrapper').show();
-		}
-		else
-			$('#pmxi_tabs').tabs().show();
-	}
-
-	$('.pmxi_plugin').find('.nav-tab').click(function(){
-		$('.nav-tab').removeClass('nav-tab-active');
-		$(this).addClass('nav-tab-active');
-		$('.pmxi_tab').hide();
-		$('div#' + $(this).attr('rel')).fadeIn();				
-
-		if ( parseInt($('div#' + $(this).attr('rel')).find('.is_disabled').val()) ) {
-			$('div#' + $(this).attr('rel')).find('input, select, textarea').attr('disabled','disabled'); 			
-		} 
-		/*else { 
-			$('div#' + $(this).attr('rel')).find('input, select, textarea').removeAttr('readonly');			
-		}*/
-
 	});	
-	
+
 	// swither show/hide logic
 	$('input.switcher').live('change', function (e) {	
 
@@ -201,6 +146,8 @@
 	    	}
 		});
 		$form.find('.preview').click(function () {
+			$preview.find('input[name="tagno"]').die();
+			$preview.find('.navigation a').die('click');
 			$modal.addClass('loading').empty().dialog('open').dialog('option', 'position', 'center');
 			if (tinyMCE != undefined) tinyMCE.triggerSave(false, false);
 			$.post('admin.php?page=pmxi-admin-import&action=preview', $form.serialize(), function (response) {
@@ -292,7 +239,8 @@
 		var $template = $(this).parents('table').first().find('tr.template');
 		$template.clone(true).insertBefore($template).css('display', 'none').removeClass('template').fadeIn();
 		return false;
-	});
+	});	
+
 	// options form: auto submit when `load options` checkbox is checked
 	$('input[name="load_options"]').click(function () {		
 		if ($(this).is(':checked')) $(this).parents('form').submit();
@@ -420,7 +368,7 @@
 				}
 			});
 			
-			if ($('#content').length && window.tinymce != undefined) tinymce.dom.Event.add('wp-content-editor-container', 'click', function(e) {
+			/*if ($('#content').length && window.tinymce != undefined) tinymce.dom.Event.add('wp-content-editor-container', 'click', function(e) {
 				if (dblclickbuf.selected)
 				{
 					tinyMCE.activeEditor.selection.setContent(dblclickbuf.value);
@@ -428,7 +376,7 @@
 					dblclickbuf.value = '';
 					dblclickbuf.selected = false;					
 				}				
-			});
+			});*/
 
 			this.find('.xml-tag.opening > .xml-tag-name, .xml-attr-name').each(function () {
 				var $this = $(this);
@@ -639,7 +587,7 @@
  
 				switch (condition){
 					case 'equals':
-						filter += ' = %s';
+						filter += ' = "%s"';
 						break;
 					case 'greater':
 						filter += ' > %s';
@@ -655,6 +603,9 @@
 						break;
 					case 'contains':
 						filter += '[contains(.,"%s")]';
+						break;
+					case 'not_contains':
+						filter += '[not(contains(.,"%s"))]';
 						break;
 					case 'is_empty':
 						filter += '[not(text())]';
@@ -767,10 +718,10 @@
 
 	/* Categories hierarchy */
 
-	$('.sortable').nestedSortable({
+	$('ol.sortable').nestedSortable({
         handle: 'div',
-        items: 'li',
-        toleranceElement: '> div',
+        items: 'li.dragging',        
+        toleranceElement: '> div',        
         update: function () {	        
 	       $(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).nestedSortable('toArray', {startDepthCount: 0})));
 	       if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
@@ -778,22 +729,22 @@
     });
 
     $('.drag-element').find('input').live('blur', function(){    	
-    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
+    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.ui-sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
     	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
     });
 
     $('.drag-element').find('input').live('change', function(){    	
-    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
+    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.ui-sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
     	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
     });
 
     $('.drag-element').find('input').live('hover', function(){},function(){    	
-    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
+    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.ui-sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
     	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
     });
 
     $('.taxonomy_auto_nested').live('click', function(){
-    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('td:first').find('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
+    	$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('td:first').find('.ui-sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
     	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
     });
 
@@ -805,34 +756,109 @@
 		parent_td.find('ol.sortable:first').find('li').each(function(i, e){
 			$(this).attr({'id':'item_'+ (i+1)});
 		});
-		parent_td.find('.hierarhy-output').val(window.JSON.stringify(parent_td.find('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));	         	
+		parent_td.find('.hierarhy-output').val(window.JSON.stringify(parent_td.find('.ui-sortable:first').nestedSortable('toArray', {startDepthCount: 0})));	         	
 	 	if (parent_td.find('input:first').val() == '') parent_td.find('.hierarhy-output').val('');	 			 	
 	});
 
-	$('.add-new-ico').live('click', function(){		
-		var count = $(this).parents('tr:first').find('ol.sortable').find('li').length + 1;
-		$(this).parents('tr:first').find('ol.sortable').append('<li id="item_'+count+'"><div class="drag-element"><input type="checkbox" class="assign_post" checked="checked"/><input type="text" value="" class="widefat"></div><a class="icon-item remove-ico" href="javascript:void(0);"></a></li>');
-		$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify($(this).parents('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));
-    	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
+	$('.add-new-ico').live('click', function(){				
+		var count = $(this).parents('tr:first').find('ol.sortable').find('li.dragging').length + 1;
+
+		var $template = $(this).prev('ol').children('li.template');		
+		$clone = $template.clone(true);
+		$clone.addClass('dragging').attr({'id': $clone.attr('id') + '_' + count}).find('input[type=checkbox][name^=categories_mapping]').each(function(){			
+			$(this).attr({'id': $(this).attr('id') + '_' + count});
+			$(this).next('label').attr({'for':$(this).next('label').attr('for') + '_' + count});
+			$(this).next('label').next('div').addClass($(this).next('label').next('div').attr('rel') + '_' + count);
+		}); 		
+		$clone.insertBefore($template).css('display', 'none').removeClass('template').fadeIn().find('input.switcher').change();		
+		
+		var sortable = $(this).parents('.ui-sortable:first');
+		if (sortable.length){
+			$(this).parents('td:first').find('.hierarhy-output').val(window.JSON.stringify(sortable.nestedSortable('toArray', {startDepthCount: 0})));
+	    	if ($(this).parents('td:first').find('input:first').val() == '') $(this).parents('td:first').find('.hierarhy-output').val('');
+	    }
 		$('.widefat').bind('focus', insertxpath );
+
+	});	
+
+	$('ol.sortable').each(function(){
+		if ( ! $(this).children('li').not('.template').length ) $(this).next('.add-new-ico').click();
 	});
 	
 	$('form.options').find('input[type=submit]').click(function(e){
+
 		e.preventDefault();
 		
-		$('.hierarhy-output').each(function(){			
-			$(this).val(window.JSON.stringify($(this).parents('td:first').find('.sortable:first').nestedSortable('toArray', {startDepthCount: 0})));			
-			if ($(this).parents('td:first').find('input:first').val() == '') $(this).val('');
+		$('.hierarhy-output').each(function(){
+			var sortable = $(this).parents('td:first').find('.ui-sortable:first');
+			if (sortable.length){
+				$(this).val(window.JSON.stringify(sortable.nestedSortable('toArray', {startDepthCount: 0})));			
+				if ($(this).parents('td:first').find('input:first').val() == '') $(this).val('');
+			}
 		});
 		if ($(this).attr('name') == 'btn_save_only') $('.save_only').val('1');
 
-		$('input[name^=in_variations], input[name^=is_visible], input[name^=is_taxonomy], input[name^=create_taxonomy_in_not_exists], input[name^=variable_create_taxonomy_in_not_exists], input[name^=variable_in_variations], input[name^=variable_is_visible], input[name^=variable_is_taxonomy]').each(function(){
+		$('input[name^=in_variations], input[name^=is_visible], input[name^=is_taxonomy], input[name^=create_taxonomy_in_not_exists], input[name^=variable_create_taxonomy_in_not_exists], input[name^=variable_in_variations], input[name^=variable_is_visible], input[name^=variable_is_taxonomy], input[name^=custom_format]').each(function(){
 	    	if ( ! $(this).is(':checked') && ! $(this).parents('.form-field:first').hasClass('template')){	    		
 	    		$(this).val('0').attr('checked','checked');
 	    	}
-	    });		
+	    });
+
+	    $('.custom_type[rel=serialized]:visible').each(function(){
+	    	var values = new Array();
+	    	$(this).find('.form-field').each(function(){
+	    		if ($(this).find('.serialized_value').val() != "")
+	    		{
+	    			var skey = $(this).find('.serialized_key').val();
+	    			if ('' == skey){
+	    				values.push($(this).find('.serialized_value').val());
+	    			}
+	    			else
+	    			{
+	    				var obj = {};
+	    				obj[skey] = $(this).find('.serialized_value').val();
+	    				values.push(obj);
+	    			}
+	    			//values[skey] = $(this).find('.serialized_value').val();
+	    			
+	    		}
+	    	});
+	    	$(this).find('input[name^=serialized_values]').val(window.JSON.stringify(values));
+	    });
 
 		$(this).parents('form:first').submit();
+
+	});
+
+	$('.add-new-custom').click(function(){		
+		var $template = $(this).parents('table').first().children('tbody').children('tr.template');
+		$number = $(this).parents('table').first().children('tbody').children('tr').length - 2;
+		$clone = $template.clone(true);
+		$clone.find('input[name^=custom_format]').each(function(){
+			$(this).attr({'id': $(this).attr('id') + '_' + $number});
+		}); 
+		$clone.find('label').each(function(){
+			$(this).attr({'for': $(this).attr('for') + '_' + $number});
+		}); 		
+		$clone.insertBefore($template).css('display', 'none').removeClass('template').fadeIn();
+		return false;
+	});
+
+	$('.add-new-key').live('click', function(){
+		var $template = $(this).parents('table').first().find('tr.template');
+		$template.clone(true).insertBefore($template).css('display', 'none').removeClass('template').fadeIn();
+	});
+
+	$('input[name^=custom_format]').live('click', function(){
+		
+		$(this).parents('.form-field:first').find('.custom_type').hide();
+		if ($(this).is(':checked')){			
+			$(this).parents('.form-field:first').find('div[rel=serialized]').show();
+		}
+		else{
+			$(this).parents('.form-field:first').find('div[rel=default]').show();
+		}
+
 	});
 
 	/* END Categories hierarchy */	
@@ -888,15 +914,17 @@
 
 	// Step 4 - custom meta keys helper
 	$('.existing_meta_keys').change(function(){
-		var parent_fieldset = $(this).parents('fieldset');
+
+		var parent_fieldset = $(this).parents('fieldset').first();
 		var key = $(this).find('option:selected').val();
 		
 		if ("" != $(this).val()) {
+
 			parent_fieldset.find('input[name^=custom_name]:visible').each(function(){
-				if ("" == $(this).val()) $(this).parents('tr:first').remove();
+				if ("" == $(this).val()) $(this).parents('tr').first().remove();
 			});
-			parent_fieldset.find('a.action[href="#add"]').click();
-			parent_fieldset.find('input[name^=custom_name]:visible:last').val($(this).val());						
+			parent_fieldset.find('a.add-new-custom').click();
+			parent_fieldset.find('input[name^=custom_name]:visible').last().val($(this).val());
 
 			$(this).prop('selectedIndex',0);	
 
@@ -910,13 +938,15 @@
 
 			}, 'html');
 		}
+
 	});
 
 	$('input[name^=custom_name]').live('change', function(){
+
 		var $ths = $(this);
 		$ths.parents('fieldset:first').addClass('loading');
 		$.post('admin.php?page=pmxi-admin-settings&action=meta_values', {key: $ths.val()}, function (data) {
-			$ths.nextAll().remove();
+			$ths.parents('td:first').find('.ex_values').remove();
 			$ths.after(data);
 			$ths.parents('fieldset:first').removeClass('loading');
 		}, 'html');
@@ -985,7 +1015,7 @@
 	
     $('.pmxi_choosen').each(function(){    	
     	$(this).find(".choosen_input").select2({tags: $(this).find('.choosen_values').html().split(',')});
-    });
+    });    
 
 	$('.pmxi_tips_pointer').click(function(){		
 		$(this).pointer({
@@ -1002,6 +1032,10 @@
                 });
             }
         }).pointer('open');
-	});	
+	});		
+
+	if ($('#pmxi_tabs').length && parseInt($('#pmxi_tabs').find('.is_disabled').val()) ) {
+		$('form.options').find('input, select, textarea').attr('disabled','disabled'); 			
+	} 
 
 });})(jQuery);

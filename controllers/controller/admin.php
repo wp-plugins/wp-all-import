@@ -49,7 +49,7 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 		$wp_styles->add_data('pmxi-admin-style-ie', 'conditional', 'lte IE 7');
 		wp_enqueue_style('wp-pointer');		
 		
-		if ( version_compare(get_bloginfo('version'), '3.8-RC1') >= 0 ){			
+		if ( version_compare(get_bloginfo('version'), '3.8-RC1') >= 0 ){
 			wp_enqueue_style('pmxi-admin-style-wp-3.8', PMXI_ROOT_URL . '/static/css/admin-wp-3.8.css');
 		}
 

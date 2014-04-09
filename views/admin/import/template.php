@@ -32,7 +32,8 @@
 					<div id="<?php echo user_can_richedit() ? 'postdivrich' : 'postdiv'; ?>" class="postarea">
 
 						<?php wp_editor($post['content'], 'content', array(
-								'teeny' => true,								
+								'teeny' => true,	
+								'media_buttons' => false,							
 								'editor_height' => 360)); 
 						?>
 						<table id="post-status-info" cellspacing="0">

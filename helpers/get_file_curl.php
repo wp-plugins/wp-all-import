@@ -2,21 +2,56 @@
 
 if ( ! function_exists('get_file_curl') ):
 
-	function get_file_curl($url, $fullpath, $to_variable = false) {						
+	function get_file_curl($url, $fullpath, $to_variable = false, $iteration = 0) {
 		
-		$rawdata = wp_remote_retrieve_body( wp_remote_get($url) );
+		$request = wp_remote_get($url);
+		
+		if ( ! is_wp_error($request) ){
 
-		if (empty($rawdata))	
+			$rawdata = wp_remote_retrieve_body( $request );				
 			
-			return pmxi_curl_download($url, $fullpath, $to_variable);							
+			if (empty($rawdata)){
+				$result =  pmxi_curl_download($url, $fullpath, $to_variable);	
+				if ( ! $result and ! $iteration){					
+					$url = pmxi_translate_uri($url);
+					return get_file_curl($url, $fullpath, $to_variable, 1);
+				}
+				return $result;
+			}
 
-		if ( ! @file_put_contents($fullpath, $rawdata) ){
-			$fp = fopen($fullpath,'w');	    
-		    fwrite($fp, $rawdata);
-		    fclose($fp);			
-		}													
+			if ( ! @file_put_contents($fullpath, $rawdata) ) {
+				$fp = fopen($fullpath,'w');
+			    fwrite($fp, $rawdata);
+			    fclose($fp);
+			}													
+			
+		    if ( preg_match('%\W(jpg|jpeg|gif|png)$%i', basename($fullpath)) and ( ! ($image_info = @getimagesize($fullpath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG)) ) )
+			{			
+				$result =  pmxi_curl_download($url, $fullpath, $to_variable);	
+				if ( ! $result and ! $iteration){
+					$url = pmxi_translate_uri($url);
+					return get_file_curl($url, $fullpath, $to_variable, 1);
+				}
+				return $result;
+			}
+			
+		    return ($to_variable) ? $rawdata : true;
+
+		}
+		else{ 			
+			
+			$curl = pmxi_curl_download($url, $fullpath, $to_variable);							
+
+			if ($curl === false and ! $iteration){				
+				$url = pmxi_translate_uri($url);
+				return get_file_curl($url, $fullpath, $to_variable, 1);
+								
+			}
+
+			return ($curl === false) ? $request : $curl;			
+
+		}
 		
-	    return ($to_variable) ? $rawdata : true;
 	}
 
 endif;
@@ -52,7 +87,7 @@ if ( ! function_exists('curl_exec_follow') ):
 
 	function curl_exec_follow($ch, &$maxredirect = null) {
 	  
-	  $mr = $maxredirect === null ? 2 : intval($maxredirect);
+	  $mr = $maxredirect === null ? 5 : intval($maxredirect);
 
 	  if (ini_get('open_basedir') == '' && ini_get('safe_mode' == 'Off')) {
 
@@ -83,7 +118,6 @@ if ( ! function_exists('curl_exec_follow') ):
 	          $code = 0;
 	        } else {
 	          $code = curl_getinfo($rch, CURLINFO_HTTP_CODE);
-
 	          if ($code == 301 || $code == 302) {
 	            preg_match('/Location:(.*?)\n/', $header, $matches);
 	            $newurl = trim(array_pop($matches));
@@ -113,4 +147,5 @@ if ( ! function_exists('curl_exec_follow') ):
 	  }
 	  return curl_exec($ch);
 	}
+	
 endif;

@@ -148,8 +148,7 @@ abstract class PMXI_Model extends ArrayObject {
 		}
 		return implode(" $operator ", $where);
 	}
-	
-	
+		
 	/**
 	 * Return associative array with record data
 	 * @param bool[optional] $serialize Whether returned fields should be serialized

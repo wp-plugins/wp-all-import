@@ -4,11 +4,14 @@
  * @param int $parent_id Parent id of post to delete attachments for
  */
 function wp_delete_attachments($parent_id, $unlink = true, $type = '') {	
+
+	if ( $type == 'images' and has_post_thumbnail($parent_id) ) delete_post_thumbnail($parent_id);
+
 	foreach (get_posts(array('post_parent' => $parent_id, 'post_type' => 'attachment', 'numberposts' => -1, 'post_status' => null)) as $attach) {
 		if ($type == 'files' and ! wp_attachment_is_image( $attach->ID ) ){
 			wp_delete_attachment($attach->ID, true);							
 		}	
-		elseif ( ($type == 'images' and wp_attachment_is_image( $attach->ID )) or "" == $type){
+		elseif ( ($type == 'images' and wp_attachment_is_image( $attach->ID )) or "" == $type){						
 
 			if ($unlink or ! wp_attachment_is_image( $attach->ID )){ 
 				wp_delete_attachment($attach->ID, true);
