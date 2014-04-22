@@ -486,10 +486,10 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			$chunk == 1 and $logger and call_user_func($logger, __('Processing posts...', 'pmxi_plugin'));
 			
 			if ('post' == $this->options['type'] and '' != $this->options['custom_type']) {
-				$post_type = ($this->options['custom_type'] == 'product' and class_exists('PMWI_Plugin')) ? $this->options['custom_type'] : 'post';
+				$post_type = ($this->options['custom_type'] == 'product' and class_exists('PMWI_Plugin')) ? $this->options['custom_type'] : (($this->options['custom_type'] == 'page') ? 'page' : 'post');
 			} else {
 				$post_type = $this->options['type'];
-			}					
+			}							
 			
 			$addons = array();
 			$addons_data = array();
