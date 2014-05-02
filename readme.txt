@@ -46,7 +46,7 @@ Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocom
 == Premium Support ==
 Upgrade to the professional edition of WP All Import for premium support.
 
-E-mail: support@soflyy.com
+E-mail: support@wpallimport.com
 
 == Import To WooCommerce ==
 
