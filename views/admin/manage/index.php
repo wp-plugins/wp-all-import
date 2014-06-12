@@ -10,7 +10,7 @@
 		?>
 		<div class="updated"><p>
 			<?php printf(
-					__('Need help with WP All Import? Please visit <a href="http://www.wpallimport.com/support">http://www.wpallimport.com/support</a> or send an e-mail to <a href="mailto:support@soflyy.com">support@soflyy.com</a>. We give priority to professional edition customers, but we respond to most inquiries from free version users within 24 hours during business days.<br/><br/>Please note that we are unable to handle technical support requests in the WordPress.org community forums. <br/><br/><a href="javascript:void(0);" id="dismiss_manage_top"><u>dismiss</u></a>', 'pmxi_plugin')
+					__('Need help with WP All Import? Please visit <a href="http://www.wpallimport.com/support">http://www.wpallimport.com/support</a> or send an e-mail to <a href="mailto:support@wpallimport.com">support@wpallimport.com</a>. We give priority to professional edition customers, but we respond to most inquiries from free version users within 24 hours during business days.<br/><br/>Please note that we are unable to handle technical support requests in the WordPress.org community forums. <br/><br/><a href="javascript:void(0);" id="dismiss_manage_top"><u>dismiss</u></a>', 'pmxi_plugin')
 			) ?>
 		</p></div>
 		<?php

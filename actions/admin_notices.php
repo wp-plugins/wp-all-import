@@ -21,7 +21,7 @@ function pmxi_admin_notices() {
 		?>
 		<div class="updated"><p>
 			<?php printf(
-					__('Welcome to WP All Import. We hope you like it. Please send all support requests and feedback to <a href="mailto:support@soflyy.com">support@soflyy.com</a>.<br/><br/><a href="javascript:void(0);" id="dismiss">dismiss</a>', 'pmxi_plugin')										
+					__('Welcome to WP All Import. We hope you like it. Please send all support requests and feedback to <a href="mailto:support@wpallimport.com">support@wpallimport.com</a>.<br/><br/><a href="javascript:void(0);" id="dismiss">dismiss</a>', 'pmxi_plugin')										
 			) ?>
 		</p></div>
 		<?php

@@ -4,7 +4,7 @@
 	<tr>
 		<td class="left">
 			<p style='font-size: 1.3em;'>
-				<b>E-mail</b> - <a href='mailto:support@soflyy.com'>support@soflyy.com</a><br />
+				<b>E-mail</b> - <a href='mailto:support@wpallimport.com'>support@wpallimport.com</a><br />
 				<b>Support page</b> - <a href='http://www.wpallimport.com/support?utm_source=wordpress.org&utm_medium=support&utm_campaign=free+plugin' target='_blank'>http://www.wpallimport.com/support</a>
 			</p>
 

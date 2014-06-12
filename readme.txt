@@ -2,8 +2,8 @@
 Contributors: soflyy
 Tags: wordpress, xml, csv, datafeed, import
 Requires at least: 3.6.1
-Tested up to: 3.9
-Stable tag: 3.1.3
+Tested up to: 3.9.1
+Stable tag: 3.1.4
 
 WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress.
 
@@ -86,6 +86,9 @@ Does it work with special character encoding like Hebrew, Arabic, Chinese, etc?
 4. Manage imports.
 
 == Changelog ==
+
+= 3.1.4 =
+* changed support email
 
 = 3.1.3 =
 * fixed import pages
