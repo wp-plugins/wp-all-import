@@ -2,10 +2,10 @@
 function pmxi_recursion_taxes($parent, $tx_name, $txes, $key){
 
 	if (is_array($parent)){
-		$parent['name'] = sanitize_text_field($parent['name']);
+		$parent['name'] = htmlspecialchars($parent['name']);
 		if (empty($parent['parent'])){				
 
-			$term = is_exists_term($tx_name, $parent['name']);				
+			$term = term_exists($parent['name'], $tx_name);				
 
 			if ( empty($term) and !is_wp_error($term) ){
 				$term = wp_insert_term(
@@ -18,7 +18,7 @@ function pmxi_recursion_taxes($parent, $tx_name, $txes, $key){
 		else{
 			$parent_id = pmxi_recursion_taxes($parent['parent'], $tx_name, $txes, $key);
 			
-			$term = is_exists_term($tx_name, $parent['name'], (int)$parent_id);				
+			$term = term_exists($parent['name'], $tx_name, (int)$parent_id);				
 
 			if ( empty($term) and  !is_wp_error($term) ){
 				$term = wp_insert_term(
@@ -32,11 +32,13 @@ function pmxi_recursion_taxes($parent, $tx_name, $txes, $key){
 	}
 	else{	
 
+		$parent = htmlspecialchars($parent);
+
 		if ( !empty($txes[$key - 1]) and !empty($txes[$key - 1]['parent']) and $parent != $txes[$key - 1]['parent']) {	
 
 			$parent_id = pmxi_recursion_taxes($txes[$key - 1]['parent'], $tx_name, $txes, $key - 1);
 			
-			$term = is_exists_term($tx_name, $parent, (int)$parent_id);
+			$term = term_exists($parent, $tx_name, (int)$parent_id);
 			
 			if ( empty($term) and ! is_wp_error($term) ){
 				$term = wp_insert_term(
@@ -49,7 +51,7 @@ function pmxi_recursion_taxes($parent, $tx_name, $txes, $key){
 		}
 		else{
 			
-			$term = is_exists_term($tx_name, $parent);
+			$term = term_exists($parent, $tx_name);
 			if ( empty($term) and !is_wp_error($term) ){					
 				$term = wp_insert_term(
 					$parent, // the term 

@@ -96,6 +96,16 @@ function pmxi_insert_attachment($object, $file = false, $parent = 0) {
 
 	// expected_slashed (everything!)
 	$data = compact( array( 'post_author', 'post_date', 'post_date_gmt', 'post_content', 'post_content_filtered', 'post_title', 'post_excerpt', 'post_status', 'post_type', 'comment_status', 'ping_status', 'post_password', 'post_name', 'to_ping', 'pinged', 'post_modified', 'post_modified_gmt', 'post_parent', 'menu_order', 'post_mime_type', 'guid' ) );
+	/**
+	 * Filter attachment post data before it is updated in or added
+	 * to the database.
+	 *
+	 * @since 3.9.0
+	 *
+	 * @param array $data   Array of sanitized attachment post data.
+	 * @param array $object Array of un-sanitized attachment post data.
+	 */
+	$data = apply_filters( 'wp_insert_attachment_data', $data, $object );
 	$data = wp_unslash( $data );
 
 	if ( $update ) {
@@ -116,6 +126,23 @@ function pmxi_insert_attachment($object, $file = false, $parent = 0) {
 	if ( empty($post_name) ) {
 		$post_name = sanitize_title($post_title, $post_ID);
 		$wpdb->update( $wpdb->posts, compact("post_name"), array( 'ID' => $post_ID ) );
+	}
+
+	if ( is_object_in_taxonomy($post_type, 'category') )
+		wp_set_post_categories( $post_ID, $post_category );
+
+	if ( isset( $tags_input ) && is_object_in_taxonomy($post_type, 'post_tag') )
+		wp_set_post_tags( $post_ID, $tags_input );
+
+	// support for all custom taxonomies
+	if ( !empty($tax_input) ) {
+		foreach ( $tax_input as $taxonomy => $tags ) {
+			$taxonomy_obj = get_taxonomy($taxonomy);
+			if ( is_array($tags) ) // array = hierarchical, string = non-hierarchical.
+				$tags = array_filter($tags);
+			if ( current_user_can($taxonomy_obj->cap->assign_terms) )
+				wp_set_post_terms( $post_ID, $tags, $taxonomy );
+		}
 	}
 
 	if ( $file )

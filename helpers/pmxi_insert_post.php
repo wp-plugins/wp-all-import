@@ -26,15 +26,7 @@ function pmxi_insert_post($postarr, $wp_error = false){
 
 		// Get the post ID and GUID
 		$post_ID = $ID;
-		$post_before = get_post( $post_ID );
-		if ( is_null( $post_before ) ) {
-			if ( $wp_error )
-				return new WP_Error( 'invalid_post', __( 'Invalid post ID.' ) );
-			return 0;
-		}
-
-		$guid = get_post_field( 'guid', $post_ID );
-		$previous_status = get_post_field('post_status', $ID);
+		
 	} else {
 		$previous_status = 'new';
 	}	
@@ -58,10 +50,10 @@ function pmxi_insert_post($postarr, $wp_error = false){
 		$post_author = $user_id;	
 
 	// Create a valid post name. Drafts and pending posts are allowed to have an empty
-	// post name.
+	// post name.	
 	if ( empty($post_name) ) {
-		if ( !in_array( $post_status, array( 'draft', 'pending', 'auto-draft' ) ) )
-			$post_name = sanitize_title($post_title);
+		if ( !in_array( $post_status, array( 'draft', 'pending', 'auto-draft' ) ) )		
+			$post_name = sanitize_title($post_title);					
 		else
 			$post_name = '';
 	} else {
@@ -70,7 +62,7 @@ function pmxi_insert_post($postarr, $wp_error = false){
 		if ( $update && strtolower( urlencode( $post_name ) ) == $check_name && get_post_field( 'post_name', $ID ) == $check_name )
 			$post_name = $check_name;
 		else // new post, or slug has changed.
-			$post_name = sanitize_title($post_name);
+			$post_name = sanitize_title($post_name);		
 	}
 
 	// If the post date is empty (due to having been new or a draft) and status is not 'draft' or 'pending', set date to now

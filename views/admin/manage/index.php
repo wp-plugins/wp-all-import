@@ -152,7 +152,7 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 									<?php if ('0000-00-00 00:00:00' == $item['first_import']): ?>
 										<em>never</em>
 									<?php else: ?>
-										<?php echo mysql2date(__('Y/m/d g:i a', 'pmxi_plugin'), $item['first_import']) ?>
+										<?php echo get_date_from_gmt( $item['first_import'], 'Y/m/d g:i a'); ?>
 									<?php endif ?>
 								</td>
 								<?php
@@ -163,26 +163,11 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 									<?php if ('0000-00-00 00:00:00' == $item['registered_on']): ?>
 										<em>never</em>
 									<?php else: ?>
-										<?php echo mysql2date(__('Y/m/d g:i a', 'pmxi_plugin'), $item['registered_on']) ?>
+										<?php echo get_date_from_gmt( $item['registered_on'], 'Y/m/d g:i a' ); ?>
 									<?php endif ?>
 								</td>
 								<?php
-								break;
-							case 'next_import':
-								?>
-								<td>
-									<?php if ('0000-00-00 00:00:00' == $item['registered_on'] or empty($item['scheduled'])): ?>
-										<em>never</em>
-									<?php
-									else:
-										$task = new _PMXI_Import_Record_Cron_Parser($item['scheduled']);
-										$task_date = $task->getNextRunDate();
-										echo mysql2date(__('Y/m/d g:i a', 'pmxi_plugin'), $task_date->format('Y-m-d H:i:s'));
-									endif;
-									?>
-								</td>
-								<?php
-								break;
+								break;					
 							case 'name':
 								?>
 								<td>
@@ -315,6 +300,7 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 		</div>
 	</div>
 	<div class="clear"></div>
+	
 	<?php
 	// notify user
 	if (!PMXI_Plugin::getInstance()->getOption('dismiss_manage_bottom')) {

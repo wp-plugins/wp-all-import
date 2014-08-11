@@ -129,7 +129,7 @@
 				</div>
 				<?php if ($isWizard or $this->isTemplateEdit): ?>
 				<div class="right options">
-					<?php $this->tag() ?>
+					<?php $this->tag( false ); ?>
 				</div>
 				<?php endif ?>
 			</div>

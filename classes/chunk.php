@@ -171,7 +171,7 @@ class PMXI_Chunk {
     // trim it
     $element = trim($this->options['element']);
                   
-    $xml = '';    
+    $xml = '';        
 
     try { 
       while ( @$this->reader->read() ) {        

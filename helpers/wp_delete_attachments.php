@@ -17,6 +17,10 @@ function wp_delete_attachments($parent_id, $unlink = true, $type = '') {
 				wp_delete_attachment($attach->ID, true);
 			}
 			else{
+
+				do_action( 'delete_attachment', $attach->ID );
+				do_action( 'delete_post', $attach->ID );
+
 				global $wpdb;
 				$sql = "delete a,b,c
 					FROM ".$wpdb->posts." a
@@ -27,7 +31,8 @@ function wp_delete_attachments($parent_id, $unlink = true, $type = '') {
 
 					$wpdb->query( 
 						$wpdb->prepare($sql, '')
-					);
+					);									
+
 			}
 		}		
 	}

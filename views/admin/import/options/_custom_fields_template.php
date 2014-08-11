@@ -2,7 +2,7 @@
 	<td colspan="3" style="padding-top:20px;">
 		<fieldset class="optionsset" style="text-align:center;">
 			<legend><?php _e('Custom Fields','pmxi_plugin');?></legend>
-			
+
 			<center>
 
 				<h3>Please upgrade to the professional edition of WP All Import to import data to Custom Fields.</h3>

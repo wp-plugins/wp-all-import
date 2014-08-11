@@ -104,6 +104,11 @@
 							<label for="is_update_title_<?php echo $entry; ?>"><?php _e('Title', 'pmxi_plugin') ?></label>
 						</div>
 						<div class="input">
+							<input type="hidden" name="is_update_post_author" value="0" />
+							<input type="checkbox" id="is_update_post_author_<?php echo $entry; ?>" name="is_update_post_author" value="1" <?php echo $post['is_update_post_author'] ? 'checked="checked"': '' ?> />
+							<label for="is_update_post_author_<?php echo $entry; ?>"><?php _e('Author', 'pmxi_plugin') ?></label>
+						</div>	
+						<div class="input">
 							<input type="hidden" name="is_update_slug" value="0" />
 							<input type="checkbox" id="is_update_slug_<?php echo $entry; ?>" name="is_update_slug" value="1" <?php echo $post['is_update_slug'] ? 'checked="checked"': '' ?> />
 							<label for="is_update_slug_<?php echo $entry; ?>"><?php _e('Slug', 'pmxi_plugin') ?></label>

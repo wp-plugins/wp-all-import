@@ -65,7 +65,7 @@
 		<div class="col3">
 			<h3><?php _e('Post Format', 'pmxi_plugin') ?></h3>											
 			<div>
-				<?php $post_formats = get_terms( 'post_format' , array('hide_empty' => false)); ?>
+				<?php $post_formats = get_theme_support( 'post-formats' ); ?>
 
 				<div class="input">
 					<input type="radio" id="post_format_<?php echo "standart_" . $entry; ?>" name="post_format" value="0" <?php echo (empty($post['post_format']) or ( empty($post_formats) )) ? 'checked="checked"' : '' ?> />
@@ -73,12 +73,12 @@
 				</div>
 
 				<?php								
-					if ( ! empty($post_formats) ){
-						foreach ($post_formats as $post_format) {
+					if ( ! empty($post_formats[0]) ){
+						foreach ($post_formats[0] as $post_format) {
 							?>
 							<div class="input">
-								<input type="radio" id="post_format_<?php echo $post_format->slug . "_" . $entry; ?>" name="post_format" value="<?php echo $post_format->name; ?>" <?php echo $post_format->name == $post['post_format'] ? 'checked="checked"' : '' ?> />
-								<label for="post_format_<?php echo $post_format->slug . "_" . $entry; ?>"><?php _e( $post_format->name, 'pmxi_plugin') ?></label>
+								<input type="radio" id="post_format_<?php echo $post_format . "_" . $entry; ?>" name="post_format" value="<?php echo $post_format; ?>" <?php echo $post_format == $post['post_format'] ? 'checked="checked"' : '' ?> />
+								<label for="post_format_<?php echo $post_format . "_" . $entry; ?>"><?php _e( ucfirst($post_format), 'pmxi_plugin') ?></label>
 							</div>
 							<?php
 						}

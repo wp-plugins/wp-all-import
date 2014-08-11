@@ -111,22 +111,23 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 
 		PMXI_Plugin::getInstance()->updateOption("dismiss", 1);
 
-		exit('OK');
+		exit( json_encode(array('result' => 'OK')) );
 	}
 	
 	public function dismiss_manage_top(){
 
 		PMXI_Plugin::getInstance()->updateOption("dismiss_manage_top", 1);
 
-		exit('OK');
+		exit( json_encode(array('result' => 'OK')) );
 	}
 
 	public function dismiss_manage_bottom(){
 
 		PMXI_Plugin::getInstance()->updateOption("dismiss_manage_bottom", 1);
 
-		exit('OK');
+		exit( json_encode(array('result' => 'OK')) );
 	}
+	
 	
 	public function meta_values(){
 
@@ -153,7 +154,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 
 		$html .= '</div>';
 
-		echo $html;
+		exit( json_encode(array('html' => $html)) );
 	}
 
 	/**

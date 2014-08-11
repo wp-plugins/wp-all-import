@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. A paid upgrade to WP All Import Pro is available for support and additional features.
-Version: 3.1.4
+Version: 3.1.5
 Author: Soflyy
 */
 
@@ -28,7 +28,7 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('PMXI_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.1.4');
+define('PMXI_VERSION', '3.1.5');
 
 define('PMXI_EDITION', 'free');
 
@@ -94,6 +94,10 @@ final class PMXI_Plugin {
 			self::$instance = new self();
 		}
 		return self::$instance;
+	}
+
+	static public function getEddName(){
+		return 'WP All Import';
 	}
 
 	/**
@@ -169,7 +173,7 @@ final class PMXI_Plugin {
 	 * @param string $rootDir Plugin root dir
 	 * @param string $pluginFilePath Plugin main file
 	 */
-	protected function __construct() {
+	protected function __construct() {	
 		
 		$this->load_plugin_textdomain();
 
@@ -235,7 +239,7 @@ final class PMXI_Plugin {
 		}
 
 		// register admin page pre-dispatcher
-		add_action('admin_init', array($this, '__adminInit'));									
+		add_action('admin_init', array($this, '__adminInit'), 1);									
 		add_action('admin_init', array($this, '_fix_options'));		
 
 		global $wpdb;
@@ -310,10 +314,55 @@ final class PMXI_Plugin {
 	 * pre-dispatching logic for admin page controllers
 	 */
 	public function __adminInit() {
+
 		$input = new PMXI_Input();
-		$page = strtolower($input->getpost('page', ''));
+		$page = strtolower($input->getpost('page', ''));						
+
 		if (preg_match('%^' . preg_quote(str_replace('_', '-', self::PREFIX), '%') . '([\w-]+)$%', $page)) {
-			$this->adminDispatcher($page, strtolower($input->getpost('action', 'index')));
+			//$this->adminDispatcher($page, strtolower($input->getpost('action', 'index')));
+
+			$action = strtolower($input->getpost('action', 'index'));
+
+			// capitalize prefix and first letters of class name parts	
+			if (function_exists('preg_replace_callback')){
+				$controllerName = preg_replace_callback('%(^' . preg_quote(self::PREFIX, '%') . '|_).%', array($this, "replace_callback"),str_replace('-', '_', $page));
+			}
+			else{
+				$controllerName =  preg_replace('%(^' . preg_quote(self::PREFIX, '%') . '|_).%e', 'strtoupper("$0")', str_replace('-', '_', $page)); 
+			}
+			$actionName = str_replace('-', '_', $action);
+			if (method_exists($controllerName, $actionName)) {
+				$this->_admin_current_screen = (object)array(
+					'id' => $controllerName,
+					'base' => $controllerName,
+					'action' => $actionName,
+					'is_ajax' => strpos($_SERVER["HTTP_ACCEPT"], 'json') !== false,
+					'is_network' => is_network_admin(),
+					'is_user' => is_user_admin(),
+				);
+				add_filter('current_screen', array($this, 'getAdminCurrentScreen'));
+				add_filter('admin_body_class', create_function('', 'return "' . PMXI_Plugin::PREFIX . 'plugin";'));
+
+				$controller = new $controllerName();
+				if ( ! $controller instanceof PMXI_Controller_Admin) {
+					throw new Exception("Administration page `$page` matches to a wrong controller type.");
+				}
+
+				if ($this->_admin_current_screen->is_ajax) { // ajax request						
+					$controller->$action();
+					do_action('pmxi_action_after');
+					die(); // stop processing since we want to output only what controller is randered, nothing in addition
+				} elseif ( ! $controller->isInline) {																																		
+					@ob_start();
+					$controller->$action();
+					self::$buffer = @ob_get_clean();													
+				} else {
+					self::$buffer_callback = array($controller, $action);
+				}
+			} else { // redirect to dashboard if requested page and/or action don't exist
+				wp_redirect(admin_url()); die();
+			}
+
 		}
 	}
 
@@ -336,69 +385,31 @@ final class PMXI_Plugin {
 		return ob_get_clean();
 	}
 
+	static $buffer = NULL;
+	static $buffer_callback = NULL;
+
 	/**
 	 * Dispatch admin page: call corresponding controller based on get parameter `page`
 	 * The method is called twice: 1st time as handler `parse_header` action and then as admin menu item handler
 	 * @param string[optional] $page When $page set to empty string ealier buffered content is outputted, otherwise controller is called based on $page value
 	 */
 	public function adminDispatcher($page = '', $action = 'index') {
-		static $buffer = NULL;
-		static $buffer_callback = NULL;
-		if ('' === $page) {
-			if ( ! is_null($buffer)) {
+		
+		if ('' === $page) {				
+			if ( ! is_null(self::$buffer)) {
 				echo '<div class="wrap">';
-				echo $buffer;
+				echo self::$buffer;
 				do_action('pmxi_action_after');
 				echo '</div>';
-			} elseif ( ! is_null($buffer_callback)) {
+			} elseif ( ! is_null(self::$buffer_callback)) {
 				echo '<div class="wrap">';
-				call_user_func($buffer_callback);
+				call_user_func(self::$buffer_callback);
 				do_action('pmxi_action_after');
 				echo '</div>';
 			} else {
 				throw new Exception('There is no previousely buffered content to display.');
 			}
-		} else {
-			// capitalize prefix and first letters of class name parts	
-			if (function_exists('preg_replace_callback')){
-				$controllerName = preg_replace_callback('%(^' . preg_quote(self::PREFIX, '%') . '|_).%', array($this, "replace_callback"),str_replace('-', '_', $page));
-			}
-			else{
-				$controllerName =  preg_replace('%(^' . preg_quote(self::PREFIX, '%') . '|_).%e', 'strtoupper("$0")', str_replace('-', '_', $page)); 
-			}
-			$actionName = str_replace('-', '_', $action);
-			if (method_exists($controllerName, $actionName)) {
-				$this->_admin_current_screen = (object)array(
-					'id' => $controllerName,
-					'base' => $controllerName,
-					'action' => $actionName,
-					'is_ajax' => isset($_SERVER['HTTP_X_REQUESTED_WITH']) and strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest',
-					'is_network' => is_network_admin(),
-					'is_user' => is_user_admin(),
-				);
-				add_filter('current_screen', array($this, 'getAdminCurrentScreen'));
-				add_filter('admin_body_class', create_function('', 'return "' . PMXI_Plugin::PREFIX . 'plugin";'));
-
-				$controller = new $controllerName();
-				if ( ! $controller instanceof PMXI_Controller_Admin) {
-					throw new Exception("Administration page `$page` matches to a wrong controller type.");
-				}
-
-				if ($this->_admin_current_screen->is_ajax) { // ajax request
-					$controller->$action();
-					do_action('pmxi_action_after');
-					die(); // stop processing since we want to output only what controller is randered, nothing in addition
-				} elseif ( ! $controller->isInline) {
-					ob_start();
-					$controller->$action();
-					$buffer = ob_get_clean();						
-				} else {
-					$buffer_callback = array($controller, $action);
-				}
-			} else { // redirect to dashboard if requested page and/or action don't exist
-				wp_redirect(admin_url()); die();
-			}
-		}
+		} 
 	}
 
 	public function replace_callback($matches){
@@ -620,8 +631,8 @@ final class PMXI_Plugin {
 			'featured_delim' => '',
 			'atch_delim' => ',',
 			'post_taxonomies' => array(),
-			'parent' => '',
-			'order' => '0',
+			'parent' => 0,
+			'order' => 0,
 			'status' => 'publish',
 			'page_template' => 'default',
 			'page_taxonomies' => array(),
@@ -671,6 +682,7 @@ final class PMXI_Plugin {
 			'update_images_logic' => 'full_update',				
 			'is_update_dates' => 1,
 			'is_update_menu_order' => 1,
+			'is_update_post_author' => 1,
 			'is_update_parent' => 1,			
 			'is_keep_attachments' => 0,
 			'is_keep_imgs' => 0,
@@ -733,7 +745,7 @@ final class PMXI_Plugin {
 	}
 
 	public static function is_ajax(){
-		return (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') ? true : false ;
+		return strpos($_SERVER["HTTP_ACCEPT"], 'json') !== false;
 	}
 
 }

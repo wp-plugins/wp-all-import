@@ -109,13 +109,13 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		$this->data['item'] = $item = new PMXI_Import_Record();
 		if ( ! $id or $item->getById($id)->isEmpty()) {
 			wp_redirect($this->baseUrl); die();
-		}				
-		
-		pmxi_session_unset();
+		}							
 
 		$chunks = 0;
 
 		if ($this->input->post('is_confirmed')) {
+
+			pmxi_session_unset();
 
 			check_admin_referer('update-import', '_wpnonce_update-import');		
 		
@@ -353,8 +353,15 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		$id = $this->input->get('id');
 		
 		$wp_uploads = wp_upload_dir();
+		$log_file = $wp_uploads['basedir'] . '/wpallimport_logs/' .$id.'.html';
 
-		PMXI_download::csv($wp_uploads['basedir'] . '/wpallimport_logs/' .$id.'.html');
-
+		if (file_exists($log_file)) 
+		{
+			PMXI_download::xml($log_file);
+		}
+		else
+		{
+			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Log file does not exists.', 'pmxi_plugin')), $this->baseUrl)); die();
+		}
 	}
 }

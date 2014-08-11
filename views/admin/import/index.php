@@ -27,6 +27,7 @@ $l10n = array(
 	var plugin_url = '<?php echo PMXI_ROOT_URL; ?>';
 	var swfuploadL10n = <?php echo json_encode($l10n); ?>;
 </script>
+
 <table class="layout pmxi_step_1">
 	<tr>
 		<td class="left">
@@ -49,7 +50,8 @@ $l10n = array(
 			<?php do_action('pmxi_choose_file_header'); ?>
 	        <form method="post" class="choose-file enter-submit" enctype="multipart/form-data" autocomplete="off">
 				<input type="hidden" name="is_submitted" value="1" />
-				<?php wp_nonce_field('upload-xml', '_wpnonce_upload-xml') ?>				
+				<?php wp_nonce_field('upload-xml', '_wpnonce_upload-xml') ?>
+				
 				<div class="file-type-container">
 					<h3>
 						<input type="radio" id="type_upload" name="type" value="upload" checked="checked" />
@@ -73,11 +75,11 @@ $l10n = array(
 						<label for="type_url"><?php _e('Download File From URL', 'pmxi_plugin') ?></label>
 					</h3>
 					<div class="file-type-options">
-						<input type="text" class="regular-text" name="url" value="" disabled="disabled" />
+						<input type="text" class="regular-text" name="url" value="" disabled="disabled"/>
 						<p>To have the option to set up a cron-based recurring import, specify the URL to your file.</p>
 						<a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=step-1&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade to the professional edition of WP All Import to use this feature.</a>
 					</div>
-				</div>				
+				</div>
 				<div class="file-type-container">
 					<h3>
 						<input type="radio" id="type_file" name="type" value="file" />
@@ -102,7 +104,7 @@ $l10n = array(
 						<a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=step-1&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Upgrade to the professional edition of WP All Import to use this feature.</a>
 					</div>
 				</div>
-				<div id="url_upload_status"></div>					
+				<div id="url_upload_status"></div>
 				<p class="submit-buttons">
 					<input type="hidden" name="is_submitted" value="1" />
 					<?php wp_nonce_field('choose-file', '_wpnonce_choose-file') ?>

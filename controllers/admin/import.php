@@ -26,7 +26,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			$this->isWizard = false;
 			
 		} else {						
-			$action = PMXI_Plugin::getInstance()->getAdminCurrentScreen()->action; 
+			$action = PMXI_Plugin::getInstance()->getAdminCurrentScreen()->action; 			
 			$this->_step_ready($action);
 			$this->isInline = 'process' == $action;
 		}		
@@ -98,7 +98,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		if ('template' == $action or 'preview' == $action or 'tag' == $action) return true;
 		
 		// step #4: options
-		if (empty(PMXI_Plugin::$session->data['pmxi_import']['template']) or empty(PMXI_Plugin::$session->data['pmxi_import']['template']['title']) or empty(PMXI_Plugin::$session->data['pmxi_import']['template']['content'])) {
+		if (empty(PMXI_Plugin::$session->data['pmxi_import']['template']) or empty(PMXI_Plugin::$session->data['pmxi_import']['template']['title'])) {
 			wp_redirect_or_javascript(add_query_arg('action', 'template', $this->baseUrl)); die();
 		}
 		if ('options' == $action) return true;
@@ -358,10 +358,10 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				{
 					$this->errors->add('form-validation', __('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@wpallimport.com">support@wpallimport.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'pmxi_plugin')); 					
 				}
-				else{
+				else{					
 					wp_redirect(add_query_arg('action', 'element', $this->baseUrl)); die();
 				}				
-
+			
 			} else {
 				$this->errors->add('form-validation', __('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@wpallimport.com">support@wpallimport.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'pmxi_plugin')); 				
 			}
@@ -619,6 +619,9 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				}
 			}			
 		}
+
+		ob_start();
+
 		if ( ! $this->errors->get_error_codes()) {
 								
 			$paths = array(); $this->data['paths'] =& $paths;
@@ -634,6 +637,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		} else {
 			$this->error();
 		}
+
+		exit( json_encode(array('html' => ob_get_clean())) );
 	}
 	
 	/**
@@ -686,10 +691,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				$this->_validate_template($post['title'], 'Post title');
 			}
 
-			if (empty($post['content'])) {
-				$post['content'] = '&nbsp;';
-				$this->_validate_template($post['content'], 'Post content');				
-			} else {
+			if (!empty($post['content'])) {				
 				$this->_validate_template($post['content'], 'Post content');
 			}
 			
@@ -743,7 +745,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 	/**
 	 * Preview selected xml tag (called with ajax from `template` step)
 	 */
-	public function tag()
+	public function tag( $is_json = true )
 	{					
 
 		$wp_uploads = wp_upload_dir();
@@ -820,7 +822,18 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			}
 		}		
 
-		$this->render();
+		if ( $is_json ){
+
+			ob_start();
+
+			$this->render();
+
+			$html = ob_get_clean();
+
+			exit( json_encode(array('html' => $html)) );
+
+		}
+		else $this->render();
 	}
 	
 	/**
@@ -917,7 +930,13 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			$this->errors->add('form-validation', sprintf(__('Error parsing content: %s', 'pmxi_plugin'), $e->getMessage()));
 		}
 		
+		ob_start();
+
 		$this->render();
+
+		$html = ob_get_clean();
+
+		exit( json_encode(array('html' => $html)) );
 	}
 	
 	/**
@@ -1202,10 +1221,9 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 		$wp_uploads = wp_upload_dir();		
 													
-		$import = $this->data['update_previous'];				
-		$logger = create_function('$m', 'echo "<div class=\\"progress-msg\\">$m</div>\\n"; if ( "" != strip_tags(pmxi_strip_tags_content($m)) and !empty(PMXI_Plugin::$session[\'pmxi_import\'][\'log\'])) { PMXI_Plugin::$session[\'pmxi_import\'][\'log\'] .= "<p>".strip_tags(pmxi_strip_tags_content($m))."</p>"; flush(); }');								
+		$import = $this->data['update_previous'];								
 
-		if ( ! PMXI_Plugin::is_ajax() ) {																
+		if ( ! PMXI_Plugin::is_ajax() ) {																		
 
 			$import->set(
 				(empty(PMXI_Plugin::$session->data['pmxi_import']['source']) ? array() : PMXI_Plugin::$session->data['pmxi_import']['source'])
@@ -1323,6 +1341,11 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 			pmxi_session_commit();
 
+			$log_file = $wp_uploads['basedir'] . '/wpallimport_logs/' . $import->id . '.html';
+			if ( PMXI_Plugin::$session->data['pmxi_import']['action'] != 'continue' and file_exists($log_file)){
+				@unlink($log_file);	
+			}
+
 			$this->render();
 			wp_ob_end_flush_all(); flush();
 			@set_time_limit(0);	
@@ -1336,11 +1359,22 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		$ajax_processing = ("ajax" == $import->options['import_processing']) ? true : false;
 
+		if ("ajax" == $import->options['import_processing'])
+		{
+			$logger = create_function('$m', 'echo "<div class=\\"progress-msg\\">$m</div>\\n"; flush();');					
+		}
+		else
+		{
+			$logger = create_function('$m', 'echo "<div class=\\"progress-msg\\">$m</div>\\n"; if ( "" != strip_tags(pmxi_strip_tags_content($m))) { PMXI_Plugin::$session[\'pmxi_import\'][\'log\'] .= "<p>".strip_tags(pmxi_strip_tags_content($m))."</p>"; flush(); }');
+		}
+
 		PMXI_Plugin::$session['pmxi_import']['start_time'] = (empty(PMXI_Plugin::$session->data['pmxi_import']['start_time'])) ? time() : PMXI_Plugin::$session->data['pmxi_import']['start_time'];								
 
 		wp_cache_flush();
 
-		if ( PMXI_Plugin::is_ajax() or ! $ajax_processing ) {			
+		if ( PMXI_Plugin::is_ajax() or ! $ajax_processing ) {		
+
+			$log_file = $wp_uploads['basedir'] . '/wpallimport_logs/' . $import->id . '.html';							
 
 			if ( "ajax" == $import->options['import_processing'] ) {
 				// HTTP headers for no cache etc
@@ -1420,7 +1454,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 									$feed .= "</pmxi_records>";																																							
 									$import->process($feed, $logger, PMXI_Plugin::$session->data['pmxi_import']['chunk_number'], false, '/pmxi_records');																											
-									unset($dom, $xpath);									
+									unset($dom, $xpath);																													
 
 									if ( ! $ajax_processing ){										
 										$feed = "<?xml version=\"1.0\" encoding=\"". $import->options['encoding'] ."\"?>"  . "\n" . "<pmxi_records>";
@@ -1429,13 +1463,19 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 										unset($file);
 										PMXI_Plugin::$session['pmxi_import']['pointer'] = PMXI_Plugin::$session->data['pmxi_import']['pointer'] + $pointer;
 										pmxi_session_commit();
+
+										$log_data = ob_get_clean();
+										$log = @fopen($log_file, 'a+');				
+										@fwrite($log, $log_data);
+										@fclose($log);						
+
 										wp_send_json(array(
 											'created' => $import->created,
 											'updated' => $import->updated,										
 											'percentage' => ceil(($processed_records/$import->count) * 100),
 											'warnings' => PMXI_Plugin::$session->data['pmxi_import']['warnings'],
 											'errors' => PMXI_Plugin::$session->data['pmxi_import']['errors'],
-											'log' => ob_get_clean(),
+											'log' => $log_data,
 											'done' => false 
 										));														
 									}
@@ -1461,13 +1501,20 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		}			
 		
 		if ( ( PMXI_Plugin::is_ajax() and empty(PMXI_Plugin::$session->data['pmxi_import']['local_paths']) ) or ! $ajax_processing ){
-			
-			// Save import process log
-			$log_file = $wp_uploads['basedir'] . '/wpallimport_logs/' . $import->id . '.html';
-			if (file_exists($log_file)) unlink($log_file);
-			@file_put_contents($log_file, PMXI_Plugin::$session->data['pmxi_import']['log']);
-
+						
 			if ( ! empty(PMXI_Plugin::$session->data['pmxi_import']) ) do_action( 'pmxi_after_xml_import', $import->id );									
+			
+			if ("ajax" != $import->options['import_processing']){
+				$log_file = $wp_uploads['basedir'] . '/wpallimport_logs/' . $import->id . '.html';				
+				if (PMXI_Plugin::$session->data['pmxi_import']['action'] != 'continue'){
+					@file_put_contents($log_file, PMXI_Plugin::$session->data['pmxi_import']['log']);
+				}
+				else{
+					$log = @fopen($log_file, 'a+');				
+					@fwrite($log, PMXI_Plugin::$session->data['pmxi_import']['log']);
+					@fclose($log);
+				}
+			}
 			
 			wp_cache_flush();
 			foreach ( get_taxonomies() as $tax ) {				
@@ -1588,12 +1635,12 @@ COMPLETE;
 				$this->render_xml_text(trim($el->childNodes->item(0)->wholeText), $shorten, $is_render_collapsed);
 			} else {
 				echo '<div class="xml-content' . ($is_render_collapsed ? ' collapsed' : '') . '">';
-				$indexes = array();
+				$indexes = array();										
 				foreach ($el->childNodes as $child) {
 					if ($child instanceof DOMElement) {
 						empty($indexes[$child->nodeName]) and $indexes[$child->nodeName] = 0; $indexes[$child->nodeName]++;
 						$this->render_xml_element($child, $shorten, $path . '/', $indexes[$child->nodeName], $lvl + 1); 
-					} elseif ($child instanceof DOMText) {
+					} elseif ($child instanceof DOMText) {												
 						$this->render_xml_text(trim($child->wholeText), $shorten); 
 					} elseif ($child instanceof DOMComment) {
 						if (preg_match('%\[pmxi_more:(\d+)\]%', $child->nodeValue, $mtch)) {

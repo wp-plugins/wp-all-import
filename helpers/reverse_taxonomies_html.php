@@ -2,7 +2,7 @@
 
 if ( ! function_exists('reverse_taxonomies_html') ) {
 
-	function reverse_taxonomies_html($post_taxonomies, $item_id, &$i, $ctx_name, $entry){
+	function reverse_taxonomies_html($post_taxonomies, $item_id, &$i, $ctx_name = '', $entry = ''){
 		$childs = array();
 		foreach ($post_taxonomies as $j => $cat) if ($cat->parent_id == $item_id) { $childs[] = $cat; }
 

@@ -182,10 +182,17 @@
 		function pmxi_get_remote_image_ext($filePath){
 			
 			$response = wp_remote_get($filePath);
-			$headers = wp_remote_retrieve_headers( $response );
+			$headers = wp_remote_retrieve_headers( $response );			
 			$content_type = (!empty($headers['content-type'])) ? explode('/', $headers['content-type']) : false;		
+			if (!empty($content_type[1])){				
+				if (preg_match('%jpeg%i', $content_type[1])) return 'jpeg';
+				if (preg_match('%jpg%i', $content_type[1])) return 'jpg';
+				if (preg_match('%png%i', $content_type[1])) return 'png';
+				if (preg_match('%gif%i', $content_type[1])) return 'gif';
+				return $content_type[1];
+			}
 
-			return ( ! empty($content_type[1]) ) ? $content_type[1] : '';
+			return '';
 
 		}
 	}
@@ -437,6 +444,13 @@
 		    return $url;
 		}
 	}
+
+	if ( ! function_exists('pmxi_cdata_filter')):
+		function pmxi_cdata_filter($matches){		    
+		    PMXI_Import_Record::$cdata[] = $matches[0];
+		    return '{{CPLACE_'. count(PMXI_Import_Record::$cdata) .'}}';
+		}
+	endif;
 
 	/* Session */
 

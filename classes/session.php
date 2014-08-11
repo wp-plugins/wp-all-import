@@ -98,6 +98,7 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 					}
 					elseif ($this->session_mode == 'files'){
 						@file_put_contents(PMXI_ROOT_DIR . "/sessions/_pmxi_session_expires_{$this->session_id}.txt", $this->expires);				
+						@chmod(PMXI_ROOT_DIR . "/sessions/_pmxi_session_expires_{$this->session_id}.txt", 0600);
 					}
 				}
 				
@@ -213,10 +214,12 @@ final class PMXI_Session extends PMXI_ArrayAccess implements Iterator, Countable
 		}
 		elseif ($this->session_mode == 'files'){			
 			if ( @file_exists( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt") ){									
-				@file_put_contents( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", (string) serialize($this->container) );				
+				@file_put_contents( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", (string) serialize($this->container) );	
+				@chmod(PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", 0600);			
 			}
 			else{
 				@file_put_contents( PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", (string) serialize($this->container) );
+				@chmod(PMXI_ROOT_DIR . "/sessions/" . $option_key . ".txt", 0600);			
 				@file_put_contents( PMXI_ROOT_DIR . "/sessions/_pmxi_session_expires_{$this->session_id}.txt", $this->expires );
 			}
 		}

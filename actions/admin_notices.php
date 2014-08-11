@@ -58,5 +58,5 @@ function pmxi_admin_notices() {
 			<div class="<?php echo $type ?>"><p><?php echo $m ?></p></div>
 			<?php 
 		}
-	}
+	}	
 }

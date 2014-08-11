@@ -25,10 +25,15 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 	 */
 	public function __construct() {
 		$remove = array_diff(array_keys($_GET), $this->baseUrlParamNames);
+
+		$p_url = parse_url( home_url() );
+
+		$url = $p_url['scheme'] . '://' . $p_url['host'];
+
 		if ($remove) {
-			$this->baseUrl = remove_query_arg($remove);
+			$this->baseUrl = $url . remove_query_arg($remove);
 		} else {
-			$this->baseUrl = $_SERVER['REQUEST_URI'];
+			$this->baseUrl = $url . $_SERVER['REQUEST_URI'];
 		}
 		parent::__construct();
 		
