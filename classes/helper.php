@@ -14,6 +14,11 @@ class PMXI_Helper {
 	const GLOB_NODOTS = 1024;
 	const GLOB_RECURSE = 2048;
 
+	const FNM_PATHNAME = 1;
+	const FNM_NOESCAPE = 2;
+	const FNM_PERIOD = 4;
+	const FNM_CASEFOLD = 16;
+
 	/**
 	 * A safe empowered glob().
 	 *
@@ -45,7 +50,7 @@ class PMXI_Helper {
 					$glob = array_merge($glob, self::array_prepend(self::safe_glob($path . '/' . $file . '/' . $mask, $flags), ($flags & self::GLOB_PATH ? '' : $file . '/')));
 				}
 				// Match file mask				
-				if (self::fnmatch($mask, $file, FNM_CASEFOLD)) {					
+				if (self::fnmatch($mask, $file, self::FNM_CASEFOLD)) {					
 					if ((( ! ($flags & self::GLOB_ONLYDIR)) || is_dir("$path/$file"))
 						&& (( ! ($flags & self::GLOB_NODIR)) || ( ! is_dir($path . '/' . $file)))
 						&& (( ! ($flags & self::GLOB_NODOTS)) || ( ! in_array($file, array('.', '..'))))
@@ -86,11 +91,6 @@ class PMXI_Helper {
 		return $array;
 
 	}
-	
-	const FNM_PATHNAME = 1;
-	const FNM_NOESCAPE = 2;
-	const FNM_PERIOD = 4;
-	const FNM_CASEFOLD = 16;
 
 	/**
 	 * non-POSIX complient remplacement for the fnmatch
@@ -110,22 +110,22 @@ class PMXI_Helper {
 		);
 		 
 		// Forward slash in string must be in pattern:
-		if ($flags & FNM_PATHNAME) {
+		if ($flags & self::FNM_PATHNAME) {
 			$transforms['\*'] = '[^/]*';
 		}
 		 
 		// Back slash should not be escaped:
-		if ($flags & FNM_NOESCAPE) {
+		if ($flags & self::FNM_NOESCAPE) {
 			unset($transforms['\\']);
 		}
 		 
 		// Perform case insensitive match:
-		if ($flags & FNM_CASEFOLD) {
+		if ($flags & self::FNM_CASEFOLD) {
 			$modifiers .= 'i';
 		}
 		 
 		// Period at start must be the same as pattern:
-		if ($flags & FNM_PERIOD) {
+		if ($flags & self::FNM_PERIOD) {
 			if (strpos($string, '.') === 0 && strpos($pattern, '.') !== 0) return false;
 		}
 		 

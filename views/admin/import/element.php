@@ -1,108 +1,210 @@
-<form class="choose-elements no-enter-submit" method="post">
-<h2><?php _e('Import XML/CSV - Step 2: Select Elements', 'pmxi_plugin') ?></h2>
 
-<h3><?php _e('<b>Double-click on an element below to select it and its siblings.</b>', 'pmxi_plugin') ?></h3>
+<h2 class="wpallimport-wp-notices"></h2>
 
-<div class="ajax-console">
-	<?php if ($this->errors->get_error_codes()): ?>
-		<?php $this->error() ?>
-	<?php endif ?>
-</div>
-<table class="layout">
-	<tr>
-		<td class="left" style="width:60%;">			
-			<fieldset class="widefat">
-				<legend><?php _e('Current XML tree', 'pmxi_plugin');?></legend>
-				<div class="action_buttons">
-					<a href="javascript:void(0);" id="prev_element" class="button button-primary button-hero large_button go_to">&laquo;</a>
-					<a href="javascript:void(0);" id="next_element" class="button button-primary button-hero large_button go_to" style="margin-right:15px;">&raquo;</a>
-					<div style="float:left;">
-						<span style="font-size:20px; padding-top:17px; float:left; margin-right:10px;"><?php _e('Go to:','pmxi_plugin');?> </span><input type="text" id="goto_element" value="1"/>
-					</div>					
+<form class="wpallimport-choose-elements no-enter-submit wpallimport-step-2 wpallimport-wrapper" method="post">	
+	<div class="wpallimport-header">
+		<div class="wpallimport-logo"></div>
+		<div class="wpallimport-title">
+			<p><?php _e('WP All Import', 'pmxi_plugin'); ?></p>
+			<h2><?php _e('Import XML / CSV', 'pmxi_plugin'); ?></h2>					
+		</div>
+		<div class="wpallimport-links">
+			<a href="http://www.wpallimport.com/support/" target="_blank"><?php _e('Support', 'pmxi_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/" target="_blank"><?php _e('Documentation', 'pmxi_plugin'); ?></a>
+		</div>
+	</div>	
+	<div class="clear"></div>	
+	<?php $custom_type = get_post_type_object( PMXI_Plugin::$session->custom_type ); ?>
+	<div class="wpallimport-content-section wpallimport-console">
+		<div class="ajax-console">
+			<?php if ($this->errors->get_error_codes()): ?>
+				<?php $this->error() ?>			
+			<?php endif ?>
+		</div>		
+		<input type="submit" class="button button-primary button-hero wpallimport-large-button" value="<?php _e('Continue to Step 3', 'pmxi_plugin'); ?>" style="position:absolute; top:45px; right:10px;"/>
+	</div>
+	
+	<div class="wpallimport-content-section wpallimport-elements-preloader">
+		<div class="preload" style="height: 80px; margin-top: 25px;"></div>
+	</div>
+
+	<div class="wpallimport-content-section" style="padding-bottom:0; max-height: 600px; overflow:scroll; width: 100%;">
+
+		<table class="wpallimport-layout" style="width:100%;">
+			<tr>				
+				<?php if ( ! $is_csv): ?>
+				<td class="left" style="width: 25%; min-width: unset; border-right: 1px solid #ddd;">
+					<h3 class="txt_center"><?php _e('What element are you looking for?', 'pmxi_plugin'); ?></h3>				
 					<?php
-					if ($is_csv !== false){
-						?>										
-						<ul class="set_csv_delimiter">
-							<li><?php _e("Set delimiter for CSV fields:",'pmxi_plugin');?> </li>							
-							<li> <input type="text" value="<?php echo $is_csv;?>" name="delimiter"/> <input type="button" name="apply_delimiter" value="Apply"/></li>
-						</ul>
-						<?php
-					} 
-					else{
-						?>
-						<input type="hidden" value="" name="delimiter"/>
-						<?php
+					if ( ! empty($elements_cloud) and ! $is_csv ){												
+						foreach ($elements_cloud as $tag => $count){
+							?>
+							<a href="javascript:void(0);" rel="<?php echo $tag;?>" class="wpallimport-change-root-element <?php if (PMXI_Plugin::$session->source['root_element'] == $tag) echo 'selected';?>">
+								<span class="tag_name"><?php echo strtolower($tag); ?></span>
+								<span class="tag_count"><?php echo $count; ?></span>
+							</a>
+							<?php
+						}						
 					}
-					?>
-				</div>
-				<div class="xml" style="min-height:400px;">
-					<?php //$this->render_xml_element($dom->documentElement) ?>
-				</div>
-			</fieldset>
-		</td>
-		<td class="right" style="width:40%;">
-			<fieldset class="widefat">				
-				<legend><?php _e('Fitering Options','pmxi_plugin');?></legend>
-				<p><?php _e('Manual XPath:','pmxi_plugin');?></p>
-				<div>
-					<input type="text" name="xpath" value="<?php echo esc_attr($post['xpath']) ?>" style="max-width:none;" />					
-					<input type="hidden" id="root_element" name="root_element" value="<?php echo PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']; ?>"/>
-					<?php
-					if (!empty($elements_cloud)){
-						?>
-						&nbsp; <br/><label><?php _e('What element are you looking for?','pmxi_plugin');?></label>&nbsp; <br/>
-						<?php
-						$root_elements = array();
-						foreach ($elements_cloud as $tag => $count) 						
-							$root_elements[] = '<a href="javascript:void(0);" rel="'. $tag .'" class="change_root_element">' . $tag . '</a>';						
-						echo implode(', ', $root_elements);
-					}
-					?>
-					&nbsp; <br/><br/>or <a href="javascript:void(0);" rel="<?php echo esc_attr($post['xpath']) ?>" root="<?php echo PMXI_Plugin::$session->data['pmxi_import']['source']['root_element']; ?>" id="get_default_xpath"><?php _e('get default xPath','pmxi_plugin');?></a>
-				</div>
-				<p><?php _e('Filters:','pmxi_plugin');?></p>
-				<div>					
-					<select id="pmxi_xml_element">
-						<option value=""><?php _e('Select Element', 'pmxi_plugin'); ?></option>
-						<?php $this->render_xml_elements_for_filtring($elements->item(0)); ?>
-					</select>
-					<select id="pmxi_rule">
-						<option value=""><?php _e('Select Rule', 'pmxi_plugin'); ?></option>
-						<option value="equals"><?php _e('equals', 'pmxi_plugin'); ?></option>
-						<option value="greater"><?php _e('greater than', 'pmxi_plugin');?></option>
-						<option value="equals_or_greater"><?php _e('equals or greater than', 'pmxi_plugin'); ?></option>
-						<option value="less"><?php _e('less than', 'pmxi_plugin'); ?></option>
-						<option value="equals_or_less"><?php _e('equals or less than', 'pmxi_plugin'); ?></option>
-						<option value="contains"><?php _e('contains', 'pmxi_plugin'); ?></option>
-						<option value="not_contains"><?php _e('not contains', 'pmxi_plugin'); ?></option>
-						<option value="is_empty"><?php _e('is empty', 'pmxi_plugin'); ?></option>
-						<option value="is_not_empty"><?php _e('is not empty', 'pmxi_plugin'); ?></option>
-					</select>
-					<input id="pmxi_value" type="text" placeholder="value" value=""/>
-					<a id="pmxi_add_rule" href="javascript:void(0);"><?php _e('Add rule', 'pmxi_plugin');?></a>
-				</div>
-				<div class="clear"></div>
-				<div>
-					<fieldset id="filtering_rules">
-						<legend><?php _e('Rules', 'pmxi_plugin'); ?></legend>
-						<p style="margin-top:5px;"><?php _e('No filtering options. Add filtering options to only import records matching some specified criteria.');?></p>
-						<ol class="filtering_rules">
+					?>			
+				</td>			
+				<?php endif; ?>	
+				<td class="right" <?php if ( ! $is_csv){?>style="width:75%; padding:0;"<?php } else {?>style="width:100%; padding:0;"<?php }?>>
+					<div class="action_buttons">
+						<table style="width:100%;">
+							<tr>
+								<td>
+									<a href="javascript:void(0);" id="prev_element" class="wpallimport-go-to">&nbsp;</a>
+								</td>
+								<td class="txt_center">
+
+									<p class="wpallimport-root-element">
+										<?php echo PMXI_Plugin::$session->source['root_element'];?>
+									</p>								
+									<input type="text" id="goto_element" value="1"/>
+									<span class="wpallimport-elements-information">
+										<?php printf(__('of <span class="wpallimport-elements-count-info">%s</span>','pmxi_plugin'), PMXI_Plugin::$session->count);?> 
+									</span>																	
+
+								</td>
+								<td>
+									<a href="javascript:void(0);" id="next_element" class="wpallimport-go-to">&nbsp;</a>
+								</td>
+							</tr>
+						</table>																
+					</div>
+					<fieldset class="widefat" style="background:fafafa;">												
+						
+						<div class="input">
+
+							<?php if ($is_csv !== false): ?>										
+															
+								<div class="wpallimport-set-csv-delimiter">
+									<label>
+										<?php _e("Set delimiter for CSV fields:", "pmxi_plugin"); ?>
+									</label>									
+									<input type="text" name="delimiter" value="<?php echo $is_csv;?>"/> 
+									<input type="button" name="apply_delimiter" class="rad4" value="<?php _e('Apply', 'pmxi_plugin'); ?>"/>									
+								</div>							
+
+							<?php else: ?>
 							
-						</ol>
-						<a href="javascript:void(0);" id="apply_filters" style="display:none;"><?php _e('Apply Filters', 'pmxi_plugin');?></a>
-					</fieldset>
+								<input type="hidden" value="" name="delimiter"/>
+
+							<?php endif; ?>
+						
+						</div>
+
+						<div class="wpallimport-xml">
+							<?php //$this->render_xml_element($dom->documentElement) ?>
+						</div>
+					</fieldset>		
+					<div class="import_information">
+						<?php if (PMXI_Plugin::$session->wizard_type == 'new') :?>
+						<h3>
+							<?php printf(__('Each <span>&lt;<span class="root_element">%s</span>&gt;</span> element will be imported into a <span>New %s</span>'), PMXI_Plugin::$session->source['root_element'], $custom_type->labels->singular_name); ?>
+						</h3>
+						<?php else: ?>
+						<h3>
+							<?php printf(__('Data in <span>&lt;<span class="root_element">%s</span>&gt;</span> elements will be imported to <span>%s</span>'), PMXI_Plugin::$session->source['root_element'], $custom_type->labels->name); ?>
+						</h3>
+						<?php endif; ?>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
+
+	<div class="wpallimport-collapsed closed">
+		<div class="wpallimport-content-section">
+			<div class="wpallimport-collapsed-header">
+				<h3><?php _e('Add Filtering Options', 'pmxi_plugin'); ?></h3>
+			</div>
+			<div class="wpallimport-collapsed-content">
+				<div>
+					<div class="rule_inputs">
+						<table style="width:100%;">
+							<tr>
+								<th><?php _e('Element', 'pmxi_plugin'); ?></th>
+								<th><?php _e('Rule', 'pmxi_plugin'); ?></th>
+								<th><?php _e('Value', 'pmxi_plugin'); ?></th>
+								<th>&nbsp;</th>
+							</tr>
+							<tr>
+								<td style="width:25%;">
+									<select id="pmxi_xml_element">
+										<option value=""><?php _e('Select Element', 'pmxi_plugin'); ?></option>
+										<?php PMXI_Render::render_xml_elements_for_filtring($elements->item(0)); ?>
+									</select>
+								</td>
+								<td style="width:25%;">
+									<select id="pmxi_rule">
+										<option value=""><?php _e('Select Rule', 'pmxi_plugin'); ?></option>
+										<option value="equals"><?php _e('equals', 'pmxi_plugin'); ?></option>
+										<option value="not_equals"><?php _e('not equals', 'pmxi_plugin'); ?></option>
+										<option value="greater"><?php _e('greater than', 'pmxi_plugin');?></option>
+										<option value="equals_or_greater"><?php _e('equals or greater than', 'pmxi_plugin'); ?></option>
+										<option value="less"><?php _e('less than', 'pmxi_plugin'); ?></option>
+										<option value="equals_or_less"><?php _e('equals or less than', 'pmxi_plugin'); ?></option>
+										<option value="contains"><?php _e('contains', 'pmxi_plugin'); ?></option>
+										<option value="not_contains"><?php _e('not contains', 'pmxi_plugin'); ?></option>
+										<option value="is_empty"><?php _e('is empty', 'pmxi_plugin'); ?></option>
+										<option value="is_not_empty"><?php _e('is not empty', 'pmxi_plugin'); ?></option>
+									</select>
+								</td>
+								<td style="width:25%;">
+									<input id="pmxi_value" type="text" placeholder="value" value=""/>
+								</td>
+								<td style="width:15%;">
+									<a id="pmxi_add_rule" href="javascript:void(0);"><?php _e('Add Rule', 'pmxi_plugin');?></a>
+								</td>
+							</tr>
+						</table>						
+					</div>					
 				</div>
-				<br><br>				
-				<a href="http://www.w3schools.com/xpath/default.asp" target='_blank'><?php _e('XPath Tutorial','pmxi_plugin');?></a> - <?php _e('For further help','pmxi_plugin');?>, <a href="http://www.wpallimport.com/support" target='_blank'><?php _e('contact us','pmxi_plugin');?></a>.
-			</fieldset>
-			<p class="submit-buttons" style="text-align:right;">
-				<a href="<?php echo $this->baseUrl ?>" class="back"><?php _e('Back','pmxi_plugin');?></a>
-				&nbsp;
-				<input type="hidden" name="is_submitted" value="1" />
-				<?php wp_nonce_field('choose-elements', '_wpnonce_choose-elements') ?>
-				<input type="submit" class="button button-primary button-hero large_button" value="<?php _e('Next', 'pmxi_plugin') ?>" />
-			</p>
-		</td>
-	</tr>
-</table>
+				<div class="clear"></div>				
+				<table class="xpath_filtering">
+					<tr>
+						<td style="width:5%; font-weight:bold; color: #000;"><?php _e('XPath','pmxi_plugin');?></td>
+						<td style="width:95%;">
+							<input type="text" name="xpath" value="<?php echo esc_attr($post['xpath']) ?>" style="max-width:none;" />					
+							<input type="hidden" id="root_element" name="root_element" value="<?php echo PMXI_Plugin::$session->source['root_element']; ?>"/>					
+						</td>
+					</tr>
+				</table>				
+			</div>
+		</div>	
+		<div id="wpallimport-filters" class="wpallimport-collapsed-content" style="padding:0;">
+			<table style="width: 100%; font-weight: bold; padding: 20px;">
+				<tr>					
+					<td style="width: 30%; padding-left: 30px;"><?php _e('Element', 'pmxi_plugin'); ?></td>
+					<td style="width:20%;"><?php _e('Rule', 'pmxi_plugin'); ?></td>
+					<td style="width:20%;"><?php _e('Value', 'pmxi_plugin'); ?></td>
+					<td style="width:25%;"><?php _e('Condition', 'pmxi_plugin'); ?></td>
+				</tr>
+			</table>
+			<div class="wpallimport-content-section">					
+				<fieldset id="filtering_rules">					
+					<p style="margin:20px 0 5px; text-align:center;"><?php _e('No filtering options. Add filtering options to only import records matching some specified criteria.', 'pmxi_plugin');?></p>					
+					<ol class="filtering_rules">
+						
+					</ol>	
+					<div class="clear"></div>				
+					<a href="javascript:void(0);" id="apply_filters" style="display:none;"><?php _e('Apply Filters To XPath', 'pmxi_plugin');?></a>
+				</fieldset>
+			</div>	
+		</div>
+	</div>
+
+	<hr>
+
+	<p class="wpallimport-submit-buttons" style="text-align:center;">
+		<a href="<?php echo $this->baseUrl ?>" class="back rad3"><?php _e('Back to Step 1','pmxi_plugin');?></a>
+		&nbsp;
+		<input type="hidden" name="is_submitted" value="1" />
+		<?php wp_nonce_field('choose-elements', '_wpnonce_choose-elements') ?>
+		<input type="submit" class="button button-primary button-hero wpallimport-large-button" value="<?php _e('Continue to Step 3', 'pmxi_plugin'); ?>" />
+	</p>
+
+	<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'pmxi_plugin'); ?> <span></span></a>
+	
 </form>

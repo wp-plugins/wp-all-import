@@ -78,7 +78,7 @@ class PMXI_Model_List extends PMXI_Model {
 			$sql = "SELECT SQL_CALC_FOUND_ROWS $this->what $sql LIMIT " . intval(($page - 1) * $perPage) . ", " . intval($perPage);
 		} else {
 			$sql = "SELECT $this->what $sql";
-		}
+		}		
 		$result = $this->wpdb->get_results($sql, ARRAY_A);
 		if (is_array($result)) {
 			foreach ($result as $i => $row) {

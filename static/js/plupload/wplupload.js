@@ -15,37 +15,29 @@ $.fn.wplupload  = function($options) {
 		var $this = $(this);
 				
 		$up = new plupload.Uploader($options);
-		
-		
-		/*$up.bind('Init', function(up) {
-			var dropElm = $('#' + up.settings.drop_element);
-			if (dropElm.length && up.features.dragdrop) {
-				dropElm.bind('dragenter', function() {
-					$(this).css('border', '3px dashed #cccccc');
-				});
-				dropElm.bind('dragout drop', function() {
-					$(this).css('border', 'none');
-				});
-			}			
-		});*/
-		
+					
 		$up.bind('FilesAdded', function(up, files) {
 			$.each(files, function(i, file) {
 				// Create a progress bar containing the filename
-				$('#basic').find('.submit-buttons').hide();				
-				$('#progress').css({'visibility':'visible'});
+				$('#progress').css({'visibility':'visible', 'display':'block'});
+				$('#select-files').hide();
 			})
 		});
 		
 		$up.init();				
 		
 		$up.bind('Error', function(up, err) {									
-			$('#upload_process').html(err.message);
+			//$('#upload_process').html(err.message);
+			$('.wpallimport-header').next('.clear').after(err.message);
 		});
 		
 		$up.bind('FilesAdded', function(up, files) {
 			// Disable submit and enable cancel
 			
+			$('.error.inline').remove();
+
+			$('.wpallimport-choose-file').find('.wpallimport-upload-resource-step-two').slideUp();
+
 			$('#cancel-upload').removeAttr('disabled');
 			
 			$up.start();
@@ -57,7 +49,7 @@ $.fn.wplupload  = function($options) {
 		
 		$up.bind('UploadProgress', function(up, file) {
 			// Lengthen the progress bar
-			$('#progressbar').html('Uploading data feed ... ' + file.percent + '%');
+			$('#progressbar').html('<span>Uploading</span> ' + file.name + ' ' + file.percent + '%');
 			$('#upload_process').progressbar({value:file.percent});
 
 		});
@@ -68,22 +60,47 @@ $.fn.wplupload  = function($options) {
 			
 			r = _parseJSON(r.response);		
 			
-			$('#filepath').val(r.name);
+			if (r.error !== null){
 
-			$('#progressbar').html('Upload Complete - ' + file.name + ' (' + ( (file.size / (1024*1024) >= 1) ? (file.size / (1024*1024)).toFixed(2) + 'mb' : (file.size / (1024)).toFixed(2) + 'kb') + ')');					
+				$('.wpallimport-choose-file').find('.wpallimport-submit-buttons').hide();										
+				/*$('.wpallimport-choose-file').find('.wpallimport-uploaded-file-name').html('');
+				$('.wpallimport-choose-file').find('.wpallimport-uploaded-file-size').html('');		*/		
+				$('.wpallimport-import-from.selected').click();
+				$('#wpallimport-url-upload-status').html('');
 
-			$('#basic').find('.submit-buttons').show();
+				$('#progress').hide();
+				$('#progressbar').html('<span></span>');
+				$('#select-files').fadeIn();
 
-			if (r.OK) {					
+				$('.wpallimport-header').next('.clear').after(r.error.message);
 
-			} else if (r.error != undefined && '' != r.error.message) {
-				$('#progressbar').html(r.error.message);
+			}
+			else{
+
+				$('#filepath').val(r.name);
+
+				$('#progressbar').html('<span>Upload Complete</span> - ' + file.name + ' (' + ( (file.size / (1024*1024) >= 1) ? (file.size / (1024*1024)).toFixed(2) + 'mb' : (file.size / (1024)).toFixed(2) + 'kb') + ')');					
+
+				setTimeout(function() {
+					
+					$('.wpallimport-choose-file').find('.wpallimport-upload-resource-step-two').slideDown(400, function(){
+						$('.wpallimport-choose-file').find('.wpallimport-submit-buttons').show();			
+					});			
+
+					if (r.OK) {					
+
+					} else if (r.error != undefined && '' != r.error.message) {
+						$('#progressbar').html(r.error.message);
+					}
+
+				}, 1000);			 			
 			}
 			
 		});
 		
 		$up.bind('UploadComplete', function(up) {
 			$('#cancel-upload').attr('disabled', 'disabled');			
+			$('#advanced_upload').show();
 		});
 		
 		$('#cancel-upload').click(function() {

@@ -24,6 +24,9 @@ $config = array(
 	"session_mode" => 'default',
 	"enable_ftp_import" => 0,
 	"large_feed_limit" => 1000,
-	"enable_cron_processing_time_limit" => 0,
-	"cron_processing_time_limit" => 120	
+	//"enable_cron_processing_time_limit" => 0,
+	"cron_processing_time_limit" => 120,
+	"secure" => 1,
+	"log_storage" => 5,
+	"cron_sleep" => ""
 );

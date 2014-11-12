@@ -1,141 +1,83 @@
-<?php
-
-	$custom_types = get_post_types(array('_builtin' => true), 'objects') + get_post_types(array('_builtin' => false), 'objects'); 
-	foreach ($custom_types as $key => $ct) {
-		if (in_array($key, array('attachment', 'revision', 'nav_menu_item'))) unset($custom_types[$key]);
-	}
+<?php	
 	$isWizard = $this->isWizard;
-	$baseUrl  = $this->baseUrl;
-	
+	$baseUrl  = $this->baseUrl;	
 ?>
 
 <input type="hidden" id="selected_post_type" value="<?php echo (!empty($post['custom_type'])) ? $post['custom_type'] : '';?>">
 <input type="hidden" id="selected_type" value="<?php echo (!empty($post['type'])) ? $post['type'] : '';?>">
-<h2>
-	<?php if ($isWizard): ?>
-		<?php _e('Import XML/CSV - Step 4: Options', 'pmxi_plugin') ?>
-	<?php else: ?>
-		<?php _e('Edit Import Options', 'pmxi_plugin') ?>
-	<?php endif ?>
-</h2>
-<h3><?php _e('Click the appropriate tab to choose the type of posts to create.', 'pmxi_plugin');?></h3>
 
-<?php do_action('pmxi_options_header', $isWizard, $post); ?>
+<div class="wpallimport-step-4">
+	
+	<h2 class="wpallimport-wp-notices"></h2>
 
-<div class="ajax-console">
-	<?php if ($this->errors->get_error_codes()): ?>
-		<?php $this->error() ?>
-	<?php endif ?>
-</div>
+	<div class="wpallimport-wrapper">
+		<h2 class="wpallimport-wp-notices"></h2>
+		<div class="wpallimport-header">
+			<div class="wpallimport-logo"></div>
+			<div class="wpallimport-title">
+				<p><?php _e('WP All Import', 'pmxi_plugin'); ?></p>
+				<h2><?php _e('Import XML / CSV', 'pmxi_plugin'); ?></h2>					
+			</div>
+			<div class="wpallimport-links">
+				<a href="http://www.wpallimport.com/support/" target="_blank"><?php _e('Support', 'pmxi_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/" target="_blank"><?php _e('Documentation', 'pmxi_plugin'); ?></a>
+			</div>
+		</div>	
+		<div class="clear"></div>		
+	</div>		
 
-<table class="layout">
-	<tr>
-		<td class="left" style="width:100%;">
-			<?php $templates = new PMXI_Template_List() ?>
-			<form class="load_options options <?php echo ! $isWizard ? 'edit' : '' ?>" method="post">
-				<div class="load-template">
-					<span><?php _e('Load existing template:','pmxi_plugin');?> </span>
-					<select name="load_template">
-						<option value=""><?php _e('Load Template...', 'pmxi_plugin') ?></option>
-						<?php foreach ($templates->getBy()->convertRecords() as $t): ?>
-							<option value="<?php echo $t->id ?>"><?php echo $t->name ?></option>
-						<?php endforeach ?>
-						<option value="-1"><?php _e('Reset...', 'pmxi_plugin') ?></option>
-					</select>
-				</div>
-			</form>
-			<h2 class="woo-nav-tab-wrapper">				
-				<?php $custom_types = apply_filters( 'pmxi_custom_types', $custom_types );?>
-				<?php if (count($custom_types)): ?>
-					<?php foreach ($custom_types as $key => $ct):?>
-					<a class="nav-tab <?php if ($key == $get['pmxi-cpt']) echo 'nav-tab-active'; ?>" rel="<?php echo $key; ?>" href="<?php echo add_query_arg(array('action' => 'options', 'pmxi-cpt' => $key), $this->baseUrl); ?>"><?php echo $ct->labels->name ?></a>					
-					<?php endforeach ?>
-				<?php endif ?>				
-				<?php do_action('pmxi_custom_menu_item'); ?>			
-			</h2>
-			<div id="pmxi_tabs">			
-				<div class="left">			   
-				   
-					<!-- Custom Post Types -->
-					<?php 				
-					if (count($custom_types)): ?>
-						<?php foreach ($custom_types as $key => $ct):?>
-							<?php if ( $key == $get['pmxi-cpt'] ): ?>
-								<div id="<?php echo $key;?>" class="">
-									<form class="options <?php echo ! $isWizard ? 'edit' : '' ?>" method="post">
-										<input type="hidden" name="custom_type" value="<?php echo $key; ?>"/>
-										<input type="hidden" name="type" value="post"/>
-										<div class="post-type-options">
-											<table class="form-table" style="max-width:none;">
-												<?php
-													$post_type = $entry = $key;
-													include( 'options/_main_options_template.php' );												
-													
-													if ( 'page' == $key ):
+	<?php $visible_sections = apply_filters('pmxi_visible_options_sections', array('reimport', 'settings'), $post['custom_type']); ?>
 
-														$entry = 'page';
-													?>
-														<tr>
-															<td align="center" width="33%" style="padding-bottom:20px;">
-																<label><?php _e('Page Template', 'pmxi_plugin') ?></label> <br>
-																<select name="page_template" id="page_template">
-																	<option value='default'><?php _e('Default', 'pmxi_plugin') ?></option>
-																	<?php page_template_dropdown($post['page_template']); ?>
-																</select>
-															</td>
-															<td align="center" width="33%">
-																<label><?php _e('Parent Page', 'pmxi_plugin') ?></label> <br>
-																<?php wp_dropdown_pages(array('post_type' => 'page', 'selected' => $post['parent'], 'name' => 'parent', 'show_option_none' => __('(no parent)', 'pmxi_plugin'), 'sort_column'=> 'menu_order, post_title',)) ?>
-															</td>
-															<td align="center" width="33%">
-																<label><?php _e('Order', 'pmxi_plugin') ?></label> <br>
-																<input type="text" class="" name="order" value="<?php echo esc_attr($post['order']) ?>" />
-															</td>
-														</tr>
-													<?php
-													endif;
-
-													do_action('pmxi_extend_options_main', $entry);
-													include( 'options/_taxonomies_template.php' );
-													do_action('pmxi_extend_options_taxonomies', $entry);
-													
-													if ( ! in_array($entry, array('page', 'product')) ){
-														include( 'options/_categories_template.php' );
-														do_action('pmxi_extend_options_categories', $entry);
-													}
-
-													include( 'options/_custom_fields_template.php' );
-													do_action('pmxi_extend_options_custom_fields', $entry);																								
-													include( 'options/_featured_template.php' );
-													do_action('pmxi_extend_options_featured', $entry);
-													include( 'options/_author_template.php' );
-													do_action('pmxi_extend_options_author', $entry);
-													include( 'options/_reimport_template.php' );											
-													include( 'options/_settings_template.php' );
-												?>
-											</table>
-										</div>
-
-										<?php include( 'options/_buttons_template.php' ); ?>
-
-									</form>
-								</div>
-							<?php endif ?>
-						<?php endforeach ?>
+	<table class="wpallimport-layout">
+		<tr>
+			<td class="left">		
+	
+				<?php do_action('pmxi_options_header', $isWizard, $post); ?>
+				
+				<div class="ajax-console">					
+					<?php if ($this->errors->get_error_codes()): ?>
+						<?php $this->error() ?>
 					<?php endif ?>
+					<?php if ($this->warnings->get_error_codes()): ?>
+						<?php $this->warning() ?>
+					<?php endif ?>
+				</div>											
+
+				<form class="<?php echo ! $isWizard ? 'edit' : 'options' ?>" method="post" enctype="multipart/form-data" autocomplete="off" <?php echo ! $isWizard ? 'style="overflow:visible;"' : '' ?>>
+
+					<?php $post_type = $post['custom_type']; ?>				
+
+					<?php if ( ! $this->isWizard): ?>					
+
+						<?php include( 'options/_import_file.php' ); ?>
+
+					<?php endif; ?>
+
+					<div class="options">
+						<?php
+													
+							if ( in_array('reimport', $visible_sections)) include( 'options/_reimport_template.php' );
+							do_action('pmxi_options_tab', $isWizard, $post);
+							if ( in_array('settings', $visible_sections)) include( 'options/_settings_template.php' );
+							
+							include( 'options/_buttons_template.php' );
+
+						?>
+					</div>
+
+				</form>					
+								
+				<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'pmxi_plugin'); ?> <span></span></a>
 					
-					<?php do_action('pmxi_custom_options_tab', $isWizard, $post);?>
-					
-				</div>
-				<?php if ($isWizard or $this->isTemplateEdit): ?>
-				<div class="right options">
+			</td>
+			<td class="right template-sidebar ">
+				<div style="position:relative;">
 					<?php $this->tag( false ); ?>
 				</div>
-				<?php endif ?>
-			</div>
-		</td>	
-	</tr>
-</table>
+			</td>	
+		</tr>
+	</table>
+
+</div>
 
 <div id="record_matching_pointer" style="display:none;">	
 

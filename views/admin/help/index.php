@@ -3,19 +3,16 @@
 <table class="layout">
 	<tr>
 		<td class="left">
-			<p style='font-size: 1.3em;'>
-				<b>E-mail</b> - <a href='mailto:support@wpallimport.com'>support@wpallimport.com</a><br />
-				<b>Support page</b> - <a href='http://www.wpallimport.com/support?utm_source=wordpress.org&utm_medium=support&utm_campaign=free+plugin' target='_blank'>http://www.wpallimport.com/support</a>
+			<p style="font-size: 1.3em;">
+				<b>E-mail</b> - <a href="mailto:support@wpallimport.com">support@wpallimport.com</a><br>
+				<b><?php _e('Support Form', 'pmxi_plugin'); ?> </b> - <a target="_blank" href="http://www.wpallimport.com/support">http://www.wpallimport.com/support</a>
 			</p>
 
-			<p style='font-size: 1.3em;'>Thanks for installing the free version of WP All Import.</p>
+			<p style="font-size: 1.3em;"><?php _e('Thanks for installing the free version of WP All Import.', 'pmxi_plugin'); ?></p>
 
-			<p style='font-size: 1.3em;'>We are able to provide limited technical support to free version users. Support is not guaranteed, and is based on availability</p>
+			<p style="font-size: 1.3em;"><?php _e('We do not provide technical support in the WordPress.org community forums. But we are usually more than happy to help out free version users via e-mail - just e-mail us at the address above or submit a ticket through the support form.', 'pmxi_plugin'); ?></p>
 
-			<p style='font-size: 1.3em;'><b>Please note we generally do not provide technical support via the WordPress.org community forums.</b></p>
-
-			<p style='font-size: 1.3em;'><a href='http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=support&utm_campaign=free+plugin' target='_blank'>For premium support, please upgrade to the professional edition of WP All Import.</a></p>
-
+			<p style="font-size: 1.3em;"><a href="http://www.wpallimport.com/upgrade-to-pro/?utm_source=free-plugin&utm_medium=in-plugin&utm_campaign=support" target="_blank"><?php _e('For premium support, please upgrade to the professional edition of WP All Import.', 'pmxi_plugin'); ?></a></p>
 
 		</td>
 		<td class="right">&nbsp;</td>

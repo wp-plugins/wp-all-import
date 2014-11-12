@@ -1,259 +1,97 @@
-<tr>
-	<td colspan="3" style="padding-top:20px;">
-		<fieldset class="optionsset">
-			<legend><?php _e('Record Matching','pmxi_plugin');?></legend>		
-			<div class="input" style="margin-bottom:15px; position:relative;">
-				<input type="button" value="<?php _e('Click to see hints', 'pmxi_plugin');?>" class="button-primary pmxi_tips_pointer">				
-				<input type="radio" id="auto_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="auto" <?php echo 'manual' != $post['duplicate_matching'] ? 'checked="checked"': '' ?>/>
-				<label for="auto_matching_<?php echo $entry; ?>"><?php _e('Automatic Record Matching', 'pmxi_plugin' )?></label><br>
-				<div class="switcher-target-auto_matching_<?php echo $entry; ?>"  style="padding-left:17px;">
-					<div class="input">
-						<label><?php _e("Unique key"); ?></label>
-						
-						<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php echo esc_attr($post['unique_key']) ?>" <?php echo  ( ! $isWizard ) ? 'disabled="disabled"' : '' ?>/>
-						<a href="#help" class="help" title="<?php _e('If posts are being updated and not just created during a brand new import, the problem is that the value of the unique key is not unique for each record.', 'pmxi_plugin') ?>">?</a>
-					</div>
-				</div>
-				<input type="radio" id="manual_matching_<?php echo $entry; ?>" class="switcher" name="duplicate_matching" value="manual" <?php echo 'manual' == $post['duplicate_matching'] ? 'checked="checked"': '' ?>/>
-				<label for="manual_matching_<?php echo $entry; ?>"><?php _e('Manual Record Matching', 'pmxi_plugin' )?></label>
-				<div class="switcher-target-manual_matching_<?php echo $entry; ?>" style="padding-left:17px;">
-					<div class="input">						
-						<input type="radio" id="duplicate_indicator_title_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="title" <?php echo 'title' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
-						<label for="duplicate_indicator_title_<?php echo $entry; ?>"><?php _e('match by Title', 'pmxi_plugin' )?></label><br>
-						<input type="radio" id="duplicate_indicator_content_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="content" <?php echo 'content' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
-						<label for="duplicate_indicator_content_<?php echo $entry; ?>"><?php _e('match by Content', 'pmxi_plugin' )?></label><br>
-						<input type="radio" id="duplicate_indicator_custom_field_<?php echo $entry; ?>" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
-						<label for="duplicate_indicator_custom_field_<?php echo $entry; ?>"><?php _e('match by Custom field', 'pmxi_plugin' )?></label><br>
-						<span class="switcher-target-duplicate_indicator_custom_field_<?php echo $entry; ?>" style="vertical-align:middle; padding-left:17px;">
-							<?php _e('Name', 'pmxi_plugin') ?>
-							<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" />
-							<?php _e('Value', 'pmxi_plugin') ?>
-							<input type="text" name="custom_duplicate_value" value="<?php echo esc_attr($post['custom_duplicate_value']) ?>" />
-						</span>
-					</div>
-				</div>
+<?php $custom_type = get_post_type_object( $post_type ); ?>
+<div class="wpallimport-collapsed wpallimport-section">
+	<script type="text/javascript">
+		__META_KEYS = <?php echo json_encode($existing_meta_keys) ?>;
+	</script>	
+	<div class="wpallimport-content-section">
+		<div class="wpallimport-collapsed-header">					
+		<?php if ( "new" == $post['wizard_type']): ?>	
+			<?php if ( ! $this->isWizard ):?>
+				<h3><?php _e('Record Matching', 'pmxi_plugin'); ?></h3>	
+			<?php else: ?>
+				<h3 style="padding-left:0;"><?php printf(__('WP All Import will create new %s for each unique record in your file.','pmxi_plugin'), $custom_type->labels->name);?></h3>	
+			<?php endif; ?>			
 			</div>
-			<hr>
-			<div class="input">
-				<input type="hidden" name="create_new_records" value="0" />
-				<input type="checkbox" id="create_new_records_<?php echo $entry; ?>" name="create_new_records" value="1" <?php echo $post['create_new_records'] ? 'checked="checked"' : '' ?> />
-				<label for="create_new_records_<?php echo $entry; ?>"><?php _e('Create new posts from records newly present in your file', 'pmxi_plugin') ?></label>
-			</div>
-			<div class="switcher-target-auto_matching_<?php echo $entry; ?>">
-				<div class="input">
-					<input type="hidden" name="is_delete_missing" value="0" />
-					<input type="checkbox" id="is_delete_missing_<?php echo $entry; ?>" name="is_delete_missing" value="1" <?php echo $post['is_delete_missing'] ? 'checked="checked"': '' ?> class="switcher"/>
-					<label for="is_delete_missing_<?php echo $entry; ?>"><?php _e('Delete posts that are no longer present in your file', 'pmxi_plugin') ?></label>
-					<a href="#help" class="help" title="<?php _e('Check this option if you want to delete posts from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>
+			<div class="wpallimport-collapsed-content" style="padding: 0;">
+				<div class="wpallimport-collapsed-content-inner">					
+					<table class="form-table" style="max-width:none;">
+						<tr>
+							<td>
+								<input type="hidden" name="duplicate_matching" value="auto"/>										
+								<?php if ( ! $this->isWizard ):?>												 
+								<h4><?php printf(__('WP All Import will associate records in your file with %s it has already created from previous runs of this import based on the Unique Identifier.','pmxi_plugin'), $custom_type->labels->name);?></h4>
+								<?php endif; ?>
+								<div class="wpallimport-unique-key-wrapper">
+									<label style="font-weight: bold;"><?php _e("Unique Identifier", "pmxi_plugin"); ?></label>										
+
+									<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php if ( ! $this->isWizard ) echo esc_attr($post['unique_key']); elseif ($post['tmp_unique_key']) echo esc_attr($post['unique_key']); ?>" <?php echo  ( ! $isWizard ) ? 'disabled="disabled"' : '' ?>/>
+
+									<?php if ( $this->isWizard ): ?>
+									<input type="hidden" name="tmp_unique_key" value="<?php echo ($post['unique_key']) ? esc_attr($post['unique_key']) : esc_attr($post['tmp_unique_key']); ?>"/>
+									<a href="javascript:void(0);" class="wpallimport-auto-detect-unique-key"><?php _e('Auto-detect', 'pmxi_plugin'); ?></a>
+									<?php else: ?>
+									<a href="javascript:void(0);" class="wpallimport-change-unique-key"><?php _e('Edit', 'pmxi_plugin'); ?></a>
+									<div id="dialog-confirm" title="<?php _e('Warning: Are you sure you want to edit the Unique Identifier?','pmxi_plugin');?>" style="display:none;">
+										<p><?php printf(__('It is recommended you delete all %s associated with this import before editing the unique identifier.', 'pmxi_plugin'), strtolower($custom_type->labels->name)); ?></p>
+										<p><?php printf(__('Editing the unique identifier will dissociate all existing %s linked to this import. Future runs of the import will result in duplicates, as WP All Import will no longer be able to update these %s.', 'pmxi_plugin'), strtolower($custom_type->labels->name), strtolower($custom_type->labels->name)); ?></p>
+										<p><?php _e('You really should just re-create your import, and pick the right unique identifier to start with.', 'pmxi_plugin'); ?></p>
+									</div>
+									<?php endif; ?>
+
+									<p>&nbsp;</p>
+									<?php if ( $this->isWizard ):?>
+										<p class="drag_an_element_ico"><?php _e('Drag an element, or combo of elements, to the box above. The Unique Identifier should be unique for each record in your file, and should stay the same even if your file is updated. Things like product IDs, titles, and SKUs are good Unique Identifiers because they probably won\'t change. Don\'t use a description or price, since that might be changed.', 'pmxi_plugin'); ?></p>
+										<p class="info_ico"><?php printf(__('If you run this import again with an updated file, the Unique Identifier allows WP All Import to correctly link the records in your updated file with the %s it will create right now. If multiple records in this file have the same Unique Identifier, only the first will be created. The others will be detected as duplicates.', 'pmxi_plugin'), $custom_type->labels->name); ?></p>
+									<?php endif; ?>
+								</div>					
+								<?php if ( ! $this->isWizard ):?>
+									
+									<?php include( '_reimport_options.php' ); ?>
+
+								<?php endif; ?>					
+							</td>
+						</tr>
+					</table>
 				</div>
-				<div class="switcher-target-is_delete_missing_<?php echo $entry; ?>" style="padding-left:17px;">
-					<div class="input">
-						<input type="hidden" name="is_keep_attachments" value="0" />
-						<input type="checkbox" id="is_keep_attachments_<?php echo $entry; ?>" name="is_keep_attachments" value="1" <?php echo $post['is_keep_attachments'] ? 'checked="checked"': '' ?> />
-						<label for="is_keep_attachments_<?php echo $entry; ?>"><?php _e('Do not remove attachments', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you want attachments like *.pdf or *.doc files to be kept in media library after parent post or page is removed or replaced during reimport operation.', 'pmxi_plugin') ?>">?</a>
-					</div>
-					<div class="input">
-						<input type="hidden" name="is_keep_imgs" value="0" />
-						<input type="checkbox" id="is_keep_imgs_<?php echo $entry; ?>" name="is_keep_imgs" value="1" <?php echo $post['is_keep_imgs'] ? 'checked="checked"': '' ?> />
-						<label for="is_keep_imgs_<?php echo $entry; ?>"><?php _e('Do not remove images', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you want images like featured image to be kept in media library after parent post or page is removed or replaced during reimport operation.', 'pmxi_plugin') ?>">?</a>
-					</div>
-					<div class="input">
-						<input type="hidden" name="is_update_missing_cf" value="0" />
-						<input type="checkbox" id="is_update_missing_cf_<?php echo $entry; ?>" name="is_update_missing_cf" value="1" <?php echo $post['is_update_missing_cf'] ? 'checked="checked"': '' ?> class="switcher"/>
-						<label for="is_update_missing_cf_<?php echo $entry; ?>"><?php _e('Instead of deletion, set Custom Field', 'pmxi_plugin') ?></label>
-						<a href="#help" class="help" title="<?php _e('Check this option if you want to update posts custom fields from the previous import operation which are not found among newly imported set.', 'pmxi_plugin') ?>">?</a>			
-						<div class="switcher-target-is_update_missing_cf_<?php echo $entry; ?>" style="padding-left:17px;">
-							<div class="input">
-								<?php _e('Name', 'pmxi_plugin') ?>
-								<input type="text" name="update_missing_cf_name" value="<?php echo esc_attr($post['update_missing_cf_name']) ?>" />
-								<?php _e('Value', 'pmxi_plugin') ?>
-								<input type="text" name="update_missing_cf_value" value="<?php echo esc_attr($post['update_missing_cf_value']) ?>" />									
-							</div>
-						</div>
-					</div>
-					<div class="input">
-						<input type="hidden" name="set_missing_to_draft" value="0" />
-						<input type="checkbox" id="set_missing_to_draft_<?php echo $entry; ?>" name="set_missing_to_draft" value="1" <?php echo $post['set_missing_to_draft'] ? 'checked="checked"': '' ?> />
-						<label for="set_missing_to_draft_<?php echo $entry; ?>"><?php _e('Instead of deletion, change post status to Draft', 'pmxi_plugin') ?></label>					
-					</div>
-				</div>	
 			</div>		
-			<div class="input">
-				<input type="hidden" id="is_keep_former_posts_<?php echo $entry; ?>" name="is_keep_former_posts" value="yes" />				
-				<input type="checkbox" id="is_not_keep_former_posts_<?php echo $entry; ?>" name="is_keep_former_posts" value="no" <?php echo "yes" != $post['is_keep_former_posts'] ? 'checked="checked"': '' ?> class="switcher" />
-				<label for="is_not_keep_former_posts_<?php echo $entry; ?>"><?php _e('Update existing posts with changed data in your file', 'pmxi_plugin') ?></label>
-
-				<div class="switcher-target-is_not_keep_former_posts_<?php echo $entry; ?>" style="padding-left:17px;">
-					<input type="radio" id="update_all_data_<?php echo $entry; ?>" class="switcher" name="update_all_data" value="yes" <?php echo 'no' != $post['update_all_data'] ? 'checked="checked"': '' ?>/>
-					<label for="update_all_data_<?php echo $entry; ?>"><?php _e('Update all data', 'pmxi_plugin' )?></label><br>
-					
-					<input type="radio" id="update_choosen_data_<?php echo $entry; ?>" class="switcher" name="update_all_data" value="no" <?php echo 'no' == $post['update_all_data'] ? 'checked="checked"': '' ?>/>
-					<label for="update_choosen_data_<?php echo $entry; ?>"><?php _e('Choose which data to update', 'pmxi_plugin' )?></label><br>
-					<div class="switcher-target-update_choosen_data_<?php echo $entry; ?>"  style="padding-left:17px;">
-						<div class="input">
-							<input type="hidden" name="is_update_status" value="0" />
-							<input type="checkbox" id="is_update_status_<?php echo $entry; ?>" name="is_update_status" value="1" <?php echo $post['is_update_status'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_status_<?php echo $entry; ?>"><?php _e('Post status', 'pmxi_plugin') ?></label>
-							<a href="#help" class="help" title="<?php _e('Check this option if you want previously imported posts to change their publish status or being restored from Trash.', 'pmxi_plugin') ?>">?</a>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_title" value="0" />
-							<input type="checkbox" id="is_update_title_<?php echo $entry; ?>" name="is_update_title" value="1" <?php echo $post['is_update_title'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_title_<?php echo $entry; ?>"><?php _e('Title', 'pmxi_plugin') ?></label>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_post_author" value="0" />
-							<input type="checkbox" id="is_update_post_author_<?php echo $entry; ?>" name="is_update_post_author" value="1" <?php echo $post['is_update_post_author'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_post_author_<?php echo $entry; ?>"><?php _e('Author', 'pmxi_plugin') ?></label>
-						</div>	
-						<div class="input">
-							<input type="hidden" name="is_update_slug" value="0" />
-							<input type="checkbox" id="is_update_slug_<?php echo $entry; ?>" name="is_update_slug" value="1" <?php echo $post['is_update_slug'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_slug_<?php echo $entry; ?>"><?php _e('Slug', 'pmxi_plugin') ?></label>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_content" value="0" />
-							<input type="checkbox" id="is_update_content_<?php echo $entry; ?>" name="is_update_content" value="1" <?php echo $post['is_update_content'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_content_<?php echo $entry; ?>"><?php _e('Content', 'pmxi_plugin') ?></label>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_excerpt" value="0" />
-							<input type="checkbox" id="is_update_excerpt_<?php echo $entry; ?>" name="is_update_excerpt" value="1" <?php echo $post['is_update_excerpt'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_excerpt_<?php echo $entry; ?>"><?php _e('Excerpt/Short Description', 'pmxi_plugin') ?></label>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_dates" value="0" />
-							<input type="checkbox" id="is_update_dates_<?php echo $entry; ?>" name="is_update_dates" value="1" <?php echo $post['is_update_dates'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_dates_<?php echo $entry; ?>"><?php _e('Dates', 'pmxi_plugin') ?></label>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_menu_order" value="0" />
-							<input type="checkbox" id="is_update_menu_order_<?php echo $entry; ?>" name="is_update_menu_order" value="1" <?php echo $post['is_update_menu_order'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_menu_order_<?php echo $entry; ?>"><?php _e('Menu order', 'pmxi_plugin') ?></label>
-						</div>
-						<div class="input">
-							<input type="hidden" name="is_update_parent" value="0" />
-							<input type="checkbox" id="is_update_parent_<?php echo $entry; ?>" name="is_update_parent" value="1" <?php echo $post['is_update_parent'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_parent_<?php echo $entry; ?>"><?php _e('Parent post', 'pmxi_plugin') ?></label>
-						</div>	
-						<div class="input">
-							<input type="hidden" name="is_update_attachments" value="0" />
-							<input type="checkbox" id="is_update_attachments_<?php echo $entry; ?>" name="is_update_attachments" value="1" <?php echo $post['is_update_attachments'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_attachments_<?php echo $entry; ?>"><?php _e('Attachments', 'pmxi_plugin') ?></label>
-						</div>	
-						
-						<?php 
-
-							// add-ons re-import options
-							do_action('pmxi_reimport', $entry, $post);
-
-						?>						
-
-						<div class="input">
-							<input type="hidden" name="is_update_images" value="0" />
-							<input type="checkbox" id="is_update_images_<?php echo $entry; ?>" name="is_update_images" value="1" <?php echo $post['is_update_images'] ? 'checked="checked"': '' ?> class="switcher" />
-							<label for="is_update_images_<?php echo $entry; ?>"><?php _e('Images', 'pmxi_plugin') ?></label>
-							<!--a href="#help" class="help" title="<?php _e('This will keep the featured image if it exists, so you could modify the post image manually, and then do a reimport, and it would not overwrite the manually modified post image.', 'pmxi_plugin') ?>">?</a-->
-							<div class="switcher-target-is_update_images_<?php echo $entry; ?>" style="padding-left:17px;">
-								<div class="input" style="margin-bottom:3px;">								
-									<input type="radio" id="update_images_logic_full_update_<?php echo $entry; ?>" name="update_images_logic" value="full_update" <?php echo ( "full_update" == $post['update_images_logic'] ) ? 'checked="checked"': '' ?> />
-									<label for="update_images_logic_full_update_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Update all images', 'pmxi_plugin') ?></label>
-								</div>
-								<div class="input" style="margin-bottom:3px;">								
-									<input type="radio" id="update_images_logic_add_new_<?php echo $entry; ?>" name="update_images_logic" value="add_new" <?php echo ( "add_new" == $post['update_images_logic'] ) ? 'checked="checked"': '' ?> />
-									<label for="update_images_logic_add_new_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Don\'t touch existing images, append new images', 'pmxi_plugin') ?></label>
-								</div>
-							</div>
-						</div>			
-						<div class="input">			
-							<input type="hidden" name="custom_fields_list" value="0" />			
-							<input type="hidden" name="is_update_custom_fields" value="0" />
-							<input type="checkbox" id="is_update_custom_fields_<?php echo $entry; ?>" name="is_update_custom_fields" value="1" <?php echo $post['is_update_custom_fields'] ? 'checked="checked"': '' ?>  class="switcher"/>
-							<label for="is_update_custom_fields_<?php echo $entry; ?>"><?php _e('Custom Fields', 'pmxi_plugin') ?></label>
-							<!--a href="#help" class="help" title="<?php _e('If Keep Custom Fields box is checked, it will keep all Custom Fields, and add any new Custom Fields specified in Custom Fields section, as long as they do not overwrite existing fields. If \'Only keep this Custom Fields\' is specified, it will only keep the specified fields.', 'pmxi_plugin') ?>">?</a-->
-							<div class="switcher-target-is_update_custom_fields_<?php echo $entry; ?>" style="padding-left:17px;">
-								<div class="input">
-									<input type="radio" id="update_custom_fields_logic_full_update_<?php echo $entry; ?>" name="update_custom_fields_logic" value="full_update" <?php echo ( "full_update" == $post['update_custom_fields_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_custom_fields_logic_full_update_<?php echo $entry; ?>"><?php _e('Update all Custom Fields', 'pmxi_plugin') ?></label>								
-								</div>
-								<?php
-								$existing_meta_keys = array();
-								$hide_fields = array('_wp_page_template', '_edit_lock', '_edit_last', '_wp_trash_meta_status', '_wp_trash_meta_time');
-								if (!empty($meta_keys) and $meta_keys->count()):
-									foreach ($meta_keys as $meta_key) { if (in_array($meta_key['meta_key'], $hide_fields) or strpos($meta_key['meta_key'], '_wp') === 0) continue;
-										$existing_meta_keys[] = $meta_key['meta_key'];												
-									}
-								endif;
-								?>	
-								<div class="input">
-									<input type="radio" id="update_custom_fields_logic_only_<?php echo $entry; ?>" name="update_custom_fields_logic" value="only" <?php echo ( "only" == $post['update_custom_fields_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_custom_fields_logic_only_<?php echo $entry; ?>"><?php _e('Update only these Custom Fields, leave the rest alone', 'pmxi_plugin') ?></label>								
-									<div class="switcher-target-update_custom_fields_logic_only_<?php echo $entry; ?> pmxi_choosen" style="padding-left:17px;">
-											
-										<span class="hidden choosen_values"><?php if (!empty($existing_meta_keys)) echo implode(',', $existing_meta_keys);?></span>
-										<input class="choosen_input" value="<?php if (!empty($post['custom_fields_list']) and "only" == $post['update_custom_fields_logic']) echo implode(',', $post['custom_fields_list']); ?>" type="hidden" name="custom_fields_only_list"/>										
+		<?php else: ?>
+			<?php if ( ! $this->isWizard ):?>
+				<h3><?php _e('Record Matching', 'pmxi_plugin'); ?></h3>					
+			<?php else: ?>
+				<h3 style="padding-left:0;"><?php printf(__('WP All Import will merge data into existing %s.','pmxi_plugin'), $custom_type->labels->name);?></h3>	
+			<?php endif; ?>
+			</div>
+			<div class="wpallimport-collapsed-content" style="padding:0;">				
+				<div class="wpallimport-collapsed-content-inner">					
+					<table class="form-table" style="max-width:none;">
+						<tr>
+							<td>						
+								<div class="input" style="margin-bottom:15px; position:relative;">					
+									<input type="hidden" name="duplicate_matching" value="manual"/>
+									<h4><?php printf(__('Records in your file will be matched with %ss on your site based on...', 'pmxi_plugin' ), $custom_type->labels->singular_name);?></h4>
+									<div style="margin-left: -4px;">
+										<div class="input">						
+											<input type="radio" id="duplicate_indicator_title" class="switcher" name="duplicate_indicator" value="title" <?php echo 'title' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
+											<label for="duplicate_indicator_title"><?php _e('Title', 'pmxi_plugin' )?></label><br>
+											<input type="radio" id="duplicate_indicator_content" class="switcher" name="duplicate_indicator" value="content" <?php echo 'content' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
+											<label for="duplicate_indicator_content"><?php _e('Content', 'pmxi_plugin' )?></label><br>
+											<input type="radio" id="duplicate_indicator_custom_field" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
+											<label for="duplicate_indicator_custom_field"><?php _e('Custom field', 'pmxi_plugin' )?></label><br>
+											<span class="switcher-target-duplicate_indicator_custom_field" style="vertical-align:middle; padding-left:17px;">
+												<?php _e('Name', 'pmxi_plugin') ?>
+												<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" />
+												<?php _e('Value', 'pmxi_plugin') ?>
+												<input type="text" name="custom_duplicate_value" value="<?php echo esc_attr($post['custom_duplicate_value']) ?>" />
+											</span>
+										</div>
 									</div>
-								</div>
-								<div class="input">
-									<input type="radio" id="update_custom_fields_logic_all_except_<?php echo $entry; ?>" name="update_custom_fields_logic" value="all_except" <?php echo ( "all_except" == $post['update_custom_fields_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_custom_fields_logic_all_except_<?php echo $entry; ?>"><?php _e('Leave these fields alone, update all other Custom Fields', 'pmxi_plugin') ?></label>								
-									<div class="switcher-target-update_custom_fields_logic_all_except_<?php echo $entry; ?> pmxi_choosen" style="padding-left:17px;">
-										
-										<span class="hidden choosen_values"><?php if (!empty($existing_meta_keys)) echo implode(',', $existing_meta_keys);?></span>
-										<input class="choosen_input" value="<?php if (!empty($post['custom_fields_list']) and "all_except" == $post['update_custom_fields_logic']) echo implode(',', $post['custom_fields_list']); ?>" type="hidden" name="custom_fields_except_list"/>																				
-									</div>
-								</div>
-							</div>
-						</div>	
-						<div class="input">
-							<input type="hidden" name="taxonomies_list" value="0" />
-							<input type="hidden" name="is_update_categories" value="0" />
-							<input type="checkbox" id="is_update_categories_<?php echo $entry; ?>" name="is_update_categories" value="1" class="switcher" <?php echo $post['is_update_categories'] ? 'checked="checked"': '' ?> />
-							<label for="is_update_categories_<?php echo $entry; ?>"><?php _e('Taxonomies (incl. Categories and Tags)', 'pmxi_plugin') ?></label>
-							<div class="switcher-target-is_update_categories_<?php echo $entry; ?>" style="padding-left:17px;">
-								<?php
-								$existing_taxonomies = array();
-								$hide_taxonomies = (class_exists('PMWI_Plugin')) ? array('product_type') : array();
-								$post_taxonomies = array_diff_key(get_taxonomies_by_object_type(array($post_type), 'object'), array_flip($hide_taxonomies));
-								if (!empty($post_taxonomies)): 
-									foreach ($post_taxonomies as $ctx):  if ("" == $ctx->labels->name or (class_exists('PMWI_Plugin') and $post_type == "product" and strpos($ctx->name, "pa_") === 0)) continue;
-										$existing_taxonomies[] = $ctx->name;												
-									endforeach;
-								endif;
-								?>
-								<div class="input" style="margin-bottom:3px;">								
-									<input type="radio" id="update_categories_logic_all_except_<?php echo $entry; ?>" name="update_categories_logic" value="all_except" <?php echo ( "all_except" == $post['update_categories_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_categories_logic_all_except_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Leave these taxonomies alone, update all others', 'pmxi_plugin') ?></label>
-									<div class="switcher-target-update_categories_logic_all_except_<?php echo $entry; ?> pmxi_choosen" style="padding-left:17px;">
-										
-										<span class="hidden choosen_values"><?php if (!empty($existing_taxonomies)) echo implode(',', $existing_taxonomies);?></span>
-										<input class="choosen_input" value="<?php if (!empty($post['taxonomies_list']) and "all_except" == $post['update_categories_logic']) echo implode(',', $post['taxonomies_list']); ?>" type="hidden" name="taxonomies_except_list"/>																				
-									</div>
-								</div>
-								<div class="input" style="margin-bottom:3px;">								
-									<input type="radio" id="update_categories_logic_only_<?php echo $entry; ?>" name="update_categories_logic" value="only" <?php echo ( "only" == $post['update_categories_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_categories_logic_only_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Update only these taxonomies, leave the rest alone', 'pmxi_plugin') ?></label>
-									<div class="switcher-target-update_categories_logic_only_<?php echo $entry; ?> pmxi_choosen" style="padding-left:17px;">
-										
-										<span class="hidden choosen_values"><?php if (!empty($existing_taxonomies)) echo implode(',', $existing_taxonomies);?></span>
-										<input class="choosen_input" value="<?php if (!empty($post['taxonomies_list']) and "only" == $post['update_categories_logic']) echo implode(',', $post['taxonomies_list']); ?>" type="hidden" name="taxonomies_only_list"/>										
-									</div>
-								</div>
-								<div class="input" style="margin-bottom:3px;">								
-									<input type="radio" id="update_categories_logic_full_update_<?php echo $entry; ?>" name="update_categories_logic" value="full_update" <?php echo ( "full_update" == $post['update_categories_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_categories_logic_full_update_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Remove existing taxonomies, add new taxonomies', 'pmxi_plugin') ?></label>
-								</div>
-								<div class="input" style="margin-bottom:3px;">								
-									<input type="radio" id="update_categories_logic_add_new_<?php echo $entry; ?>" name="update_categories_logic" value="add_new" <?php echo ( "add_new" == $post['update_categories_logic'] ) ? 'checked="checked"': '' ?> class="switcher"/>
-									<label for="update_categories_logic_add_new_<?php echo $entry; ?>" style="position:relative; top:1px;"><?php _e('Only add new', 'pmxi_plugin') ?></label>
-								</div>
-							</div>
-						</div>	
-					</div>
+								</div>								
+								<?php include( '_reimport_options.php' ); ?>
+							</td>
+						</tr>
+					</table>
 				</div>
-			</div>				
-		</fieldset>
-	</td>
-</tr>
+			</div>			
+		<?php endif; ?>	
+	</div>
+</div>

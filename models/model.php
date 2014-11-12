@@ -135,7 +135,7 @@ abstract class PMXI_Model extends ArrayObject {
 			} else {
 				if ( ! preg_match('%^(.+?) *(=|<>|!=|<|>|<=|>=| (NOT +)?(IN|(LIKE|REGEXP|RLIKE)( BINARY)?))?$%i', trim($key), $mtch)) {
 					throw new Exception('Wrong field name format.');
-				}
+				}				
 				$key = $mtch[1];
 				if (is_array($val) and (empty($mtch[2]) or 'IN' == strtoupper($mtch[4]))) {
 					$op = empty($mtch[2]) ? 'IN' : strtoupper(trim($mtch[2]));
@@ -145,7 +145,7 @@ abstract class PMXI_Model extends ArrayObject {
 					$where[] = $this->wpdb->prepare("$key $op %s", $val);
 				}
 			}
-		}
+		}		
 		return implode(" $operator ", $where);
 	}
 		

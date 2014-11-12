@@ -227,7 +227,8 @@ class XmlImportTemplateParser
    */
   private function parseFunction()
   {
-    $function = new XmlImportAstFunction($this->tokens[++$this->index]->getValue());
+    $function = new XmlImportAstFunction($this->tokens[++$this->index]->getValue());    
+
     if ($this->tokens[$this->index + 1]->getKind() != XmlImportToken::KIND_OPEN)
       throw new XmlImportException ("Open brace expected instead of " . $this->tokens[$this->index + 1]->getKind());
     $this->index++;

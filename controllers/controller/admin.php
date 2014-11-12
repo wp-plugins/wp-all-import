@@ -25,10 +25,10 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 	 */
 	public function __construct() {
 		$remove = array_diff(array_keys($_GET), $this->baseUrlParamNames);
+		
+		$p_url = parse_url( site_url() );
 
-		$p_url = parse_url( home_url() );
-
-		$url = $p_url['scheme'] . '://' . $p_url['host'];
+		$url = $p_url['scheme'] . '://' . $p_url['host'] . ':' . $_SERVER['SERVER_PORT'];
 
 		if ($remove) {
 			$this->baseUrl = $url . remove_query_arg($remove);
@@ -51,11 +51,16 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 		wp_enqueue_style('pmxi-admin-style-ie', PMXI_ROOT_URL . '/static/css/admin-ie.css');		
 		wp_enqueue_style('jquery-select2', PMXI_ROOT_URL . '/static/js/jquery/css/select2/select2.css');
 		wp_enqueue_style('jquery-select2', PMXI_ROOT_URL . '/static/js/jquery/css/select2/select2-bootstrap.css');
+		add_editor_style( PMXI_ROOT_URL . '/static/css/custom-editor-style.css' );
+
 		$wp_styles->add_data('pmxi-admin-style-ie', 'conditional', 'lte IE 7');
-		wp_enqueue_style('wp-pointer');		
+		wp_enqueue_style('wp-pointer');			
 		
 		if ( version_compare(get_bloginfo('version'), '3.8-RC1') >= 0 ){
 			wp_enqueue_style('pmxi-admin-style-wp-3.8', PMXI_ROOT_URL . '/static/css/admin-wp-3.8.css');
+		}
+		if ( version_compare(get_bloginfo('version'), '4.0-beta3') >= 0 ){
+			wp_enqueue_style('pmxi-admin-style-wp-3.8', PMXI_ROOT_URL . '/static/css/admin-wp-4.0.css');
 		}
 
 		$scheme_color = get_user_option('admin_color') and is_file(PMXI_Plugin::ROOT_DIR . '/static/css/admin-colors-' . $scheme_color . '.css') or $scheme_color = 'fresh';
@@ -69,6 +74,8 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 		wp_enqueue_script('jquery-nestable', PMXI_ROOT_URL . '/static/js/jquery/jquery.mjs.nestedSortable.js', array('jquery', 'jquery-ui-dialog', 'jquery-ui-sortable', 'jquery-ui-draggable', 'jquery-ui-droppable', 'jquery-ui-tabs', 'jquery-ui-progressbar'));
 		wp_enqueue_script('jquery-moment', PMXI_ROOT_URL . '/static/js/jquery/moment.js', 'jquery');		
 		wp_enqueue_script('jquery-select2', PMXI_ROOT_URL . '/static/js/jquery/select2.min.js', 'jquery');
+		wp_enqueue_script('jquery-ddslick', PMXI_ROOT_URL . '/static/js/jquery/jquery.ddslick.min.js', 'jquery');
+		wp_enqueue_script('jquery-contextmenu', PMXI_ROOT_URL . '/static/js/jquery/jquery.ui-contextmenu.min.js', array('jquery', 'jquery-ui-menu'));
 		wp_enqueue_script('wp-pointer');
 
 		/* load plupload scripts */
@@ -76,12 +83,12 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 		wp_deregister_script('swfupload-handlers');
 		wp_enqueue_script('swfupload-handlers', get_option('siteurl') . "/wp-includes/js/swfupload/handlers.js", array('jquery'), '2201-20100523');
 
-		wp_enqueue_script('jquery-browserplus-min', 'http://bp.yahooapis.com/2.4.21/browserplus-min.js', array('jquery'));
+		wp_enqueue_script('jquery-browserplus-min', PMXI_ROOT_URL . '/static/js/jquery/browserplus-min.js', array('jquery'));
 		wp_enqueue_script('full-plupload', PMXI_ROOT_URL . '/static/js/plupload/plupload.full.js', array('jquery-browserplus-min'));
-		wp_enqueue_script('jquery-plupload', PMXI_ROOT_URL . '/static/js/plupload/wplupload.js', array('full-plupload', 'jquery'));		
+		wp_enqueue_script('jquery-plupload', PMXI_ROOT_URL . '/static/js/plupload/wplupload.js', array('full-plupload', 'jquery'));				
 
 		wp_enqueue_script('pmxi-admin-script', PMXI_ROOT_URL . '/static/js/admin.js', array('jquery', 'jquery-ui-dialog', 'jquery-ui-datepicker', 'jquery-ui-draggable', 'jquery-ui-droppable'));
-				
+							
 	}	
 	
 	/**

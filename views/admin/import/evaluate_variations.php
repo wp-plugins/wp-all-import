@@ -8,15 +8,15 @@
 <div id="current_xml">
 	<div class="variations_tag">	
 		<input type="hidden" name="variations_tagno" value="<?php echo $tagno + 1 ?>" />
-		<div class="title">
-			<?php printf(__('Variation Record #<strong>%s</strong> out of <strong>%s</strong>', 'pmxi_plugin'), $tagno + 1, $variation_list_count); ?>
+		<div class="title">			
 			<div class="navigation">
-				<?php if ($tagno > 0): ?><a href="#variation_prev">&laquo;</a><?php else: ?><span>&laquo;</span><?php endif ?>
-				<?php if ($tagno < $variation_list_count - 1): ?><a href="#variation_next">&raquo;</a><?php else: ?><span>&raquo;</span><?php endif ?>
+				<?php if ($tagno > 0): ?><a href="#variation_prev" class="previous_element">&nbsp;</a><?php else: ?><span class="previous_element">&nbsp;</span><?php endif ?>
+				<?php printf(__('#<strong>%s</strong> out of <strong>%s</strong>', 'pmxi_plugin'), $tagno + 1, $variation_list_count); ?>
+				<?php if ($tagno < $variation_list_count - 1): ?><a href="#variation_next" class="next_element">&nbsp;</a><?php else: ?><span class="next_element">&nbsp;</span><?php endif ?>
 			</div>
 		</div>
 		<div class="clear"></div>
-		<div class="xml resetable"> <?php if (!empty($variation_list_count)) $this->render_xml_element($variation_elements->item($tagno), true);  ?></div>	
+		<div class="xml resetable"> <?php if (!empty($variation_list_count)) PMXI_Render::render_xml_element($variation_elements->item($tagno), true);  ?></div>	
 	</div>
 </div>
 <?php endif; ?>
@@ -28,6 +28,6 @@
 	$xml.html($('#current_xml').html()).css({'visibility':'visible'});
 	for (var i = 0; i < paths.length; i++) {
 		$xml.find('.xml-element[title="' + paths[i] + '"]').addClass('selected').parents('.xml-element').find('> .xml-content.collapsed').removeClass('collapsed').parent().find('> .xml-expander').html('-');
-	}	
+	}
 })(jQuery);
 </script>

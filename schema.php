@@ -27,14 +27,14 @@ $table_prefix = PMXI_Plugin::getInstance()->getTablePrefix();
 $plugin_queries = <<<SCHEMA
 CREATE TABLE {$table_prefix}templates (
 	id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-	options TEXT,
+	options TEXT,	
 	scheduled VARCHAR(64) NOT NULL DEFAULT '',
-	name VARCHAR(200) NOT NULL DEFAULT '',
+	name VARCHAR(200) NOT NULL DEFAULT '',	
 	title TEXT,
 	content LONGTEXT,
 	is_keep_linebreaks TINYINT(1) NOT NULL DEFAULT 0,
 	is_leave_html TINYINT(1) NOT NULL DEFAULT 0,
-	fix_characters TINYINT(1) NOT NULL DEFAULT 0,
+	fix_characters TINYINT(1) NOT NULL DEFAULT 0,	
 	meta LONGTEXT,
 	PRIMARY KEY  (id)
 ) $charset_collate;
@@ -46,14 +46,12 @@ CREATE TABLE {$table_prefix}imports (
 	type VARCHAR(32) NOT NULL DEFAULT '',
 	feed_type ENUM('xml','csv','zip','gz','') NOT NULL DEFAULT '',	
 	path TEXT,	
-	xpath TEXT,
-	template LONGTEXT,
-	options TEXT,
-	scheduled VARCHAR(64) NOT NULL DEFAULT '',
-	registered_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',	
-	large_import ENUM('Yes','No') NOT NULL DEFAULT 'No',	  	
+	xpath TEXT,		
+	options TEXT,		
+	registered_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',				
   	root_element VARCHAR(255) DEFAULT '',
   	processing BOOL NOT NULL DEFAULT 0,
+  	executing BOOL NOT NULL DEFAULT 0,
   	triggered BOOL NOT NULL DEFAULT 0,
   	queue_chunk_number BIGINT(20) NOT NULL DEFAULT 0,  	
   	first_import TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,	
@@ -62,6 +60,13 @@ CREATE TABLE {$table_prefix}imports (
   	created BIGINT(20) NOT NULL DEFAULT 0,
   	updated BIGINT(20) NOT NULL DEFAULT 0,
   	skipped BIGINT(20) NOT NULL DEFAULT 0,
+  	deleted BIGINT(20) NOT NULL DEFAULT 0,
+  	canceled BOOL NOT NULL DEFAULT 0,  	
+  	canceled_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  	failed BOOL NOT NULL DEFAULT 0,  	
+  	failed_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  	settings_update_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+  	last_activity DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',			
   	iteration BIGINT(20) NOT NULL DEFAULT 0,
 	PRIMARY KEY  (id)
 ) $charset_collate;
@@ -80,6 +85,15 @@ CREATE TABLE {$table_prefix}files (
 	name VARCHAR(255) NOT NULL DEFAULT '',
 	path TEXT,
 	registered_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',
+	PRIMARY KEY  (id)
+) $charset_collate;
+CREATE TABLE {$table_prefix}history (
+	id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+	import_id BIGINT(20) UNSIGNED NOT NULL,
+	type ENUM('manual','processing','trigger','continue','') NOT NULL DEFAULT '',	
+	time_run TEXT,	
+	date DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',		
+	summary TEXT,
 	PRIMARY KEY  (id)
 ) $charset_collate;
 SCHEMA;

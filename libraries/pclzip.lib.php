@@ -66,7 +66,7 @@
   $wp_uploads = wp_upload_dir();
 
   if (!defined('PCLZIP_TEMPORARY_DIR')) {
-    define( 'PCLZIP_TEMPORARY_DIR', $wp_uploads['path'] );
+    define( 'PCLZIP_TEMPORARY_DIR', $wp_uploads['basedir'] . '/wpallimport/temp/' );
   }
 
   // ----- Optional threshold ratio for use of temporary files

@@ -226,14 +226,19 @@
 	 */
 	if ( ! function_exists('pmxi_copy_url_file')){
 
-		function pmxi_copy_url_file($filePath, $detect = false){
+		function pmxi_copy_url_file($filePath, $detect = false, $targetDir = false){
 			
 			$type = (preg_match('%\W(csv|txt|dat|psv)$%i', basename($filePath))) ? 'csv' : false;
 			if (!$type) $type = (preg_match('%\W(xml)$%i', basename($filePath))) ? 'xml' : false;
+			if (!$type) $type = (preg_match('%\W(json)$%i', basename($filePath))) ? 'json' : false;
+			if (!$type) $type = (preg_match('%\W(sql)$%i', basename($filePath))) ? 'sql' : false;
 
 			$uploads = wp_upload_dir();
-			$tmpname = wp_unique_filename($uploads['path'], ($type and strlen(basename($filePath)) < 30) ? basename($filePath) : time());	
-			$localPath = $uploads['path']  .'/'. urldecode(sanitize_file_name($tmpname)) . ((!$type) ? '.tmp' : '');			
+			
+			$targetDir = (!$targetDir) ? pmxi_secure_file($uploads['basedir'] . '/wpallimport/uploads', 'uploads') : $targetDir;
+
+			$tmpname = wp_unique_filename($targetDir, ($type and strlen(basename($filePath)) < 30) ? basename($filePath) : time());	
+			$localPath = $targetDir  .'/'. urldecode(sanitize_file_name($tmpname)) . ((!$type) ? '.tmp' : '');			
 
 			$file = @fopen($filePath, "rb");
 
@@ -242,7 +247,7 @@
 			   	$first_chunk = true;
 				while ( ! @feof($file) ) {
 					$chunk = @fread($file, 1024);				
-					if (!$type and $first_chunk and strpos($chunk, "<") !== false) $type = 'xml'; elseif (!$type and $first_chunk) $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file
+					if (!$type and $first_chunk and strpos($chunk, "<?") !== false) $type = 'xml'; elseif (!$type and $first_chunk) $type = 'csv'; // if it's a 1st chunk, then chunk <? symbols to detect XML file
 					$first_chunk = false;
 				 	@fwrite($fp, $chunk);		 	
 				}
@@ -280,13 +285,14 @@
 	}
 
 	if ( ! function_exists('pmxi_gzfile_get_contents')){
-		function pmxi_gzfile_get_contents($filename, $use_include_path = 0) {					
+		function pmxi_gzfile_get_contents($filename, $use_include_path = 0, $targetDir = false) {					
 
 			$type = 'csv';
-			$uploads = wp_upload_dir();			
+			$uploads = wp_upload_dir();	
+			$targetDir = (!$targetDir) ? pmxi_secure_file($uploads['basedir'] . '/wpallimport/uploads', 'uploads') : $targetDir;
 
-			$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time() );	
-			$localPath = $uploads['path']  .'/'. urldecode(sanitize_file_name($tmpname));
+			$tmpname = wp_unique_filename($targetDir, (strlen(basename($filename)) < 30) ? basename($filename) : time() );	
+			$localPath = $targetDir  .'/'. urldecode(sanitize_file_name($tmpname));
 
 			$fp = @fopen($localPath, 'w');			
 		    $file = @gzopen($filename, 'rb', $use_include_path);
@@ -302,8 +308,8 @@
 		    } 
 		    else{
 
-		    	$tmpname = wp_unique_filename($uploads['path'], (strlen(basename($filename)) < 30) ? basename($filename) : time() );	
-		    	$localGZpath = $uploads['path']  .'/'. urldecode(sanitize_file_name($tmpname));
+		    	$tmpname = wp_unique_filename($targetDir, (strlen(basename($filename)) < 30) ? basename($filename) : time() );	
+		    	$localGZpath = $targetDir  .'/'. urldecode(sanitize_file_name($tmpname));
 				$request = get_file_curl($filename, $localGZpath, false, true);				
 
 				if ( ! is_wp_error($request) ){
@@ -445,45 +451,212 @@
 		}
 	}
 
-	if ( ! function_exists('pmxi_cdata_filter')):
+	if ( ! function_exists('pmxi_cdata_filter')){
 		function pmxi_cdata_filter($matches){		    
 		    PMXI_Import_Record::$cdata[] = $matches[0];
 		    return '{{CPLACE_'. count(PMXI_Import_Record::$cdata) .'}}';
 		}
-	endif;
+	}
 
-	/* Session */
-
-	/**
-	 * Return the current session status.
-	 *
-	 * @return int
-	 */
-	function pmxi_session_status() {
-		
-		PMXI_Plugin::$session = PMXI_Session::get_instance();
-
-		if ( PMXI_Plugin::$session->session_started() ) {
-			return PHP_SESSION_ACTIVE;
+	if (!function_exists('human_filesize')){
+		function human_filesize($bytes, $decimals = 2) {
+		 	$sz = 'BKMGTP';
+		  	$factor = floor((strlen($bytes) - 1) / 3);
+		  	return sprintf("%.{$decimals}f", $bytes / pow(1024, $factor)) . @$sz[$factor];
 		}
-
-		return PHP_SESSION_NONE;
 	}
 
-	/**
-	 * Unset all session variables.
-	 */
-	function pmxi_session_unset() {
-		PMXI_Plugin::$session = PMXI_Session::get_instance();
+	if ( ! function_exists('pmxi_secure_file') ){
 
-		PMXI_Plugin::$session->reset();
+		function pmxi_secure_file( $targetDir, $folder = 'temp', $importID = false){
+
+			$is_secure_import = PMXI_Plugin::getInstance()->getOption('secure');
+
+			if ( $is_secure_import ){
+
+				$wp_uploads = wp_upload_dir();
+
+				$dir = $wp_uploads['basedir'] . DIRECTORY_SEPARATOR . 'wpallimport' . DIRECTORY_SEPARATOR . $folder . DIRECTORY_SEPARATOR . ( ( $importID ) ? md5($importID) : md5(time()) );							
+
+				@mkdir($dir, 0755);
+
+				if (@is_writable($dir) and @is_dir($dir)){
+					$targetDir = $dir;	
+					@touch( $dir . DIRECTORY_SEPARATOR . 'index.php' );
+				}
+				
+			}
+
+			return $targetDir;
+		}
 	}
 
-	/**
-	 * Alias of wp_session_write_close()
-	 */
-	function pmxi_session_commit() {		
-		PMXI_Plugin::$session = PMXI_Session::get_instance();
-		PMXI_Plugin::$session->write_data();	
-		do_action( 'pmxi_session_commit' );
+	if ( ! function_exists('pmxi_remove_source')){
+		function pmxi_remove_source($file, $remove_dir = true){
+			
+			@unlink($file);
+	        
+            $path_parts = pathinfo($file);
+            if ( ! empty($path_parts['dirname'])){
+                $path_all_parts = explode('/', $path_parts['dirname']);
+                $dirname = array_pop($path_all_parts);
+
+                if ( pmxi_isValidMd5($dirname)){                              
+                	if ($remove_dir){
+                		@unlink($path_parts['dirname'] . DIRECTORY_SEPARATOR . 'index.php' );
+                	}
+                    if ($remove_dir or count(@scandir($path_parts['dirname'])) == 2) 
+                    	pmxi_rmdir($path_parts['dirname']);                    
+                }
+            }
+	        
+		}
+	}
+
+	function pmxi_rmdir($dir) {
+		$scanned_files = @scandir($dir);
+		if (!empty($scanned_files) and is_array($scanned_files)){
+		   	$files = array_diff($scanned_files, array('.','..'));
+		    if (!empty($files)){
+			    foreach ($files as $file) {
+			      (is_dir("$dir/$file")) ? pmxi_rmdir("$dir/$file") : @unlink("$dir/$file");
+			    }
+			}
+		    return @rmdir($dir);
+		}
+	} 
+	
+	if ( ! function_exists('pmxi_clear_directory') ){
+		function pmxi_clear_directory($path){
+			if (($dir = @opendir($path . '/')) !== false or ($dir = @opendir($path)) !== false) {				
+				while(($file = @readdir($dir)) !== false) {
+					$filePath = $path . '/' . $file;					
+					if ( is_dir($filePath) && ( ! in_array($file, array('.', '..'))) ){
+						pmxi_rmdir($filePath);
+					}
+					elseif( is_file($filePath) ){
+						@unlink($filePath);
+					}					
+				}
+			}
+		}
+	}
+
+	// function defination to convert array to xml
+	if ( ! function_exists('pmxi_array_to_xml')){
+		function pmxi_array_to_xml($data, &$xml) {
+		    foreach($data as $key => $value) {
+		        if(is_array($value)) {
+		            if(!is_numeric($key)){
+		                $subnode = $xml->addChild("$key");
+		                pmxi_array_to_xml($value, $subnode);
+		            }
+		            else{
+		                $subnode = $xml->addChild("item_" . $key);
+		                pmxi_array_to_xml($value, $subnode);
+		            }
+		        }
+		        else {
+		            $xml->addChild("$key",htmlspecialchars("$value"));
+		        }
+		    }
+		}
+	}
+
+	class PMXI_ArrayToXML
+    {
+	    /**
+	    * The main function for converting to an XML document.
+	    * Pass in a multi dimensional array and this recrusively loops through and builds up an XML document.
+	    *
+	    * @param array $data
+	    * @param string $rootNodeName - what you want the root node to be - defaultsto data.
+	    * @param SimpleXMLElement $xml - should only be used recursively
+	    * @return string XML
+	    */
+	    public static function toXml($data, $rootNodeName = 'data', $xml=null)
+	    {                
+	        // turn off compatibility mode as simple xml throws a wobbly if you don't.
+	        if (ini_get('zend.ze1_compatibility_mode') == 1)
+	        {
+	            ini_set ('zend.ze1_compatibility_mode', 0);
+	        }
+	     
+	        if ($xml == null)
+	        {
+	            $xml = simplexml_load_string('<?xml version="1.0" encoding="utf-8"?><'.$rootNodeName .'/>');
+	        }
+	     	if ( !empty($data)){
+		        // loop through the data passed in.
+		        foreach($data as $key => $value)
+		        {
+		            // no numeric keys in our xml please!
+		            if (is_numeric($key))
+		            {
+		                // make string key...
+		                $key = "item_" . $key;
+		            }
+		            
+		            // replace anything not alpha numeric
+		            $key = preg_replace('/[^a-z0-9_]/i', '', $key);
+		             
+		            // if there is another array found recrusively call this function
+		            if (is_array($value) or is_object($value))
+		            {
+		                $node = $xml->addChild($key);
+		                // recrusive call.
+		                PMXI_ArrayToXML::toXml($value, $rootNodeName, $node);
+		            }
+		            else
+		            {                
+		                // add single node.
+		                $value =  htmlspecialchars($value);
+		                $xml->addChild($key,$value);
+		            }
+		            
+		        }
+		    }
+	        // pass back as string. or simple xml object if you want!
+	        return $xml->asXML();
+	    }
+
+
+	}
+
+
+	if ( ! function_exists('pmxi_isJson')){
+		function pmxi_isJson($string) {
+		 	json_decode($string);		 	
+
+		 	switch (json_last_error()) {
+		        case JSON_ERROR_NONE:
+		            return true;
+		        break;
+		        case JSON_ERROR_DEPTH:
+		            return new WP_Error( 'broke', __( "Maximum stack depth exceeded", "pmxi_plugin" ) );		            
+		        break;
+		        case JSON_ERROR_STATE_MISMATCH:
+		        	return new WP_Error( 'broke', __( "Underflow or the modes mismatch", "pmxi_plugin" ) );		            
+		        break;
+		        case JSON_ERROR_CTRL_CHAR:
+		        	return new WP_Error( 'broke', __( "Unexpected control character found", "pmxi_plugin" ) );		            
+		        break;
+		        case JSON_ERROR_SYNTAX:
+		        	return new WP_Error( 'broke', __( "Syntax error, malformed JSON", "pmxi_plugin" ) );		            
+		        break;
+		        case JSON_ERROR_UTF8:
+		        	return new WP_Error( 'broke', __( "Malformed UTF-8 characters, possibly incorrectly encoded", "pmxi_plugin" ) );		            
+		        break;
+		        default:
+		        	return new WP_Error( 'broke', __( "Unknown json error", "pmxi_plugin" ) );		            
+		        break;
+		    }		 	
+		}
+	}
+
+	if ( ! function_exists('pmxi_isValidMd5')){
+		function pmxi_isValidMd5($md5 ='')
+		{
+		    return preg_match('/^[a-f0-9]{32}$/', $md5);
+		}
 	}

@@ -12,7 +12,8 @@ function pmxi_admin_menu() {
 			array('pmxi-admin-import',  __('New Import', 'pmxi_plugin')),
 			array('pmxi-admin-manage' ,  __('Manage Imports', 'pmxi_plugin')),
 			array('pmxi-admin-settings',  __('Settings', 'pmxi_plugin')),
-			array('pmxi-admin-help',  __('Support', 'pmxi_plugin'))	
+			array('pmxi-admin-help',  __('Support', 'pmxi_plugin')),
+			array('pmxi-admin-history',  __('History', 'pmxi_plugin')),			
 		);
 
 		$wpai_menu = apply_filters('pmxi_admin_menu', $wpai_menu);		

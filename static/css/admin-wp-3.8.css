@@ -1,23 +1,22 @@
-.pmxi_plugin textarea, .pmxi_plugin .options input, .pmxi_plugin select, .pmxi_plugin p, .pmxi_plugin .wp_attachment_details label[for="content"]{
+.wpallimport-plugin textarea, 
+.wpallimport-plugin select, 
+.wpallimport-plugin p, 
+.wpallimport-plugin .wp_attachment_details label[for="content"]{
 	font-size: 12px !important;
 }
-.pmxi_plugin form.template .back{
-	top: 14px !important;
-	float: left;
-}
-.pmxi_plugin .submit-buttons .large_button{
+.wpallimport-plugin .submit-buttons .large_button{
 	font-size: 14px !important;
 }
-.pmxi_plugin .submit-buttons .large_button:hover{
-	vertical-align: baseline !important;
-}
-.pmxi_plugin #titlediv #titlewrap{
+.wpallimport-plugin #titlediv #titlewrap{
 	font-size: 13px !important;	
 }
-.pmxi_plugin #titlediv #title{
-	color: #444 !important;
+.wpallimport-plugin #titlediv #wpallimport-title{
+	color: #333;
+	height: 40px !important;
+	font-size: 1.7em;
+	line-height: 26px !important;
 }
-.pmxi_plugin h2.woo-nav-tab-wrapper{
+.wpallimport-plugin h2.woo-nav-tab-wrapper{
 	padding-bottom: 0;
 	border-bottom: 1px solid #ccc;
 	margin-bottom: 10px;

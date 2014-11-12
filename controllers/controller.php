@@ -16,6 +16,11 @@ abstract class PMXI_Controller {
 	 */
 	protected $errors;
 	/**
+	 * Warning messages
+	 * @var WP_Error
+	 */
+	protected $warnings;
+	/**
 	 * Associative array of data which will be automatically available as variables when template is rendered
 	 * @var array
 	 */
@@ -28,6 +33,7 @@ abstract class PMXI_Controller {
 		$this->input->addFilter('trim');
 		
 		$this->errors = new WP_Error();
+		$this->warnings = new WP_Error();
 		
 		$this->init();
 	}
@@ -96,6 +102,31 @@ abstract class PMXI_Controller {
 			$this->render($viewPathRel);
 		} else { // render default error view
 			$this->render('controller/error.php');
+		}
+	}
+
+	/**
+	 * Display list of warnings
+	 * 
+	 * @param string|array|WP_Error[optional] $msgs
+	 */
+	protected function warning($msgs = NULL) {
+		if (is_null($msgs)) {
+			$msgs = $this->warnings;
+		}
+		if (is_wp_error($msgs)) {
+			$msgs = $msgs->get_error_messages();
+		}
+		if ( ! is_array($msgs)) {
+			$msgs = array($msgs);
+		}
+		$this->data['warnings'] = $msgs;
+		
+		$viewPathRel = str_replace('_', '/', preg_replace('%^' . preg_quote(PMXI_Plugin::PREFIX, '%') . '%', '', strtolower(get_class($this)))) . '/warning.php';
+		if (is_file(PMXI_Plugin::ROOT_DIR . '/views/' . $viewPathRel)) { // if calling controller class has specific error view
+			$this->render($viewPathRel);
+		} else { // render default error view
+			$this->render('controller/warning.php');
 		}
 	}
 	

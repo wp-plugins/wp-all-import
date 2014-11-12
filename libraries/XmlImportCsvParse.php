@@ -21,9 +21,7 @@ class PMXI_CsvParser
 
     $xpath = '',
 
-    $delimiter = '',
-
-    $large_import = false,    
+    $delimiter = '',    
 
     $htmlentities = false,    
 
@@ -32,6 +30,10 @@ class PMXI_CsvParser
     $iteration = 0,
 
     $csv_encoding = 'UTF-8',
+
+    $is_csv = false,
+
+    $targetDir = '',
 
     $auto_encoding = true;
 
@@ -70,31 +72,49 @@ class PMXI_CsvParser
      * @see load()
      * @return void
      */
-    public function __construct($filename = null, $large_import = false, $xpath = '', $delimiter = '', $encoding = '', $xml_path = '')
+    public function __construct( $options = array('filename' => null, 'xpath' => '', 'delimiter' => '', 'encoding' => '', 'xml_path' => '', 'targetDir' => false) ) 
     {
-        PMXI_Plugin::$csv_path = $filename;
-
-        $this->large_import = $large_import;
-        $this->xpath = (!empty($xpath) ? $xpath : ((!empty($_POST['xpath'])) ? $_POST['xpath'] : '/node'));        
-        $this->delimiter = $delimiter;
-        if ('' != $encoding){ 
-            $this->csv_encoding = $encoding;
+        PMXI_Plugin::$csv_path = $options['filename'];
+        
+        $this->xpath = (!empty($options['xpath']) ? $options['xpath'] : ((!empty($_POST['xpath'])) ? $_POST['xpath'] : '/node'));        
+            
+        if ( ! empty($options['delimiter']) ){
+            $this->delimiter = $options['delimiter'];    
+        }
+        else{
+            $input = new PMXI_Input();
+            $id = $input->get('id', 0);
+            if (!$id){
+                $id = $input->get('import_id', 0);
+            }
+            if ( $id ){
+                $import = new PMXI_Import_Record();
+                $import->getbyId($id);
+                if ( ! $import->isEmpty() ){
+                    $this->delimiter = $import->options['delimiter'];
+                }
+            }
+        }        
+        if ( ! empty($options['encoding'])){ 
+            $this->csv_encoding = $options['encoding'];
             $this->auto_encoding = false;
         }
-        if ('' != $xml_path) $this->xml_path = $xml_path;
+        if (!empty($options['xml_path'])) $this->xml_path = $options['xml_path'];
 
         @ini_set( "display_errors", 0);
         @ini_set('auto_detect_line_endings', true);        
         
-        $file_params = self::analyse_file($filename, 1);
+        $file_params = self::analyse_file($options['filename'], 1);
 
         $this->set_settings(array('delimiter' => $file_params['delimiter']['value'], 'eol' => $file_params['line_ending']['value']));        
 
         unset($file_params);
 
-        //stream_filter_register('msaccessxml', 'MSAccessXmlFilter');
+        $wp_uploads = wp_upload_dir();
+        
+        $this->targetDir = (empty($options['targetDir'])) ? pmxi_secure_file($wp_uploads['basedir'] . '/wpallimport/uploads', 'uploads') : $options['targetDir'];
 
-        $this->load($filename);
+        $this->load($options['filename']);
     }
 
     /**
@@ -902,14 +922,13 @@ class PMXI_CsvParser
     {
         if (!$this->validates()) {            
             return false;
-        }              
+        }                      
 
-        $wp_uploads = wp_upload_dir();
-
-        $tmpname = wp_unique_filename($wp_uploads['path'], str_replace("csv", "xml", basename($this->_filename)));
-        if ("" == $this->xml_path) $this->xml_path = $wp_uploads['path']  .'/'. url_title($tmpname);            
+        $tmpname = wp_unique_filename($this->targetDir, str_replace("csv", "xml", basename($this->_filename)));
+        if ("" == $this->xml_path) 
+            $this->xml_path = $this->targetDir  .'/'. url_title($tmpname);            
         
-        $this->toXML(true);
+        $this->toXML(true);        
 
         /*$file = new PMXI_Chunk($this->xml_path, array('element' => 'node'));
 
@@ -928,7 +947,7 @@ class PMXI_CsvParser
         $e = $this->settings['escape'];
         $l = $this->settings['length'];       
 
-        PMXI_Plugin::$is_csv = $d;  
+        $this->is_csv = $d;          
 
         $res = fopen($this->_filename, 'rb');                    
 

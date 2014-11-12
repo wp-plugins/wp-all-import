@@ -25,7 +25,7 @@ class PMXI_File_Record extends PMXI_Model_Record {
 		$uploads = wp_upload_dir();
 
 		if (isset($this->id) and ! is_null($file_contents)) {
-			file_put_contents($uploads['basedir']  . '/wpallimport_history/' . $this->id, $file_contents);
+			file_put_contents($uploads['basedir']  . '/wpallimport/history/' . $this->id, $file_contents);
 		}
 		
 		$list = new PMXI_File_List();
@@ -47,7 +47,7 @@ class PMXI_File_Record extends PMXI_Model_Record {
 
 		if (isset($this->id) and ! is_null($file_contents)) {
 			$uploads = wp_upload_dir();
-			file_put_contents($uploads['basedir']  . '/wpallimport_history/' . $this->id, $file_contents);
+			file_put_contents($uploads['basedir']  . '/wpallimport/history/' . $this->id, $file_contents);
 		}
 		
 		return $this;
@@ -56,7 +56,7 @@ class PMXI_File_Record extends PMXI_Model_Record {
 	public function __isset($field) {
 		if ('contents' == $field and ! $this->offsetExists($field)) {
 			$uploads = wp_upload_dir();
-			return isset($this->id) and file_exists($uploads['basedir']  . '/wpallimport_history/' . $this->id);
+			return isset($this->id) and file_exists($uploads['basedir']  . '/wpallimport/history/' . $this->id);
 		}
 		return parent::__isset($field);
 	}
@@ -65,7 +65,7 @@ class PMXI_File_Record extends PMXI_Model_Record {
 		if ('contents' == $field and ! $this->offsetExists('contents')) {
 			if (isset($this->contents)) {
 				$uploads = wp_upload_dir();
-				$this['contents'] = file_get_contents($uploads['basedir']  . '/wpallimport_history/' . $this->id);
+				$this['contents'] = file_get_contents($uploads['basedir']  . '/wpallimport/history/' . $this->id);
 			} else {
 				$this->contents = NULL;
 			}
@@ -76,8 +76,8 @@ class PMXI_File_Record extends PMXI_Model_Record {
 	public function delete() {
 		if ($this->id) { // delete history file first
 			$uploads = wp_upload_dir();
-			$file_name = $uploads['basedir']  . '/wpallimport_history/' . $this->id;
-			@file_exists($file_name) and @is_file($file_name) and @unlink($file_name);
+			$file_name = $uploads['basedir']  . '/wpallimport/history/' . $this->id;
+			@file_exists($file_name) and @is_file($file_name) and pmxi_remove_source($file_name, false);
 		}
 		return parent::delete();
 	}

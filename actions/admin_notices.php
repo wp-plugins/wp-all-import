@@ -2,32 +2,10 @@
 
 function pmxi_admin_notices() {
 	// notify user if history folder is not writable
-	$uploads = wp_upload_dir();
+	$uploads = wp_upload_dir();		
 
-	if ( ! @is_dir($uploads['basedir'] . '/wpallimport_history') or ! @is_writable($uploads['basedir'] . '/wpallimport_history')) {
-		?>
-		<div class="error"><p>
-			<?php printf(
-					__('<b>%s Plugin</b>: History folder %s must be writable for the plugin to function properly. Please deactivate the plugin, set proper permissions to the folder and activate the plugin again.', 'pmxi_plugin'),
-					PMXI_Plugin::getInstance()->getName(),
-					$uploads['basedir'] . '/wpallimport_history'
-			) ?>
-		</p></div>
-		<?php
-	}
-
-	// notify user
-	if (!PMXI_Plugin::getInstance()->getOption('dismiss') and strpos($_SERVER['REQUEST_URI'], 'pmxi-admin') !== false) {
-		?>
-		<div class="updated"><p>
-			<?php printf(
-					__('Welcome to WP All Import. We hope you like it. Please send all support requests and feedback to <a href="mailto:support@wpallimport.com">support@wpallimport.com</a>.<br/><br/><a href="javascript:void(0);" id="dismiss">dismiss</a>', 'pmxi_plugin')										
-			) ?>
-		</p></div>
-		<?php
-	}
-
-	if ( class_exists( 'PMWI_Plugin' ) and ( defined('PMWI_VERSION') and version_compare(PMWI_VERSION, '1.2.8') <= 0 and PMWI_EDITION == 'paid' or defined('PMWI_FREE_VERSION') and version_compare(PMWI_FREE_VERSION, '1.1.1') <= 0 and PMWI_EDITION == 'free') ) {
+	// compare woocommerce add-on version	
+	if ( class_exists( 'PMWI_Plugin' ) and ( defined('PMWI_VERSION') and version_compare(PMWI_VERSION, '2.0.0-beta1') < 0 and PMWI_EDITION == 'paid' or defined('PMWI_FREE_VERSION') and version_compare(PMWI_FREE_VERSION, '1.2.0') < 0 and PMWI_EDITION == 'free') ) {
 		?>
 		<div class="error"><p>
 			<?php printf(
@@ -48,6 +26,74 @@ function pmxi_admin_notices() {
 		
 	}
 
+	// compare ACF add-on
+	if ( class_exists( 'PMAI_Plugin' ) and defined('PMAI_VERSION') and version_compare(PMAI_VERSION, '3.0.0-beta1') < 0 and PMAI_EDITION == 'paid' ) {
+		?>
+		<div class="error"><p>
+			<?php printf(
+					__('<b>%s Plugin</b>: Please update your WP All Import ACF add-on to the latest version</a>', 'pmwi_plugin'),
+					PMAI_Plugin::getInstance()->getName()
+			) ?>
+		</p></div>
+		<?php
+			
+		if (defined('PMAI_EDITION') and PMAI_EDITION == 'paid')
+		{
+			deactivate_plugins( PMAI_ROOT_DIR . '/plugin.php');
+		}				
+	}
+
+	// compare Linkcloak add-on
+	if ( class_exists( 'PMLCA_Plugin' ) and defined('PMLCA_VERSION') and version_compare(PMLCA_VERSION, '1.0.0-beta1') < 0 and PMLCA_EDITION == 'paid' ) {
+		?>
+		<div class="error"><p>
+			<?php printf(
+					__('<b>%s Plugin</b>: Please update your WP All Import Linkcloak add-on to the latest version</a>', 'pmwi_plugin'),
+					PMLCA_Plugin::getInstance()->getName()
+			) ?>
+		</p></div>
+		<?php
+			
+		if (defined('PMLCA_EDITION') and PMLCA_EDITION == 'paid')
+		{
+			deactivate_plugins( PMLCA_ROOT_DIR . '/plugin.php');
+		}				
+	}
+
+	// compare User add-on
+	if ( class_exists( 'PMUI_Plugin' ) and defined('PMUI_VERSION') and version_compare(PMUI_VERSION, '1.0.0-beta1') < 0 and PMUI_EDITION == 'paid' ) {
+		?>
+		<div class="error"><p>
+			<?php printf(
+					__('<b>%s Plugin</b>: Please update your WP All Import User add-on to the latest version</a>', 'pmwi_plugin'),
+					PMUI_Plugin::getInstance()->getName()
+			) ?>
+		</p></div>
+		<?php
+			
+		if (defined('PMUI_EDITION') and PMUI_EDITION == 'paid')
+		{
+			deactivate_plugins( PMUI_ROOT_DIR . '/plugin.php');
+		}				
+	}
+
+	// compare WPML add-on
+	if ( class_exists( 'PMLI_Plugin' ) and defined('PMLI_VERSION') and version_compare(PMLI_VERSION, '1.0.0-beta1') < 0 and PMLI_EDITION == 'paid' ) {
+		?>
+		<div class="error"><p>
+			<?php printf(
+					__('<b>%s Plugin</b>: Please update your WP All Import WPML add-on to the latest version</a>', 'pmwi_plugin'),
+					PMLI_Plugin::getInstance()->getName()
+			) ?>
+		</p></div>
+		<?php
+			
+		if (defined('PMLI_EDITION') and PMLI_EDITION == 'paid')
+		{
+			deactivate_plugins( PMLI_ROOT_DIR . '/plugin.php');
+		}				
+	}
+
 	$input = new PMXI_Input();
 	$messages = $input->get('pmxi_nt', array());
 	if ($messages) {
@@ -57,6 +103,34 @@ function pmxi_admin_notices() {
 			?>
 			<div class="<?php echo $type ?>"><p><?php echo $m ?></p></div>
 			<?php 
+		}
+	}	
+	$warnings = $input->get('warnings', array());
+	if ($warnings) {
+		is_array($warnings) or $warnings = explode(',', $warnings);
+		foreach ($warnings as $code) {			
+			switch ($code) {
+				case 1:
+					$m = __('<strong>Warning:</strong> your title is blank.', 'pmxi_plugin');
+					break;
+				case 2:
+					$m = __('<strong>Warning:</strong> your content is blank.', 'pmxi_plugin');
+					break;
+				case 3:
+					$m = __('<strong>Warning:</strong> You must <a href="http://www.wpallimport.com/upgrade-to-pro/?utm_source=free-plugin&utm_medium=in-plugin&utm_campaign=images" target="_blank">upgrade to the professional edition of WP All Import</a> to import images. The settings you configured in the images section will be ignored.', 'pmxi_plugin');
+					break;
+				case 4:
+					$m = __('<strong>Warning:</strong> You must <a href="http://www.wpallimport.com/upgrade-to-pro/?utm_source=free-plugin&utm_medium=in-plugin&utm_campaign=custom-fields" target="_blank">upgrade to the professional edition of WP All Import</a> to import data to Custom Fields. The settings you configured in the Custom Fields section will be ignored.', 'pmxi_plugin');
+					break;					
+				default:
+					$m = false;
+					break;
+			}
+			if ($m):
+			?>
+			<div class="error"><p><?php echo $m ?></p></div>
+			<?php 
+			endif;
 		}
 	}	
 }

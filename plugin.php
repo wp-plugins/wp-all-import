@@ -3,12 +3,9 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. A paid upgrade to WP All Import Pro is available for support and additional features.
-Version: 3.1.5
+Version: 3.2.0
 Author: Soflyy
 */
-
-if( ! defined( 'PMXI_SESSION_COOKIE' ) )
-	define( 'PMXI_SESSION_COOKIE', '_pmxi_session' );
 
 /**
  * Plugin root dir with forward slashes as directory separator regardless of actuall DIRECTORY_SEPARATOR value
@@ -28,7 +25,7 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('PMXI_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.1.5');
+define('PMXI_VERSION', '3.2.0');
 
 define('PMXI_EDITION', 'free');
 
@@ -77,9 +74,9 @@ final class PMXI_Plugin {
 	 */
 	const LARGE_SIZE = 0; // all files will importing in large import mode	
 
-	public static $session;		
+	public static $session = null;
 
-	public static $encodings = array('UTF-8','UTF-16','Windows-1250','Windows-1251','Windows-1252','Windows-1253','Windows-1254','Windows-1255','Windows-1256','Windows-1257','Windows-1258','ISO-8859-1','ISO-8859-2','ISO-8859-3','ISO-8859-4','ISO-8859-5','ISO-8859-6','ISO-8859-7','ISO-8859-8','ISO-8859-9','ISO-8859-10', 'KOI8-R', 'KOI8-U');
+	public static $encodings = array('UTF-8', 'UTF-16', 'Windows-1250', 'Windows-1251', 'Windows-1252', 'Windows-1253', 'Windows-1254', 'Windows-1255', 'Windows-1256', 'Windows-1257', 'Windows-1258', 'ISO-8859-1', 'ISO-8859-2', 'ISO-8859-3', 'ISO-8859-4', 'ISO-8859-5', 'ISO-8859-6', 'ISO-8859-7', 'ISO-8859-8', 'ISO-8859-9', 'ISO-8859-10', 'KOI8-R', 'KOI8-U');
 
 	public static $is_csv = false;
 
@@ -94,10 +91,6 @@ final class PMXI_Plugin {
 			self::$instance = new self();
 		}
 		return self::$instance;
-	}
-
-	static public function getEddName(){
-		return 'WP All Import';
 	}
 
 	/**
@@ -173,7 +166,7 @@ final class PMXI_Plugin {
 	 * @param string $rootDir Plugin root dir
 	 * @param string $pluginFilePath Plugin main file
 	 */
-	protected function __construct() {	
+	protected function __construct() {			
 		
 		$this->load_plugin_textdomain();
 
@@ -186,14 +179,22 @@ final class PMXI_Plugin {
 		// register helpers
 		if (is_dir(self::ROOT_DIR . '/helpers')) foreach (PMXI_Helper::safe_glob(self::ROOT_DIR . '/helpers/*.php', PMXI_Helper::GLOB_RECURSE | PMXI_Helper::GLOB_PATH) as $filePath) {
 			require_once $filePath;
-		}
+		}			
 
 		// create history folder
 		$uploads = wp_upload_dir();
-		if (!is_dir($uploads['basedir'] . '/wpallimport_history')) wp_mkdir_p($uploads['basedir'] . '/wpallimport_history');
-		// create logs folder
-		if (!is_dir($uploads['basedir'] . '/wpallimport_logs')) wp_mkdir_p($uploads['basedir'] . '/wpallimport_logs');
 
+		$wpallimportDirs = array('wpallimport', 'wpallimport/logs', 'wpallimport/files', 'wpallimport/temp', 'wpallimport/uploads');
+		
+		foreach ($wpallimportDirs as $dir) {
+			
+			if ( !is_dir($uploads['basedir'] . '/' . $dir)) wp_mkdir_p($uploads['basedir'] . '/' . $dir);			
+
+			if ( ! @file_exists($uploads['basedir'] . '/' . $dir . '/index.php') )
+				@touch( $uploads['basedir'] . '/' . $dir . '/index.php' );	
+			
+		}
+		
 		// init plugin options
 		$option_name = get_class($this) . '_Options';
 		$options_default = PMXI_Config::createFromFile(self::ROOT_DIR . '/config/options.php')->toArray();
@@ -236,84 +237,179 @@ final class PMXI_Plugin {
 		if (is_dir(self::ROOT_DIR . '/shortcodes')) foreach (PMXI_Helper::safe_glob(self::ROOT_DIR . '/shortcodes/*.php', PMXI_Helper::GLOB_RECURSE | PMXI_Helper::GLOB_PATH) as $filePath) {
 			$tag = strtolower(str_replace('/', '_', preg_replace('%^' . preg_quote(self::ROOT_DIR . '/shortcodes/', '%') . '|\.php$%', '', $filePath)));
 			add_shortcode($tag, array($this, 'shortcodeDispatcher'));
-		}
+		}			
 
 		// register admin page pre-dispatcher
-		add_action('admin_init', array($this, '__adminInit'), 1);									
+		add_action('admin_init', array($this, '__adminInit'));									
 		add_action('admin_init', array($this, '_fix_options'));		
-
-		global $wpdb;
-
-		if (function_exists('is_multisite') && is_multisite()) {
-	        // check if it is a network activation - if so, run the activation function for each blog id
-	        if (isset($_GET['networkwide']) && ($_GET['networkwide'] == 1)) {
-	            $old_blog = $wpdb->blogid;
-	            // Get all blog ids
-	            $blogids = $wpdb->get_col("SELECT blog_id FROM $wpdb->blogs");
-	            foreach ($blogids as $blog_id) {
-	                switch_to_blog($blog_id);
-	                $this->__add_feed_type_fix(); // feature to version 2.22
-	            }
-	            switch_to_blog($old_blog);		            
-            	return;
-	        }
-	    }
-
-		$this->__add_feed_type_fix(); // feature to version 2.22
+		
 	}
 
 	/**
 	 * convert imports options
-	 * compatibility with version 3.3
+	 * compatibility with version 4.0
 	 */
 	public function _fix_options(){
-		$imports = new PMXI_Import_List();
-		$post = new PMXI_Post_Record();
 		
-		foreach ($imports->setColumns($imports->getTable() . '.*')->getBy(array('large_import' => 'Yes'))->convertRecords() as $imp){
-			
-			$imp->getById($imp->id);				
-			
-			if ( ! $imp->isEmpty() and empty($imp->options['converted_options'])){									
+		$imports = new PMXI_Import_List();
+		$post    = new PMXI_Post_Record();
 
-				$options = $imp->options;
+		$templates = new PMXI_Template_List();
+		$template  = new PMXI_Template_Record();
 
-				$options['update_all_data'] = 'no';
-				$options['create_new_records'] = ( ! empty($options['not_create_records'])) ? 0 : 1;
-				$options['is_update_status'] = ( ! empty($options['is_keep_status']) ) ? 0 : 1;
-				$options['is_update_content'] = ( ! empty($options['is_keep_content'])) ? 0 : 1;
-				$options['is_update_title'] = ( ! empty($options['is_keep_title'])) ? 0 : 1;
-				$options['is_update_excerpt'] = ( ! empty($options['is_keep_excerpt'])) ? 0 : 1;
-				$options['is_update_categories'] = ( ! empty($options['is_keep_categories'])) ? 0 : 1;
-				$options['is_update_attachments'] = ( ! empty($options['is_keep_attachments_on_update'])) ? 0 : 1;
-				$options['is_update_images'] = ( ! empty($options['is_keep_images'])) ? 0 : 1;
-				$options['is_update_dates'] = ( ! empty($options['is_keep_dates'])) ? 0 : 1;
-				$options['is_update_menu_order'] = ( ! empty($options['is_keep_menu_order'])) ? 0 : 1;
-				$options['is_update_parent'] = ( ! empty($options['is_keep_parent'])) ? 0 : 1;
-				$options['is_update_custom_fields'] = ( ! empty($options['keep_custom_fields'])) ? 0 : 1;					
-				if ("" != $options['keep_custom_fields_specific'] or "" != $options['keep_custom_fields_except']){ 
-					$options['custom_fields_list'] = ( ! empty($options['keep_custom_fields'])) ? explode(',', $options['keep_custom_fields_except']) : explode(',', $options['keep_custom_fields_specific']);						
-					$options['update_custom_fields_logic'] = ( ! empty($options['is_update_custom_fields'])) ? 'only' : 'all_except';						
-				}
-				if ( ! empty($options['is_keep_categories']) and ! empty($options['is_add_newest_categories'])){
-					$options['is_update_categories'] = 1;
-					$options['update_categories_logic'] = 'add_new';
+		$is_migrated = get_option('pmxi_is_migrated');
+
+		$uploads = wp_upload_dir();
+		
+		if ( empty($is_migrated) or version_compare($is_migrated, PMXI_VERSION) < 0 ){
+
+			if ( empty($is_migrated) ){ // plugin version less than 3.2.0
+
+				pmxi_rmdir($uploads['basedir'] . '/wpallimport_history');
+				pmxi_rmdir($uploads['basedir'] . '/wpallimport_logs');
+
+				foreach ($imports->setColumns($imports->getTable() . '.*')->getBy(array('id !=' => ''))->convertRecords() as $imp){
+					
+					$imp->getById($imp->id);				
+					
+					if ( ! $imp->isEmpty() and ! empty($imp->template)){
+
+						$options = array_merge($imp->options, $imp->template);
+
+						$this->__ver_4_transition_fix($options);
 						
+						$imp->set(array(
+							'options' => $options
+						))->update();
+						
+						if ($imp->type == 'file'){									
+							$imp->set(array(
+								'path' => $uploads['basedir'] . '/wpallimport/files/' . basename($imp->path)
+							))->update();
+						}
+					}
+				}					
+
+				foreach ($templates->setColumns($templates->getTable() . '.*')->getBy(array('id !=' => ''))->convertRecords() as $tpl){
+					
+					$tpl->getById($tpl->id);				
+					
+					if ( ! $tpl->isEmpty() and ! empty($tpl->title) ) {
+						
+						$opt = ( empty($tpl->options) ) ? array() : $tpl->options;
+
+						$options = array_merge($opt, array(
+							'title' => $tpl->title,
+							'content' => $tpl->content,
+							'is_keep_linebreaks' => $tpl->is_keep_linebreaks,
+							'is_leave_html' => $tpl->is_leave_html,
+							'fix_characters' => $tpl->fix_characters
+						));
+
+						$this->__ver_4_transition_fix($options);
+
+						$tpl->set(array(
+							'options' => $options
+						))->update();
+
+					}
+
 				}
-				$options['converted_options'] = 1;
-				$imp->set(array(
-					'options' => $options
-				))->update();
 				
 			}
-		}
+			else {
+
+				// migration fixes for vesions
+				switch ($is_migrated) {
+					
+					case '3.2.0 RC1':
+						# code..
+						break;
+
+					case '3.2.1':
+						# code..
+						break;
+
+					default:
+						# code...
+						break;
+				}
+
+			}
+			update_option('pmxi_is_migrated', PMXI_VERSION);
+		}			
+	}
+
+	public function __ver_4_transition_fix( &$options ){
 		
+		$options['wizard_type'] = ($options['duplicate_matching'] == 'auto') ? 'new' : 'matching';
+
+		if ($options['download_images']){
+			$options['download_images'] = 'yes';
+			$options['download_featured_image'] = $options['featured_image'];
+			$options['featured_image'] = '';
+			$options['download_featured_delim'] = $options['featured_delim'];
+			$options['featured_delim'] = '';
+		}
+
+		if ($options['set_image_meta_data']){
+			$options['set_image_meta_title'] = 1;
+			$options['set_image_meta_caption'] = 1;
+			$options['set_image_meta_alt'] = 1;
+			$options['set_image_meta_description'] = 1;
+		}
+
+		if ("" == $options['custom_type']) $options['custom_type'] = $options['type'];
+
+		$exclude_taxonomies = (class_exists('PMWI_Plugin')) ? array('post_format', 'product_type') : array('post_format');	
+		$post_taxonomies = array_diff_key(get_taxonomies_by_object_type(array($options['custom_type']), 'object'), array_flip($exclude_taxonomies));
+
+		$options['tax_logic'] = array();
+		$options['tax_assing'] = array();
+		$options['tax_multiple_xpath'] = array();
+		$options['tax_multiple_delim'] = array();
+		$options['tax_hierarchical_logic'] = array();
+
+		if ( ! empty($post_taxonomies)):
+			foreach ($post_taxonomies as $ctx):					
+
+				$options['tax_logic'][$ctx->name] = ($ctx->hierarchical) ? 'hierarchical' : 'multiple';
+				
+				if ($ctx->name == 'category'){
+					$options['post_taxonomies']['category'] = $options['categories'];
+				}
+				elseif ($ctx->name == 'post_tag' ){
+					$options['tax_assing']['post_tag'] = 1;						
+					$options['tax_multiple_xpath']['post_tag'] = $options['tags'];
+					$options['tax_multiple_delim']['post_tag'] = $options['tags_delim'];
+					}
+				
+				if ( ! empty($options['post_taxonomies'][$ctx->name])){
+
+					$taxonomies_hierarchy = json_decode($options['post_taxonomies'][$ctx->name], true);									
+					$options['tax_assing'][$ctx->name] = (!empty($taxonomies_hierarchy[0]['assign'])) ? 1 : 0;										
+					
+					if ($options['tax_logic'][$ctx->name] == 'multiple') {
+						$options['tax_multiple_xpath'][$ctx->name] = (!empty($taxonomies_hierarchy[0]['xpath'])) ? $taxonomies_hierarchy[0]['xpath'] : '';	
+						$options['tax_multiple_delim'][$ctx->name] = (!empty($taxonomies_hierarchy[0]['delim'])) ? $taxonomies_hierarchy[0]['delim'] : '';	
+					}
+					else{
+						
+						$options['tax_hierarchical_logic'][$ctx->name] = 'manual';
+						
+					}
+				}											
+
+			endforeach;				
+		endif;						
 	}
 
 	/**
 	 * pre-dispatching logic for admin page controllers
 	 */
 	public function __adminInit() {
+		
+		self::$session = new PMXI_Handler();
 
 		$input = new PMXI_Input();
 		$page = strtolower($input->getpost('page', ''));						
@@ -341,7 +437,7 @@ final class PMXI_Plugin {
 					'is_user' => is_user_admin(),
 				);
 				add_filter('current_screen', array($this, 'getAdminCurrentScreen'));
-				add_filter('admin_body_class', create_function('', 'return "' . PMXI_Plugin::PREFIX . 'plugin";'));
+				add_filter('admin_body_class', create_function('', 'return "' . 'wpallimport-plugin";'));
 
 				$controller = new $controllerName();
 				if ( ! $controller instanceof PMXI_Controller_Admin) {
@@ -364,6 +460,7 @@ final class PMXI_Plugin {
 			}
 
 		}
+
 	}
 
 	/**
@@ -394,7 +491,6 @@ final class PMXI_Plugin {
 	 * @param string[optional] $page When $page set to empty string ealier buffered content is outputted, otherwise controller is called based on $page value
 	 */
 	public function adminDispatcher($page = '', $action = 'index') {
-		
 		if ('' === $page) {				
 			if ( ! is_null(self::$buffer)) {
 				echo '<div class="wrap">';
@@ -451,8 +547,8 @@ final class PMXI_Plugin {
 					return TRUE;
 				}
 			}
-		}
-		
+		}			
+
 		return FALSE;
 	}
 
@@ -514,8 +610,7 @@ final class PMXI_Plugin {
 	            foreach ($blogids as $blog_id) {
 	                switch_to_blog($blog_id);
 	                require self::ROOT_DIR . '/schema.php';
-	                dbDelta($plugin_queries);
-	                //$this->__ver_1_04_transition_fix();
+	                dbDelta($plugin_queries);		                
 
 					// sync data between plugin tables and wordpress (mostly for the case when plugin is reactivated)
 					
@@ -530,6 +625,8 @@ final class PMXI_Plugin {
 		dbDelta($plugin_queries);
 
 		$this->__ver_1_04_transition_fix();
+
+		$this->__add_feed_type_fix(); // feature to version 2.22
 
 		// sync data between plugin tables and wordpress (mostly for the case when plugin is reactivated)
 		
@@ -557,14 +654,14 @@ final class PMXI_Plugin {
 	 * NOTE: the function can be removed when plugin version progress and it's sure matter nobody has ver 1.03
 	 */
 	public function __ver_1_04_transition_fix() {
-		$uploads = wp_upload_dir();
+		$uploads = wp_upload_dir();			
 
-		if ( ! is_dir($uploads['basedir'] . '/wpallimport_history') or ! is_writable($uploads['basedir'] . '/wpallimport_history')) {
-			die(sprintf(__('Uploads folder %s must be writable', 'pmxi_plugin'), $uploads['basedir'] . '/wpallimport_history'));
+		if ( ! is_dir($uploads['basedir'] . '/wpallimport/logs') or ! is_writable($uploads['basedir'] . '/wpallimport/logs')) {
+			die(sprintf(__('Uploads folder %s must be writable', 'pmxi_plugin'), $uploads['basedir'] . '/wpallimport/logs'));
 		}
 
-		if ( ! is_dir($uploads['basedir'] . '/wpallimport_logs') or ! is_writable($uploads['basedir'] . '/wpallimport_logs')) {
-			die(sprintf(__('Uploads folder %s must be writable', 'pmxi_plugin'), $uploads['basedir'] . '/wpallimport_logs'));
+		if ( ! is_dir($uploads['basedir'] . '/wpallimport') or ! is_writable($uploads['basedir'] . '/wpallimport')) {
+			die(sprintf(__('Uploads folder %s must be writable', 'pmxi_plugin'), $uploads['basedir'] . '/wpallimport'));
 		}
 
 		$table = $table = $this->getTablePrefix() . 'files';
@@ -593,15 +690,39 @@ final class PMXI_Plugin {
 		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
 		$parent_import_id = false;
 		$iteration = false;
+		$deleted = false;
+		$executing = false;
+		$canceled = false;
+		$canceled_on = false;
+		$failed = false;
+		$failed_on = false;
+		$settings_update_on = false;
+		$last_activity = false;
 
 		// Check if field exists
 		foreach ($tablefields as $tablefield) {
 			if ('parent_import_id' == $tablefield->Field) $parent_import_id = true;				
 			if ('iteration' == $tablefield->Field) $iteration = true;				
+			if ('deleted' == $tablefield->Field) $deleted = true;				
+			if ('executing' == $tablefield->Field) $executing = true;				
+			if ('canceled' == $tablefield->Field) $canceled = true;				
+			if ('canceled_on' == $tablefield->Field) $canceled_on = true;				
+			if ('failed' == $tablefield->Field) $failed = true;				
+			if ('failed_on' == $tablefield->Field) $failed_on = true;				
+			if ('settings_update_on' == $tablefield->Field) $settings_update_on = true;				
+			if ('last_activity' == $tablefield->Field) $last_activity = true;				
 		}
 		
 		if (!$parent_import_id) $wpdb->query("ALTER TABLE {$table} ADD `parent_import_id` BIGINT(20) NOT NULL DEFAULT 0;");						
 		if (!$iteration) $wpdb->query("ALTER TABLE {$table} ADD `iteration` BIGINT(20) NOT NULL DEFAULT 0;");						
+		if (!$deleted) $wpdb->query("ALTER TABLE {$table} ADD `deleted` BIGINT(20) NOT NULL DEFAULT 0;");						
+		if (!$executing) $wpdb->query("ALTER TABLE {$table} ADD `executing` BOOL NOT NULL DEFAULT 0;");						
+		if (!$canceled) $wpdb->query("ALTER TABLE {$table} ADD `canceled` BOOL NOT NULL DEFAULT 0;");						
+		if (!$canceled_on) $wpdb->query("ALTER TABLE {$table} ADD `canceled_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00';");						
+		if (!$failed) $wpdb->query("ALTER TABLE {$table} ADD `failed` BOOL NOT NULL DEFAULT 0;");						
+		if (!$failed_on) $wpdb->query("ALTER TABLE {$table} ADD `failed_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00';");						
+		if (!$settings_update_on) $wpdb->query("ALTER TABLE {$table} ADD `settings_update_on` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00';");						
+		if (!$last_activity) $wpdb->query("ALTER TABLE {$table} ADD `last_activity` DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00';");						
 
 		$table = $this->getTablePrefix() . 'posts';
 		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
@@ -613,6 +734,23 @@ final class PMXI_Plugin {
 		}
 
 		if (!$iteration) $wpdb->query("ALTER TABLE {$table} ADD `iteration` BIGINT(20) NOT NULL DEFAULT 0;");
+
+		if ( ! empty($wpdb->charset))
+			$charset_collate = "DEFAULT CHARACTER SET $wpdb->charset";
+		if ( ! empty($wpdb->collate))
+			$charset_collate .= " COLLATE $wpdb->collate";
+			
+		$table_prefix = $this->getTablePrefix();
+
+		$wpdb->query("CREATE TABLE IF NOT EXISTS {$table_prefix}history (
+			id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			import_id BIGINT(20) UNSIGNED NOT NULL,
+			type ENUM('manual','processing','trigger','continue','') NOT NULL DEFAULT '',	
+			time_run TEXT,	
+			date DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',		
+			summary TEXT,
+			PRIMARY KEY  (id)
+		) $charset_collate;");
 	}	
 
 	/**
@@ -622,13 +760,9 @@ final class PMXI_Plugin {
 	public static function get_default_import_options() {
 		return array(
 			'type' => 'post',
-			'custom_type' => '',
-			'categories' => '',
-			'tags' => '',
-			'tags_delim' => ',',
-			'categories_delim' => ',',
-			'categories_auto_nested' => 0,
-			'featured_delim' => '',
+			'wizard_type' => 'new',
+			'custom_type' => '',				
+			'featured_delim' => ',',
 			'atch_delim' => ',',
 			'post_taxonomies' => array(),
 			'parent' => 0,
@@ -643,20 +777,22 @@ final class PMXI_Plugin {
 			'custom_name' => array(),
 			'custom_value' => array(),
 			'custom_format' => array(),
+			'custom_mapping' => array(),
 			'serialized_values' => array(),
+			'custom_mapping_rules' => array(),
 			'comment_status' => 'open',
 			'ping_status' => 'open',
 			'create_draft' => 'no',
 			'author' => '',
 			'post_excerpt' => '',
-			'post_slug' => '',
-			'featured_image' => '',
+			'post_slug' => '',				
 			'attachments' => '',
 			'is_import_specified' => 0,
 			'import_specified' => '',
 			'is_delete_source' => 0,
 			'is_cloak' => 0,
 			'unique_key' => '',
+			'tmp_unique_key' => '',
 			'feed_type' => 'auto',
 
 			'create_new_records' => 1,
@@ -673,6 +809,7 @@ final class PMXI_Plugin {
 			'is_update_slug' => 1,
 			'is_update_excerpt' => 1,
 			'is_update_categories' => 1,
+			'is_update_author' => 1,
 			'update_categories_logic' => 'full_update',
 			'taxonomies_list' => array(),
 			'taxonomies_only_list' => array(),
@@ -682,7 +819,6 @@ final class PMXI_Plugin {
 			'update_images_logic' => 'full_update',				
 			'is_update_dates' => 1,
 			'is_update_menu_order' => 1,
-			'is_update_post_author' => 1,
 			'is_update_parent' => 1,			
 			'is_keep_attachments' => 0,
 			'is_keep_imgs' => 0,
@@ -707,23 +843,51 @@ final class PMXI_Plugin {
 			'images_name' => 'filename',				
 			'post_format' => 'standard',
 			'encoding' => 'UTF-8',
-			'delimiter' => '',
-			'set_image_meta_data' => 0,
+			'delimiter' => '',				
 			'image_meta_title' => '',
-			'image_meta_title_delim' => '',
+			'image_meta_title_delim' => ',',
 			'image_meta_caption' => '',
-			'image_meta_caption_delim' => '',
+			'image_meta_caption_delim' => ',',
 			'image_meta_alt' => '',
-			'image_meta_alt_delim' => '',
+			'image_meta_alt_delim' => ',',
 			'image_meta_description' => '',
-			'image_meta_description_delim' => '',
+			'image_meta_description_delim' => ',',
 			'status_xpath' => '',
-			'download_images' => 0,															
+			'download_images' => 'yes',															
 			'converted_options' => 0,
 			'update_all_data' => 'yes',
 			'is_fast_mode' => 0,
 			'chuncking' => 1,
-			'import_processing' => 'ajax'				
+			'import_processing' => 'ajax',
+
+			'title' => '',
+			'content' => '',
+			'name' => '',
+			'is_keep_linebreaks' => 0,
+			'is_leave_html' => 0,
+			'fix_characters' => 0,
+
+			'featured_image' => '',
+			'download_featured_image' => '',
+			'download_featured_delim' => ',',
+			'is_featured' => 1,
+			'set_image_meta_title' => 0,
+			'set_image_meta_caption' => 0,
+			'set_image_meta_alt' => 0,
+			'set_image_meta_description' => 0,				
+			'auto_set_extension' => 0,
+			'new_extension' => '',
+			'tax_logic' => array(),
+			'tax_assing' => array(),
+			'tax_single_xpath' => array(),
+			'tax_multiple_xpath' => array(),
+			'tax_hierarchical_xpath' => array(),
+			'tax_multiple_delim' => array(),
+			'tax_hierarchical_delim' => array(),
+			'tax_hierarchical_logic' => array(),
+			'tax_enable_mapping' => array(),
+			'tax_mapping' => array(),
+			'nested_files' => array()
 		);
 	}
 
@@ -750,4 +914,5 @@ final class PMXI_Plugin {
 
 }
 
-PMXI_Plugin::getInstance();
+PMXI_Plugin::getInstance();		
+	

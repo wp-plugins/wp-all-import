@@ -91,7 +91,7 @@ class PMXI_Chunk {
          switch ($reader->nodeType) {
            case (XMLREADER::ELEMENT):              
               array_push($founded_tags, str_replace(":", "_", $reader->localName));
-              if (count($founded_tags) > 100) break(2);
+              //if (count($founded_tags) > 100) break(2);
               break;
             default:
 
@@ -113,7 +113,7 @@ class PMXI_Chunk {
      
       if (!empty($this->cloud)){      
         
-        $main_elements = array('node', 'product', 'job', 'deal', 'entry', 'item', 'property', 'listing', 'hotel', 'record', 'article', 'post');
+        $main_elements = array('node', 'product', 'job', 'deal', 'entry', 'item', 'property', 'listing', 'hotel', 'record', 'article', 'post', 'book');
 
         foreach ($this->cloud as $element_name => $value) {          
           if ( in_array(strtolower($element_name), $main_elements) ){
@@ -137,8 +137,8 @@ class PMXI_Chunk {
     else $path = $this->file;
 
     $this->reader = new XMLReader();        
-    $this->reader->open($path);    
-    $this->reader->setParserProperty(XMLReader::VALIDATE, false);
+    @$this->reader->open($path);
+    @$this->reader->setParserProperty(XMLReader::VALIDATE, false);
     
 
   }  
@@ -171,7 +171,7 @@ class PMXI_Chunk {
     // trim it
     $element = trim($this->options['element']);
                   
-    $xml = '';        
+    $xml = '';    
 
     try { 
       while ( @$this->reader->read() ) {        
@@ -217,6 +217,11 @@ class PMXI_Chunk {
         // pull out colons from attributes
         $pattern = '/(\s+\w+):(\w+[=]{1})/i';
         $replacement = '$1_$2';
+        $feed = preg_replace($pattern, $replacement, $feed);
+        // pull colons from single element 
+        // (<\w+):(\w+\/>)
+        $pattern = '/(<\w+):(\w+\/>)/i';
+        $replacement = '<$2';
         $feed = preg_replace($pattern, $replacement, $feed);
       
         return $feed;

@@ -1,21 +1,12 @@
-<h2>
-	<?php _e('Manage Imports', 'pmxi_plugin') ?>
-	&nbsp;
-	<a href="<?php echo esc_url(add_query_arg(array('page' => 'pmxi-admin-import'), admin_url('admin.php'))) ?>" class="add-new-h2"><?php echo esc_html_x('New Import', 'pmxi_plugin'); ?></a>
-</h2>
+<div class="wpallimport-header" style="overflow:hidden; height: 60px; padding-top: 10px; margin-bottom: -20px;">
+	<div class="wpallimport-logo"></div>
+	<div class="wpallimport-title">
+		<p><?php _e('WP All Import', 'pmxi_plugin'); ?></p>
+		<h3><?php _e('Manage Imports', 'pmxi_plugin'); ?></h3>			
+	</div>	
+</div>
 
-<?php
-	// notify user
-	if (!PMXI_Plugin::getInstance()->getOption('dismiss_manage_top')) {
-		?>
-		<div class="updated"><p>
-			<?php printf(
-					__('Need help with WP All Import? Please visit <a href="http://www.wpallimport.com/support">http://www.wpallimport.com/support</a> or send an e-mail to <a href="mailto:support@wpallimport.com">support@wpallimport.com</a>. We give priority to professional edition customers, but we respond to most inquiries from free version users within 24 hours during business days.<br/><br/>Please note that we are unable to handle technical support requests in the WordPress.org community forums. <br/><br/><a href="javascript:void(0);" id="dismiss_manage_top"><u>dismiss</u></a>', 'pmxi_plugin')
-			) ?>
-		</p></div>
-		<?php
-	}
-?>
+<h2></h2> <!-- Do not remove -->
 
 <?php if ($this->errors->get_error_codes()): ?>
 	<?php $this->error() ?>
@@ -33,14 +24,11 @@
 <?php
 // define the columns to display, the syntax is 'internal name' => 'display name'
 $columns = array(
-	'id'			=> __('ID', 'pmxi_plugin'),
-	'name'			=> __('File', 'pmxi_plugin'),
-	'xpath'			=> __('XPath', 'pmxi_plugin'),
-	'post_count'	=> __('Records', 'pmxi_plugin'),
-	'first_import'	=> __('First Import', 'pmxi_plugin'),
-	'registered_on'	=> __('Last Import', 'pmxi_plugin'),
-	/*'scheduled'		=> __('Reimport Schedule', 'pmxi_plugin'),	
-	'next_import'	=> __('Next Import', 'pmxi_plugin'),*/
+	'id'		=> __('ID', 'pmxi_plugin'),
+	'name'		=> __('File', 'pmxi_plugin'),
+	'actions'	=> '',	
+	'summary'	=> __('Summary', 'pmxi_plugin'),
+	'info'		=> __('Info & Options', 'pmxi_plugin'),		
 );
 
 $columns = apply_filters('pmxi_manage_imports_columns', $columns);
@@ -82,14 +70,17 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 			<?php
 			$col_html = '';
 			foreach ($columns as $column_id => $column_display_name) {
-				$column_link = "<a href='";
-				$order2 = 'ASC';
-				if ($order_by == $column_id)
-					$order2 = ($order == 'DESC') ? 'ASC' : 'DESC';
+				if (in_array($column_id, array('id', 'name'))){
+					$column_link = "<a href='";
+					$order2 = 'ASC';
+					if ($order_by == $column_id)
+						$order2 = ($order == 'DESC') ? 'ASC' : 'DESC';
 
-				$column_link .= esc_url(add_query_arg(array('order' => $order2, 'order_by' => $column_id), $this->baseUrl));
-				$column_link .= "'>{$column_display_name}</a>";
-				$col_html .= '<th scope="col" class="column-' . $column_id . ' ' . ($order_by == $column_id ? $order : '') . '">' . $column_link . '</th>';
+					$column_link .= esc_url(add_query_arg(array('order' => $order2, 'order_by' => $column_id), $this->baseUrl));
+					$column_link .= "'>{$column_display_name}</a>";
+					$col_html .= '<th scope="col" class="column-' . $column_id . ' ' . ($order_by == $column_id ? $order : '') . '">' . $column_link . '</th>';
+				}
+				else $col_html .= '<th scope="col" class="column-' . $column_id . '">' . $column_display_name . '</th>';
 			}
 			echo $col_html;
 			?>
@@ -106,21 +97,10 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 		<tbody id="the-pmxi-admin-import-list" class="list:pmxi-admin-imports">
 		<?php if ($list->isEmpty()): ?>
 			<tr>
-				<td colspan="<?php echo count($columns) + 1 ?>"><?php _e('No previous imports found.', 'pmxi_plugin') ?></td>
+				<td colspan="<?php echo count($columns) + 1 ?>"><?php printf(__('No previous imports found. <a href="%s">Start a new import...</a>', 'pmxi_plugin'), esc_url(add_query_arg(array('page' => 'pmxi-admin-import'), admin_url('admin.php')))); ?></td>
 			</tr>
 		<?php else: ?>
 			<?php
-			$periods = array( // scheduling periods
-				'*/5 * * * *' => __('every 5 min'),
-				'*/10 * * * *' => __('every 10 min'),
-				'*/30 * * * *' => __('half-hourly'),
-				'0 * * * *' => __('hourly'),
-				'0 */4 * * *' => __('every 4 hours'),
-				'0 */12 * * *' => __('half-daily'),
-				'0 0 * * *' => __('daily'),
-				'0 0 * * 1' => __('weekly'),
-				'0 0 1 * 1' => __('monthly'),
-			);
 			$class = '';
 			?>
 			<?php foreach ($list as $item): ?>
@@ -139,20 +119,13 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 								</th>
 								<?php
 								break;
-							case 'scheduled':
-								?>
-								<td>
-									<?php echo $item['scheduled'] ? $periods[$item['scheduled']] : '' ?>
-								</td>
-								<?php
-								break;
 							case 'first_import':
 								?>
 								<td>
 									<?php if ('0000-00-00 00:00:00' == $item['first_import']): ?>
 										<em>never</em>
 									<?php else: ?>
-										<?php echo get_date_from_gmt( $item['first_import'], 'Y/m/d g:i a'); ?>
+										<?php echo get_date_from_gmt($item['first_import'], 'Y/m/d g:i a'); ?>
 									<?php endif ?>
 								</td>
 								<?php
@@ -163,17 +136,35 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 									<?php if ('0000-00-00 00:00:00' == $item['registered_on']): ?>
 										<em>never</em>
 									<?php else: ?>
-										<?php echo get_date_from_gmt( $item['registered_on'], 'Y/m/d g:i a' ); ?>
+										<?php echo get_date_from_gmt($item['registered_on'], 'Y/m/d g:i a'); ?>
 									<?php endif ?>
 								</td>
 								<?php
-								break;					
+								break;
 							case 'name':
 								?>
 								<td>
-									<strong><?php echo apply_filters("pmxi_import_name", (!empty($item['friendly_name'])) ? $item['friendly_name'] : $item['name'], $item['id']); ?></strong> <?php if ( (int) $item['triggered']) _e("<i> -> Import triggered...</i>"); if ( (int) $item['processing']) _e("<i> -> Import currently in progress....</i>");  ?><br>
+									<strong><?php echo apply_filters("pmxi_import_name", (!empty($item['friendly_name'])) ? $item['friendly_name'] : $item['name'], $item['id']); ?></strong><br>																		
+
 									<?php if ($item['path']): ?>
+										<?php if ( in_array($item['type'], array('upload'))): ?>
+											<?php
+											$path = $item['path'];
+											$path_parts = pathinfo($item['path']);
+											if ( ! empty($path_parts['dirname'])){
+												$path_all_parts = explode('/', $path_parts['dirname']);
+												$dirname = array_pop($path_all_parts);
+												if ( pmxi_isValidMd5($dirname)){								
+
+													$path = str_replace($dirname, preg_replace('%^(.{3}).*(.{3})$%', '$1***$2', $dirname), str_replace('temp/', '', $item['path']));
+													
+												}
+											}
+											?>
+											<em><?php echo $path; ?></em>
+										<?php else:?>
 										<em><?php echo str_replace("\\", '/', preg_replace('%^(\w+://[^:]+:)[^@]+@%', '$1*****@', $item['path'])); ?></em>
+										<?php endif; ?>
 									<?php endif ?>
 									<div class="row-actions">
 
@@ -182,41 +173,21 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 										<?php
 
 											$import_actions = array(
-												'edit_template' => array( 
-													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl),  
-													'title' => __('Edit Template', 'pmxi_plugin'), 
+												'import_template' => array(
+													'url' => ( ! $item['processing'] and ! $item['executing'] ) ? add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl) : '',
+													'title' => __('Edit Import', 'pmxi_plugin'),
 													'class' => 'edit'
-												),												
-												'edit_options' => array( 
-													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl),  
-													'title' => __('Edit Options', 'pmxi_plugin'), 
+												),
+												'import_settings' => array( 
+													'url' => ( ! $item['processing'] and ! $item['executing'] ) ? add_query_arg(array('id' => $item['id'], 'action' => 'options'), $this->baseUrl) : '',  
+													'title' => __('Import Settings', 'pmxi_plugin'), 
 													'class' => 'edit'
-												),												
-												're_run' => array( 
-													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl),  
-													'title' => __('Re-Run Import', 'pmxi_plugin'), 
-													'class' => 'update'
-												),												
-												'scheduling' => array( 
-													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'scheduling'), $this->baseUrl),  
-													'title' => __('Cron Scheduling', 'pmxi_plugin'), 
-													'class' => 'edit'
-												),												
-												're_run_with_new_file' => array( 
-													'url' => add_query_arg(array('page' => 'pmxi-admin-import', 'id' => $item['id']), admin_url('admin.php')),  
-													'title' => __('Re-Run With New File', 'pmxi_plugin'), 
-													'class' => 'update'
-												),												
-												'log' => array( 
-													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'log'), $this->baseUrl),  
-													'title' => __('Download Log', 'pmxi_plugin'), 
-													'class' => 'update'
-												),												
+												),						
 												'delete' => array( 
 													'url' => add_query_arg(array('id' => $item['id'], 'action' => 'delete'), $this->baseUrl),  
 													'title' => __('Delete', 'pmxi_plugin'), 
 													'class' => 'delete'
-												),												
+												),																												
 											);
 											
 											$import_actions = apply_filters('pmxi_import_actions', $import_actions, $item );
@@ -224,48 +195,127 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 											$ai = 1;
 											foreach ($import_actions as $key => $action) {
 												switch ($key) {
-													case 'scheduling':
-														if ( in_array($item['type'], array('url', 'ftp', 'file'))):
-															?>
-															<span class="<?php echo $action['class']; ?>"><a class="<?php echo $action['class']; ?>" href="<?php echo esc_url($action['url']); ?>"><?php echo $action['title']; ?></a></span> <?php if ($ai != count($import_actions)): ?>|<?php endif; ?>
-															<?php
-														endif; 
-
-														break;
-
 													default:
 														?>
-														<span class="<?php echo $action['class']; ?>"><a class="<?php echo $action['class']; ?>" href="<?php echo esc_url($action['url']); ?>"><?php echo $action['title']; ?></a></span> <?php if ($ai != count($import_actions)): ?>|<?php endif; ?>
+														<span class="<?php echo $action['class']; ?>">
+															<?php if ( ! empty($action['url']) ): ?>
+															<a class="<?php echo $action['class']; ?>" href="<?php echo esc_url($action['url']); ?>"><?php echo $action['title']; ?></a>
+															<?php else: ?>
+															<span class="wpallimport-disabled"><?php echo $action['title']; ?></span>
+															<?php endif; ?>
+														</span> <?php if ($ai != count($import_actions)): ?>|<?php endif; ?>
 														<?php
 														break;
 												}												
 												$ai++;		
 											}	
 
-										?>
-										
-										<?php if ( ($item['imported'] + $item['skipped']) < $item['count'] and ! $item['options']['is_import_specified'] and ! (int) $item['triggered'] ):?>
-										| <span class="update"><a class="update" href="<?php echo esc_url(add_query_arg(array('id' => $item['id'], 'action' => 'update', 'type' => 'continue'), $this->baseUrl)) ?>"><?php _e('Continue import', 'pmxi_plugin') ?></a></span>
-										<?php endif; ?>
+										?>																			
 
 									</div>
 								</td>
 								<?php
 								break;
-							case 'xpath':
+							case 'summary':
 								?>
 								<td>
-									<?php echo $item['xpath'];?>
+									<?php 
+									if ($item['triggered'] and ! $item['processing']){
+										_e('triggered with cron', 'pmxi_plugin');
+										if ($item['last_activity'] != '0000-00-00 00:00:00'){
+											$diff = ceil((time() - strtotime($item['last_activity']))/60);
+											?>
+											<br>
+											<span <?php if ($diff >= 10) echo 'style="color:red;"';?>>
+											<?php
+												printf(__('last activity %s ago', 'pmxi_plugin'), human_time_diff(strtotime($item['last_activity']), time()));
+											?>
+											</span>
+											<?php
+										}
+									}
+									elseif ($item['processing']){
+										_e('currently processing with cron', 'pmxi_plugin'); echo '<br/>';
+										printf('Records Processed %s', $item['imported']);
+										if ($item['last_activity'] != '0000-00-00 00:00:00'){
+											$diff = ceil((time() - strtotime($item['last_activity']))/60);
+											?>
+											<br>
+											<span <?php if ($diff >= 10) echo 'style="color:red;"';?>>
+											<?php
+												printf(__('last activity %s ago', 'pmxi_plugin'), human_time_diff(strtotime($item['last_activity']), time()));
+											?>
+											</span>
+											<?php
+										}
+									}
+									elseif($item['executing']){
+										_e('Import currently in progress', 'pmxi_plugin');
+										if ($item['last_activity'] != '0000-00-00 00:00:00'){
+											$diff = ceil((time() - strtotime($item['last_activity']))/60);
+											?>
+											<br>
+											<span <?php if ($diff >= 10) echo 'style="color:red;"';?>>
+											<?php
+												printf(__('last activity %s ago', 'pmxi_plugin'), human_time_diff(strtotime($item['last_activity']), time()));
+											?>
+											</span>
+											<?php
+										}
+									}
+									elseif($item['canceled'] and $item['canceled_on'] != '0000-00-00 00:00:00'){
+										printf(__('Import Attempt at %s', 'pmxi_plugin'), get_date_from_gmt($item['canceled_on'], "m/d/Y g:i a")); echo '<br/>';
+										_e('Import canceled', 'pmxi_plugin');
+									}
+									elseif($item['failed'] and $item['failed_on'] != '0000-00-00 00:00:00'){
+										printf(__('Import Attempt at %s', 'pmxi_plugin'), get_date_from_gmt($item['failed_on'], "m/d/Y g:i a")); echo '<br/>';
+										_e('Import failed, please check logs', 'pmxi_plugin');
+									}
+									else{
+										$custom_type = get_post_type_object( $item['options']['custom_type'] );
+										$cpt_name = ( ! empty($custom_type)) ? $custom_type->labels->singular_name : '';
+										printf(__('Last run: %s', 'pmxi_plugin'), ($item['registered_on'] == '0000-00-00 00:00:00') ? __('never', 'pmxi_plugin') : get_date_from_gmt($item['registered_on'], "m/d/Y g:i a")); echo '<br/>';
+										printf(__('%d %ss created', 'pmxi_plugin'), $item['created'], $cpt_name); echo '<br/>';
+										printf(__('%d updated, %d skipped, %d deleted'), $item['updated'], $item['skipped'], $item['deleted']);
+										//printf(__('%d records', 'pmxi_plugin'), $item['post_count']);
+									}
+
+									if ($item['settings_update_on'] != '0000-00-00 00:00:00' and $item['last_activity'] != '0000-00-00 00:00:00' and strtotime($item['settings_update_on']) > strtotime($item['last_activity'])){
+										echo '<br/>';
+										?>
+										<strong><?php _e('settings edited since last run', 'pmxi_plugin'); ?></strong>																				
+										<?php
+									}
+
+									?>
 								</td>
 								<?php
 								break;
-							case 'post_count':
+							case 'info':
 								?>
 								<td>
-									<strong><?php echo $item['post_count'] ?></strong>
+									
+									<a href="http://www.wpallimport.com/upgrade-to-pro/?utm_source=free-plugin&utm_medium=in-plugin&utm_campaign=cron" target="_blank"><?php _e('Cron Scheduling', 'pmxi_plugin'); ?></a> <br>
+									
+									<a href="<?php echo add_query_arg(array('page' => 'pmxi-admin-history', 'id' => $item['id']), $this->baseUrl)?>"><?php _e('History Logs', 'pmxi_plugin'); ?></a>
+
 								</td>
 								<?php
 								break;
+							case 'actions':
+								?>
+								<td style="width: 130px;">
+									<?php if ( ! $item['processing'] and ! $item['executing'] ): ?>
+									<!--h2 style="float:left;"><a class="add-new-h2" href="<?php echo add_query_arg(array('id' => $item['id'], 'action' => 'edit'), $this->baseUrl); ?>"><?php _e('Edit', 'pmxi_plugin'); ?></a></h2-->
+									<h2 style="float:left;"><a class="add-new-h2" href="<?php echo add_query_arg(array('id' => $item['id'], 'action' => 'update'), $this->baseUrl); ?>"><?php _e('Run Import', 'pmxi_plugin'); ?></a></h2>
+									<?php elseif ($item['processing']) : ?>
+									<h2 style="float:left;"><a class="add-new-h2" href="<?php echo add_query_arg(array('id' => $item['id'], 'action' => 'cancel'), $this->baseUrl); ?>"><?php _e('Cancel Cron', 'pmxi_plugin'); ?></a></h2>
+									<?php elseif ($item['executing']) : ?>
+									<h2 style="float:left;"><a class="add-new-h2" href="<?php echo add_query_arg(array('id' => $item['id'], 'action' => 'cancel'), $this->baseUrl); ?>"><?php _e('Cancel', 'pmxi_plugin'); ?></a></h2>
+									<?php endif; ?>
+								</td>
+								<?php
+								break;							
 							default:
 								?>
 								<td>
@@ -300,20 +350,21 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 		</div>
 	</div>
 	<div class="clear"></div>
-	
 	<?php
 	// notify user
 	if (!PMXI_Plugin::getInstance()->getOption('dismiss_manage_bottom')) {
 		?>
 		<div class="updated_bottom"><p>
 			<?php printf(
-					__('<a href="http://wordpress.org/extend/plugins/wp-all-import" target="_blank">If you like WPAllImport, please rate us five stars on WordPress.org!</a> <a href="http://wordpress.org/extend/plugins/wp-all-import" class="pmxi_stars" target="_blank"></a> <br/><br/><a href="javascript:void(0);" id="dismiss_manage_bottom">dismiss</a>', 'pmxi_plugin')
+					__('<a href="https://wordpress.org/support/view/plugin-reviews/wp-all-import#postform" target="_blank">If our plugin helped you, please rate us on WordPress.org. It would really help us!</a> <a href="https://wordpress.org/support/view/plugin-reviews/wp-all-import#postform" class="pmxi_stars" target="_blank"></a> <br/><br/><a href="javascript:void(0);" id="dismiss_manage_bottom">dismiss</a>', 'pmxi_plugin')
 			) ?>
 		</p></div>
 		<?php
 	}
 	?>
 
-	<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=manage&utm_campaign=free+plugin" target="_blank" class="upgrade_link">Find out more about the professional edition of WP All Import.</a></p>
+	<p style='font-size: 1.3em; font-weight: bold;'><a href="http://www.wpallimport.com/upgrade-to-pro/?utm_source=free-plugin&utm_medium=in-plugin&utm_campaign=manage" target="_blank" class="upgrade_link"><?php _e('Find out more about the professional edition of WP All Import.', 'pmxi_plugin'); ?></a></p>
 	
+	<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'pmxi_plugin'); ?> <span></span></a>
+
 </form>
