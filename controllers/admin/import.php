@@ -1564,11 +1564,12 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				}
 				elseif ($upload_result !== false and $this->data['import']['path'] != $filePath) {
 					
-					$file = new PMXI_Chunk($upload_result['filePath'], array('element' => ( ! empty($upload_result['root_element'])) ? $upload_result['root_element'] : ''));
+					$file = new PMXI_Chunk($upload_result['filePath'], array('element' => ( ! empty($this->data['import']->root_element)) ? $this->data['import']->root_element : ''));
 
-					if ( ! empty($file->options['element']) ) {
+					$root_element = '';
+					if ( ! empty($file->options['element']) ) {						
 
-						$upload_result['root_element'] = $file->options['element'];
+						$root_element = $file->options['element'];
 
 						$baseXpath = $this->data['import']->xpath;
 						
@@ -1603,6 +1604,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 
 							if ( ! empty($file->options['element']) ) {								
 
+								$root_element = $file->options['element'];
+
 								$baseXpath = '/' . $upload_result['root_element'];
 								
 								$loop = 0;	
@@ -1633,6 +1636,8 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 							}
 
 						}
+						
+						$upload_result['root_element'] = $root_element;						
 						
 						$post['delimiter'] = ( ! empty($upload_result['is_csv']) ) ? $upload_result['is_csv'] : '';									
 						
