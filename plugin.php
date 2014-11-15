@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. A paid upgrade to WP All Import Pro is available for support and additional features.
-Version: 3.2.1
+Version: 3.2.2
 Author: Soflyy
 */
 
@@ -25,7 +25,7 @@ define('PMXI_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('PMXI_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.2.1');
+define('PMXI_VERSION', '3.2.2');
 
 define('PMXI_EDITION', 'free');
 
@@ -315,6 +315,8 @@ final class PMXI_Plugin {
 					}
 
 				}
+
+				$this->__fix_db_schema(); // feature to version 3.2.0
 				
 			}
 			else {
@@ -322,12 +324,9 @@ final class PMXI_Plugin {
 				// migration fixes for vesions
 				switch ($is_migrated) {
 					
-					case '3.2.0 RC1':
-						# code..
-						break;
-
+					case '3.2.0':						
 					case '3.2.1':
-						# code..
+						$this->__fix_db_schema(); // feature to version 3.2.0
 						break;
 
 					default:
@@ -622,11 +621,7 @@ final class PMXI_Plugin {
 	        }	         
 	    }
 
-		dbDelta($plugin_queries);
-
-		$this->__ver_1_04_transition_fix();
-
-		$this->__add_feed_type_fix(); // feature to version 2.22
+		dbDelta($plugin_queries);				
 
 		// sync data between plugin tables and wordpress (mostly for the case when plugin is reactivated)
 		
@@ -647,13 +642,10 @@ final class PMXI_Plugin {
 		$locale = apply_filters( 'plugin_locale', get_locale(), 'pmxi_plugin' );							
 		
 		load_plugin_textdomain( 'pmxi_plugin', false, dirname( plugin_basename( __FILE__ ) ) . "/i18n/languages" );
-	}
+	}	
 
-	/**
-	 * Method perfoms transition from version when file uploads has been stored in dabase to the solution when it stored on disk
-	 * NOTE: the function can be removed when plugin version progress and it's sure matter nobody has ver 1.03
-	 */
-	public function __ver_1_04_transition_fix() {
+	public function __fix_db_schema(){
+
 		$uploads = wp_upload_dir();			
 
 		if ( ! is_dir($uploads['basedir'] . '/wpallimport/logs') or ! is_writable($uploads['basedir'] . '/wpallimport/logs')) {
@@ -681,12 +673,9 @@ final class PMXI_Plugin {
 				break;
 			}
 		}
-	}	
-
-	public function __add_feed_type_fix(){
 
 		$table = $this->getTablePrefix() . 'imports';
-		global $wpdb;
+		
 		$tablefields = $wpdb->get_results("DESCRIBE {$table};");
 		$parent_import_id = false;
 		$iteration = false;

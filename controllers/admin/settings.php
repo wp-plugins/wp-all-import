@@ -438,7 +438,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		}			
 
 		// Return JSON-RPC response
-		echo json_encode(array("jsonrpc" => "2.0", "error" => null, "result" => null, "id" => "id", "name" => $filePath)); die;
+		exit(json_encode(array("jsonrpc" => "2.0", "error" => null, "result" => null, "id" => "id", "name" => $filePath)));
 
 	}		
 

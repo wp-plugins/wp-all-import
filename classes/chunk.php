@@ -76,7 +76,7 @@ class PMXI_Chunk {
     $this->file = $file;     
 
     if (empty($this->options['element'])){
-      $founded_tags = array();   
+      //$founded_tags = array();   
 
       if (function_exists('stream_filter_register')){
         stream_filter_register('preprocessxml', 'preprocessXml_filter');
@@ -90,8 +90,12 @@ class PMXI_Chunk {
       while ( @$reader->read()) {
          switch ($reader->nodeType) {
            case (XMLREADER::ELEMENT):              
-              array_push($founded_tags, str_replace(":", "_", $reader->localName));
-              //if (count($founded_tags) > 100) break(2);
+              if (array_key_exists(str_replace(":", "_", $reader->localName), $this->cloud))
+                $this->cloud[str_replace(":", "_", $reader->localName)]++;
+              else
+                $this->cloud[str_replace(":", "_", $reader->localName)] = 1;
+              //array_push($founded_tags, str_replace(":", "_", $reader->localName));
+              
               break;
             default:
 
@@ -100,7 +104,7 @@ class PMXI_Chunk {
       }
       unset($reader);   
       
-      if (!empty($founded_tags)) {            
+      /*if (!empty($founded_tags)) {            
         $element_counts = array_count_values($founded_tags);                          
         if (!empty($element_counts)){
           foreach ($element_counts as $tag => $count)
@@ -109,10 +113,12 @@ class PMXI_Chunk {
           
           arsort($element_counts);           
         }              
-      }        
+      } */       
      
       if (!empty($this->cloud)){      
         
+        arsort($this->cloud);           
+
         $main_elements = array('node', 'product', 'job', 'deal', 'entry', 'item', 'property', 'listing', 'hotel', 'record', 'article', 'post', 'book');
 
         foreach ($this->cloud as $element_name => $value) {          
@@ -122,11 +128,11 @@ class PMXI_Chunk {
           }
         }
         if (empty($this->options['element'])){                
-          foreach ($element_counts as $el => $count) {                        
+          foreach ($this->cloud as $el => $count) {                        
               $this->options['element'] = $el;
               break;            
           }          
-        }             
+        }            
       }
     }                           
 
