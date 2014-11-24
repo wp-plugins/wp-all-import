@@ -1532,26 +1532,12 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					case 'upload':
 						$filePath = $this->input->post('filepath');
 						
-						$uploader = new PMXI_Upload($filePath, $this->errors);			
-						$upload_result = $uploader->upload();			
-
+						if ($this->data['import']['path'] != $filePath){
+							$uploader = new PMXI_Upload($filePath, $this->errors);			
+							$upload_result = $uploader->upload();			
+						}		
 						
 						break;
-					case 'url':
-						$filePath = $this->input->post('url');
-						
-						$uploader = new PMXI_Upload($filePath, $this->errors);			
-						$upload_result = $uploader->url($this->data['import']->feed_type);
-
-						break;
-					case 'file':
-
-						$filePath = $this->input->post('file');
-						
-						$uploader = new PMXI_Upload($filePath, $this->errors);			
-						$upload_result = $uploader->file();	
-
-						break;	
 					default:
 
 						$this->errors->add('form-validation', __('WP All Import doesn\'t support this import type.', 'pmxi_plugin'));
@@ -1756,31 +1742,34 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 							break;*/
 					}
 
-					// unlick previous files
-					$history = new PMXI_File_List();
-					$history->setColumns('id', 'name', 'registered_on', 'path')->getBy(array('import_id' => $this->data['import']->id), 'id DESC');				
-					if ($history->count()){
-						foreach ($history as $file){						
-							if ( @file_exists($file['path']) and $file['path'] != $upload_result['filePath'] ){
-								if (in_array($this->data['import']->type, array('upload')))
-									pmxi_remove_source($file['path'], false);								
-								else
-									pmxi_remove_source($file['path']);
+					// if new file is successfully uploaded
+					if (!empty($upload_result['filePath'])){
+						// unlick previous files
+						$history = new PMXI_File_List();
+						$history->setColumns('id', 'name', 'registered_on', 'path')->getBy(array('import_id' => $this->data['import']->id), 'id DESC');				
+						if ($history->count()){
+							foreach ($history as $file){						
+								if ( @file_exists($file['path']) and $file['path'] != $upload_result['filePath'] ){
+									if (in_array($this->data['import']->type, array('upload')))
+										pmxi_remove_source($file['path'], false);								
+									else
+										pmxi_remove_source($file['path']);
+								}
+								$history_file = new PMXI_File_Record();
+								$history_file->getBy('id', $file['id']);
+								if ( ! $history_file->isEmpty()) $history_file->delete();
 							}
-							$history_file = new PMXI_File_Record();
-							$history_file->getBy('id', $file['id']);
-							if ( ! $history_file->isEmpty()) $history_file->delete();
 						}
-					}
-					
-					$history_file = new PMXI_File_Record();
-					$history_file->set(array(
-						'name' => $this->data['import']->name,
-						'import_id' => $this->data['import']->id,
-						'path' => $upload_result['filePath'],
-						//'contents' => $this->get_xml(),
-						'registered_on' => date('Y-m-d H:i:s')
-					))->save();										
+						
+						$history_file = new PMXI_File_Record();
+						$history_file->set(array(
+							'name' => $this->data['import']->name,
+							'import_id' => $this->data['import']->id,
+							'path' => $upload_result['filePath'],
+							//'contents' => $this->get_xml(),
+							'registered_on' => date('Y-m-d H:i:s')
+						))->save();		
+					}										
 					
 					if ( ! $this->warnings->get_error_codes()) {
 						
@@ -1973,6 +1962,14 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			do_action( 'pmxi_before_xml_import', $import->id );	
 
 			PMXI_Plugin::$session->set('update_previous', $import->id);
+
+			if (empty($import->options['encoding'])){
+				$currentOptions = $import->options;
+				$currentOptions['encoding'] = 'UTF-8';
+				$import->set(array(
+					'options' => $currentOptions
+				))->update();
+			}
 
 			// unlink previous files
 			$history = new PMXI_File_List();

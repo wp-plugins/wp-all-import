@@ -228,7 +228,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			require_once(ABSPATH . 'wp-admin/includes/taxonomy.php');
 
 			$taxonomies = array();						
-			$exclude_taxonomies = (class_exists('PMWI_Plugin')) ? array('post_format', 'product_type') : array('post_format');	
+			$exclude_taxonomies = (class_exists('PMWI_Plugin')) ? array('post_format', 'product_type', 'product_shipping_class') : array('post_format');	
 			$post_taxonomies = array_diff_key(get_taxonomies_by_object_type(array($this->options['custom_type']), 'object'), array_flip($exclude_taxonomies));
 			if ( ! empty($post_taxonomies) ):
 				foreach ($post_taxonomies as $ctx): if ("" == $ctx->labels->name or (class_exists('PMWI_Plugin') and strpos($ctx->name, "pa_") === 0 and $this->options['custom_type'] == "product")) continue;
@@ -475,7 +475,12 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 			}				
 
 			$chunk == 1 and $logger and call_user_func($logger, __('Composing unique keys...', 'pmxi_plugin'));
-			$unique_keys = XmlImportParser::factory($xml, $cxpath, $this->options['unique_key'], $file)->parse($records); $tmp_files[] = $file;
+			if (!empty($this->options['unique_key'])){
+				$unique_keys = XmlImportParser::factory($xml, $cxpath, $this->options['unique_key'], $file)->parse($records); $tmp_files[] = $file;
+			}
+			else{
+				count($titles) and $unique_keys = array_fill(0, count($titles), '');
+			}
 			
 			$chunk == 1 and $logger and call_user_func($logger, __('Processing posts...', 'pmxi_plugin'));
 			
@@ -775,7 +780,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						// handle obsolete attachments (i.e. delete or keep) according to import settings
 						if ( $this->options['update_all_data'] == 'yes' or ( $this->options['update_all_data'] == 'no' and $this->options['is_update_images'] and $this->options['update_images_logic'] == "full_update")){
 							$logger and call_user_func($logger, sprintf(__('Deleting images for `%s`', 'pmxi_plugin'), $articleData['post_title']));								
-							wp_delete_attachments($articleData['ID'], $this->options['download_images'], 'images');
+							wp_delete_attachments($articleData['ID'], ($this->options['download_images'] == 'yes'), 'images');
 						}
 
 					}
@@ -1513,7 +1518,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 								empty($this->options['is_keep_attachments']) and wp_delete_attachments($missingPost['post_id'], true, 'files');						
 								// Remove images
 								$logger and call_user_func($logger, __('Deleting images...', 'pmxi_plugin'));
-								empty($this->options['is_keep_imgs']) and wp_delete_attachments($missingPost['post_id'], $this->options['download_images']);							
+								empty($this->options['is_keep_imgs']) and wp_delete_attachments($missingPost['post_id'], ($this->options['download_images'] == 'yes'));							
 								
 								$logger and call_user_func($logger, sprintf(__('Deleting post `%s` from pmxi_posts table', 'pmxi_plugin'), $missingPost['post_id']));			
 								if ( ! empty($missingPost['id'])){									
@@ -1726,13 +1731,11 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 		$post = new PMXI_Post_List();		
 		if ( ! $keepPosts) {								
 			$ids = array();
-			foreach ($post->getBy('import_id', $this->id)->convertRecords() as $p) {
-				if ( $this->options['custom_type'] == 'import_users' ){
-					// Remove attachments
-					empty($this->options['is_keep_attachments']) and wp_delete_attachments($p->post_id, true, 'files');
-					// Remove images
-					empty($this->options['is_keep_imgs']) and wp_delete_attachments($p->post_id, $this->options['download_images']);
-				}
+			foreach ($post->getBy('import_id', $this->id)->convertRecords() as $p) {				
+				// Remove attachments
+				empty($this->options['is_keep_attachments']) and wp_delete_attachments($p->post_id, true, 'files');
+				// Remove images
+				empty($this->options['is_keep_imgs']) and wp_delete_attachments($p->post_id, ($this->options['download_images'] == 'yes'));			
 				$ids[] = $p->post_id;								
 			}
 

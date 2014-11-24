@@ -208,6 +208,14 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						$filePath  = $upload_result['filePath'];						
 				}				
 
+				if (empty($item->options['encoding'])){
+					$currentOptions = $item->options;
+					$currentOptions['encoding'] = 'UTF-8';
+					$item->set(array(
+						'options' => $currentOptions
+					))->update();
+				}
+
 				@set_time_limit(0);
 
 				$local_paths = ( ! empty($local_paths) ) ? $local_paths : array($filePath);								

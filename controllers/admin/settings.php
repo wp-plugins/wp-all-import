@@ -199,7 +199,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		$r = $wpdb->get_results("
 			SELECT DISTINCT postmeta.meta_value
 			FROM ".$wpdb->postmeta." as postmeta
-			WHERE postmeta.meta_key='".$meta_key."'
+			WHERE postmeta.meta_key='".$meta_key."' LIMIT 0,10
 		", ARRAY_A);		
 
 		$meta_values = array();
