@@ -1,7 +1,7 @@
 === Import any XML or CSV File to WordPress ===
 Contributors: soflyy
 Requires at least: 3.6.1
-Tested up to: 4.0.1
+Tested up to: 4.1
 Stable tag: 3.2.3
 Tags: wordpress csv import, wordpress xml import, xml, csv, datafeed, import, migrate, import csv to wordpress, import xml to wordpress, advanced xml import, advanced csv import, bulk csv import, bulk xml import, bulk data import, xml to custom post type, csv to custom post type, woocommerce csv import, woocommerce xml import, csv import, import csv, xml import, import xml
 
