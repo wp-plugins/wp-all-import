@@ -1,5 +1,5 @@
 === Import any XML or CSV File to WordPress ===
-Contributors: soflyy
+Contributors: soflyy, wpallimport
 Requires at least: 3.6.1
 Tested up to: 4.1
 Stable tag: 3.2.3
