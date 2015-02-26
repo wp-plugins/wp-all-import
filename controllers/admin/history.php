@@ -27,7 +27,7 @@ class PMXI_Admin_History extends PMXI_Controller_Admin {
 		$get['pagenum'] = absint($get['pagenum']);
 		extract($get);
 		if (empty($id)){ 
-			wp_redirect(add_query_arg(array('page' => 'pmxi-admin-manage', 'pmxi_nt' => urlencode(__('Import is not specified.', 'pmxi_plugin'))), $this->baseUrl)); die();
+			wp_redirect(add_query_arg(array('page' => 'pmxi-admin-manage', 'pmxi_nt' => urlencode(__('Import is not specified.', 'wp_all_import_plugin'))), $this->baseUrl)); die();
 		}
 		$this->data += $get;
 		$by = array('import_id' => $id);
@@ -44,8 +44,8 @@ class PMXI_Admin_History extends PMXI_Controller_Admin {
 		$this->data['page_links'] = paginate_links(array(
 			'base' => add_query_arg(array('id' => $id, 'pagenum' => '%#%'), $this->baseUrl),
 			'format' => '',
-			'prev_text' => __('&laquo;', 'pmxi_plugin'),
-			'next_text' => __('&raquo;', 'pmxi_plugin'),
+			'prev_text' => __('&laquo;', 'wp_all_import_plugin'),
+			'next_text' => __('&raquo;', 'wp_all_import_plugin'),
 			'total' => ceil($list->total() / $perPage),
 			'current' => $pagenum,
 		));			
@@ -59,22 +59,28 @@ class PMXI_Admin_History extends PMXI_Controller_Admin {
 	 */
 	public function log(){
 
-		$id = $this->input->get('history_id');
-		
-		$import_id = $this->input->get('id');
+		$nonce = (!empty($_REQUEST['_wpnonce'])) ? $_REQUEST['_wpnonce'] : '';
+		if ( ! wp_verify_nonce( $nonce, '_wpnonce-download_log' ) ) {		    
+		    die( __('Security check', 'wp_all_import_plugin') ); 
+		} else {
 
-		$wp_uploads = wp_upload_dir();
-		
-		$log_file = pmxi_secure_file( $wp_uploads['basedir'] . "/wpallimport/logs", 'logs', $id ) . '/' . $id . '.html';
+			$id = $this->input->get('history_id');
+			
+			$import_id = $this->input->get('id');
 
-		if (file_exists($log_file)) 
-		{
-			PMXI_download::xml($log_file);
-		}
-		else
-		{			
+			$wp_uploads = wp_upload_dir();
+			
+			$log_file = wp_all_import_secure_file( $wp_uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::LOGS_DIRECTORY, $id ) . DIRECTORY_SEPARATOR . $id . '.html';
 
-			wp_redirect(add_query_arg(array('id' => $import_id, 'pmxi_nt' => urlencode(__('Log file does not exists.', 'pmxi_plugin'))), $this->baseUrl)); die();
+			if (file_exists($log_file)) 
+			{
+				PMXI_download::xml($log_file);
+			}
+			else
+			{			
+
+				wp_redirect(add_query_arg(array('id' => $import_id, 'pmxi_nt' => urlencode(__('Log file does not exists.', 'wp_all_import_plugin'))), $this->baseUrl)); die();
+			}
 		}
 	}
 
@@ -82,13 +88,20 @@ class PMXI_Admin_History extends PMXI_Controller_Admin {
 	 * Delete an import
 	 */
 	public function delete() {
-		$id = $this->input->get('id');
-		$this->data['item'] = $item = new PMXI_History_Record();
-		if ( ! $id or $item->getById($id)->isEmpty()) {
-			wp_redirect($this->baseUrl); die();
+
+		if ( ! get_current_user_id() or ! current_user_can('manage_options')) {
+		    // This nonce is not valid.
+		    die( 'Security check' ); 
+		} else {
+			$id = $this->input->get('id');
+			$this->data['item'] = $item = new PMXI_History_Record();
+			if ( ! $id or $item->getById($id)->isEmpty()) {
+				wp_redirect($this->baseUrl); die();
+			}
+			$item->delete();
+			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('History deleted', 'wp_all_import_plugin')), $this->baseUrl)); die();				
 		}
-		$item->delete();
-		wp_redirect(add_query_arg('pmxi_nt', urlencode(__('History deleted', 'pmxi_plugin')), $this->baseUrl)); die();				
+		
 	}
 	
 	/**
@@ -113,7 +126,7 @@ class PMXI_Admin_History extends PMXI_Controller_Admin {
 		
 		$id = $this->input->get('id');
 
-		wp_redirect(add_query_arg(array('id' => $id, 'pmxi_nt' => urlencode(sprintf(__('<strong>%d</strong> %s deleted', 'pmxi_plugin'), $items->count(), _n('history', 'histories', $items->count(), 'pmxi_plugin')))), $this->baseUrl)); die();		
+		wp_redirect(add_query_arg(array('id' => $id, 'pmxi_nt' => urlencode(sprintf(__('<strong>%d</strong> %s deleted', 'wp_all_import_plugin'), $items->count(), _n('history', 'histories', $items->count(), 'wp_all_import_plugin')))), $this->baseUrl)); die();		
 				
 	}
 }

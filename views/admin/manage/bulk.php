@@ -7,7 +7,7 @@
 		<input type="hidden" name="items[]" value="<?php echo esc_attr($id) ?>" />
 	<?php endforeach ?>
 	
-	<p><?php printf(__('Are you sure you want to delete <strong>%s</strong> selected %s?', 'pmxi_plugin'), $items->count(), _n('import', 'imports', $items->count(), 'pmxi_plugin')) ?></p>
+	<p><?php printf(__('Are you sure you want to delete <strong>%s</strong> selected %s?', 'wp_all_import_plugin'), $items->count(), _n('import', 'imports', $items->count(), 'wp_all_import_plugin')) ?></p>
 	<p><input type="checkbox" id="is_delete_posts" name="is_delete_posts" /> <label for="is_delete_posts">Delete associated posts as well</label></p>
 	
 	<p class="submit">

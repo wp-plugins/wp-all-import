@@ -65,7 +65,7 @@ if ( ! class_exists('PMXI_Render')){
 						} elseif ($child instanceof DOMComment) {
 							if (preg_match('%\[pmxi_more:(\d+)\]%', $child->nodeValue, $mtch)) {
 								$no = intval($mtch[1]);
-								echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'pmxi_plugin'), $no, _n('element', 'elements', $no, 'pmxi_plugin')) . ' &dArr; ]</div>';
+								echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'wp_all_import_plugin'), $no, _n('element', 'elements', $no, 'wp_all_import_plugin')) . ' &dArr; ]</div>';
 							}
 						}
 					}
@@ -85,13 +85,13 @@ if ( ! class_exists('PMXI_Render')){
 			}
 			if (preg_match('%\[more:(\d+)\]%', $text, $mtch)) {
 				$no = intval($mtch[1]);
-				echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'pmxi_plugin'), $no, _n('element', 'elements', $no, 'pmxi_plugin')) . ' &dArr; ]</div>';
+				echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'wp_all_import_plugin'), $no, _n('element', 'elements', $no, 'wp_all_import_plugin')) . ' &dArr; ]</div>';
 				return;
 			}
 			$more = '';
 			if ($shorten and preg_match('%^(.*?\s+){20}(?=\S)%', $text, $mtch)) {
 				$text = $mtch[0];
-				$more = '<span class="xml-more">[' . __('more', 'pmxi_plugin') . ']</span>';
+				$more = '<span class="xml-more">[' . __('more', 'wp_all_import_plugin') . ']</span>';
 			}
 			$is_short = strlen($text) <= 40;
 			$newtext = htmlspecialchars($text); 
@@ -160,7 +160,7 @@ if ( ! class_exists('PMXI_Render')){
 						} elseif ($child instanceof DOMComment) {
 							if (preg_match('%\[pmxi_more:(\d+)\]%', $child->nodeValue, $mtch)) {
 								$no = intval($mtch[1]);
-								echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'pmxi_plugin'), $no, _n('element', 'elements', $no, 'pmxi_plugin')) . ' &dArr; ]</div>';
+								echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'wp_all_import_plugin'), $no, _n('element', 'elements', $no, 'wp_all_import_plugin')) . ' &dArr; ]</div>';
 							}
 						}
 					}
@@ -180,13 +180,13 @@ if ( ! class_exists('PMXI_Render')){
 			}
 			if (preg_match('%\[more:(\d+)\]%', $text, $mtch)) {
 				$no = intval($mtch[1]);
-				echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'pmxi_plugin'), $no, _n('element', 'elements', $no, 'pmxi_plugin')) . ' &dArr; ]</div>';
+				echo '<div class="xml-more">[ &dArr; ' . sprintf(__('<strong>%s</strong> %s more', 'wp_all_import_plugin'), $no, _n('element', 'elements', $no, 'wp_all_import_plugin')) . ' &dArr; ]</div>';
 				return;
 			}
 			$more = '';
 			if ($shorten and preg_match('%^(.*?\s+){20}(?=\S)%', $text, $mtch)) {
 				$text = $mtch[0];
-				$more = '<span class="xml-more">[' . __('more', 'pmxi_plugin') . ']</span>';
+				$more = '<span class="xml-more">[' . __('more', 'wp_all_import_plugin') . ']</span>';
 			}			
 			$is_short = strlen($text) <= 40;			
 			$text = htmlspecialchars($text);

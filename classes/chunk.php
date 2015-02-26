@@ -73,7 +73,18 @@ class PMXI_Chunk {
     $this->options['chunkSize'] *= PMXI_Plugin::getInstance()->getOption('chunk_size');      
 
     // set the filename
-    $this->file = $file;     
+    $this->file = $file;   
+
+    $is_html = false;
+    $f = @fopen($file, "rb");       
+    while (!@feof($f)) {
+      $chunk = @fread($f, 1024);         
+      if (strpos($chunk, "<!DOCTYPE") === 0) $is_html = true;
+      break;      
+    }  
+    @fclose($f);
+
+    if ($is_html) return;
 
     if (empty($this->options['element'])){
       //$founded_tags = array();   
@@ -127,12 +138,13 @@ class PMXI_Chunk {
             break;    
           }
         }
+        
         if (empty($this->options['element'])){                
           foreach ($this->cloud as $el => $count) {                        
               $this->options['element'] = $el;
               break;            
           }          
-        }            
+        }          
       }
     }                           
 
@@ -232,7 +244,7 @@ class PMXI_Chunk {
       
         return $feed;
 
-    }
+  }
 
 }
 

@@ -112,7 +112,7 @@ class PMXI_CsvParser
 
         $wp_uploads = wp_upload_dir();
         
-        $this->targetDir = (empty($options['targetDir'])) ? pmxi_secure_file($wp_uploads['basedir'] . '/wpallimport/uploads', 'uploads') : $options['targetDir'];
+        $this->targetDir = (empty($options['targetDir'])) ? wp_all_import_secure_file($wp_uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::UPLOADS_DIRECTORY) : $options['targetDir'];
 
         $this->load($options['filename']);
     }
@@ -926,7 +926,7 @@ class PMXI_CsvParser
 
         $tmpname = wp_unique_filename($this->targetDir, str_replace("csv", "xml", basename($this->_filename)));
         if ("" == $this->xml_path) 
-            $this->xml_path = $this->targetDir  .'/'. url_title($tmpname);            
+            $this->xml_path = $this->targetDir  .'/'. wp_all_import_url_title($tmpname);            
         
         $this->toXML(true);        
 
@@ -948,6 +948,16 @@ class PMXI_CsvParser
         $l = $this->settings['length'];       
 
         $this->is_csv = $d;          
+
+        $is_html = false;
+        $f = @fopen($this->_filename, "rb");       
+        while (!@feof($f)) {
+          $chunk = @fread($f, 1024);         
+          if (strpos($chunk, "<!DOCTYPE") === 0) $is_html = true;
+          break;      
+        }  
+
+        if ($is_html) return;
 
         $res = fopen($this->_filename, 'rb');                    
 
@@ -990,6 +1000,7 @@ class PMXI_CsvParser
                         foreach ($chunk as $header => $value) 
                         {
                             $xmlWriter->startElement($header);
+                                $value = preg_replace('/\]\]>/s', '', preg_replace('/<!\[CDATA\[/s', '', $value ));
                                 if ($fixBrokenSymbols){
                                     // Remove non ASCII symbols and write CDATA
                                     $xmlWriter->writeCData(preg_replace('/[^\x{0009}\x{000a}\x{000d}\x{0020}-\x{D7FF}\x{E000}-\x{FFFD}]+/u', ' ', $value));                                

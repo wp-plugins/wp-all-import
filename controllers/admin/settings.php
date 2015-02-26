@@ -22,7 +22,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		
 		if ( ! $is_secure_import ){
 
-			self::$path = pmxi_secure_file($uploads['basedir'] . '/wpallimport/uploads', 'uploads');
+			self::$path = wp_all_import_secure_file($uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::UPLOADS_DIRECTORY );
 			
 		}
 		else {			
@@ -30,7 +30,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 			self::$path = get_transient( self::$upload_transient );
 
 			if ( empty(self::$path) ) {
-				self::$path = pmxi_secure_file($uploads['basedir'] . '/wpallimport/uploads', 'uploads');
+				self::$path = wp_all_import_secure_file($uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::UPLOADS_DIRECTORY );
 				set_transient( self::$upload_transient, self::$path);
 			}
 
@@ -40,16 +40,16 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 	
 	public function index() {
 
-		$this->data['post'] = $post = $this->input->post(PMXI_Plugin::getInstance()->getOption());
+		$this->data['post'] = $post = $this->input->post(PMXI_Plugin::getInstance()->getOption());		
 		
 		if ($this->input->post('is_settings_submitted')) { // save settings form
 			check_admin_referer('edit-settings', '_wpnonce_edit-settings');
 			
 			if ( ! preg_match('%^\d+$%', $post['history_file_count'])) {
-				$this->errors->add('form-validation', __('History File Count must be a non-negative integer', 'pmxi_plugin'));
+				$this->errors->add('form-validation', __('History File Count must be a non-negative integer', 'wp_all_import_plugin'));
 			}
 			if ( ! preg_match('%^\d+$%', $post['history_file_age'])) {
-				$this->errors->add('form-validation', __('History Age must be a non-negative integer', 'pmxi_plugin'));
+				$this->errors->add('form-validation', __('History Age must be a non-negative integer', 'wp_all_import_plugin'));
 			}
 			if (empty($post['html_entities'])) $post['html_entities'] = 0;
 			if (empty($post['utf8_decode'])) $post['utf8_decode'] = 0;
@@ -57,13 +57,25 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 			if ( ! $this->errors->get_error_codes()) { // no validation errors detected
 
 				PMXI_Plugin::getInstance()->updateOption($post);
+
+				if (empty($_POST['pmxi_license_activate']) and empty($_POST['pmxi_license_deactivate'])) {
+					foreach ($this->data['addons'] as $class => $addon) {
+						$post['statuses'][$class] = $this->check_license($class);
+					}					
+					PMXI_Plugin::getInstance()->updateOption($post);
+				}				
+
+				isset( $_POST['pmxi_license_activate'] ) and $this->activate_licenses();
+
 				$files = new PMXI_File_List(); $files->sweepHistory(); // adjust file history to new settings specified
 				
-				wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Settings saved', 'pmxi_plugin')), $this->baseUrl)); die();
+				wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Settings saved', 'wp_all_import_plugin')), $this->baseUrl)); die();
 			}
-		}
-		
+		}		
+
 		if ($this->input->post('is_templates_submitted')) { // delete templates form
+
+			check_admin_referer('delete-templates', '_wpnonce_delete-templates');
 
 			if ($this->input->post('import_templates')){
 
@@ -80,7 +92,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 										
 						if (($extension != "txt")) 
 						{							
-							$this->errors->add('form-validation', __('Unknown File extension. Only txt files are permitted', 'pmxi_plugin'));
+							$this->errors->add('form-validation', __('Unknown File extension. Only txt files are permitted', 'wp_all_import_plugin'));
 						}
 						else {
 							$import_data = @file_get_contents($tmp_name);
@@ -93,22 +105,22 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 										unset($template_data['id']);
 										$template->clear()->set($template_data)->insert();
 									}
-									wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(_n('%d template imported', '%d templates imported', count($templates_data), 'pmxi_plugin'), count($templates_data))), $this->baseUrl)); die();
+									wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(_n('%d template imported', '%d templates imported', count($templates_data), 'wp_all_import_plugin'), count($templates_data))), $this->baseUrl)); die();
 								}
-								else $this->errors->add('form-validation', __('Wrong imported data format', 'pmxi_plugin'));							
+								else $this->errors->add('form-validation', __('Wrong imported data format', 'wp_all_import_plugin'));							
 							}
-							else $this->errors->add('form-validation', __('File is empty or doesn\'t exests', 'pmxi_plugin'));
+							else $this->errors->add('form-validation', __('File is empty or doesn\'t exests', 'wp_all_import_plugin'));
 						}
 					}
-					else $this->errors->add('form-validation', __('Undefined entry!', 'pmxi_plugin'));
+					else $this->errors->add('form-validation', __('Undefined entry!', 'wp_all_import_plugin'));
 				}
-				else $this->errors->add('form-validation', __('Please select file.', 'pmxi_plugin'));
+				else $this->errors->add('form-validation', __('Please select file.', 'wp_all_import_plugin'));
 
 			}
 			else{
 				$templates_ids = $this->input->post('templates', array());
 				if (empty($templates_ids)) {
-					$this->errors->add('form-validation', __('Templates must be selected', 'pmxi_plugin'));
+					$this->errors->add('form-validation', __('Templates must be selected', 'wp_all_import_plugin'));
 				}
 				
 				if ( ! $this->errors->get_error_codes()) { // no validation errors detected
@@ -117,7 +129,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 						foreach ($templates_ids as $template_id) {
 							$template->clear()->set('id', $template_id)->delete();
 						}
-						wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(_n('%d template deleted', '%d templates deleted', count($templates_ids), 'pmxi_plugin'), count($templates_ids))), $this->baseUrl)); die();
+						wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(_n('%d template deleted', '%d templates deleted', count($templates_ids), 'wp_all_import_plugin'), count($templates_ids))), $this->baseUrl)); die();
 					}
 					if ($this->input->post('export_templates')){
 						$export_data = array();
@@ -127,7 +139,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 						}	
 						
 						$uploads = wp_upload_dir();
-						$targetDir = $uploads['basedir'] . '/wpallimport/uploads';
+						$targetDir = $uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::UPLOADS_DIRECTORY;
 						$export_file_name = "templates_".uniqid().".txt";
 						file_put_contents($targetDir . DIRECTORY_SEPARATOR . $export_file_name, json_encode($export_data));
 						
@@ -147,7 +159,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 
 		$wp_uploads = wp_upload_dir();
 
-		$dir = $wp_uploads['basedir'] . '/wpallimport/temp';
+		$dir = $wp_uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::TEMP_DIRECTORY;
 
 		$cacheDir = PMXI_Plugin::ROOT_DIR . '/libraries/cache';
 
@@ -155,15 +167,15 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 
 		$cacheFiles = array_diff(@scandir($cacheDir), array('.','..'));
 
-		$msg = __('Files not found', 'pmxi_plugin');
+		$msg = __('Files not found', 'wp_all_import_plugin');
 
 		if ( count($files) or count($cacheFiles)){
 
-			pmxi_clear_directory( $dir );
+			wp_all_import_clear_directory( $dir );
 
-			pmxi_clear_directory( $cacheDir );		
+			wp_all_import_clear_directory( $cacheDir );		
 
-			$msg = __('Clean Up has been successfully completed.', 'pmxi_plugin');
+			$msg = __('Clean Up has been successfully completed.', 'wp_all_import_plugin');
 		}
 
 		wp_redirect(add_query_arg('pmxi_nt', urlencode($msg), $this->baseUrl)); die();
@@ -191,6 +203,14 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 	}
 	
 	public function meta_values(){
+
+		if ( ! PMXI_Plugin::getInstance()->getAdminCurrentScreen()->is_ajax) { // call is only valid when send with ajax
+			exit('nice try!');
+		}				
+
+		if ( ! check_ajax_referer( 'wp_all_import_secure', 'security', false ) ){
+			exit( json_encode(array('meta_values' => array())) );
+		}
 
 		global $wpdb;
 
@@ -222,7 +242,11 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 	 * License: http://www.plupload.com/license
 	 * Contributing: http://www.plupload.com/contributing
 	 */
-	public function upload(){	
+	public function upload(){			
+
+		if ( ! check_ajax_referer( 'wp_all_import_secure', '_wpnonce', false )){
+			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => __('Security check', 'wp_all_import_plugin')), "id" => "id")));
+		}
 		
 		// HTTP headers for no cache etc
 		header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
@@ -235,11 +259,11 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		//$targetDir = ini_get("upload_tmp_dir") . DIRECTORY_SEPARATOR . "plupload";
 		//$uploads = wp_upload_dir();	
 
-		$targetDir = self::$path;//pmxi_secure_file($uploads['basedir'] . '/wpallimport/uploads', 'uploads');
+		$targetDir = self::$path;
 
 		if (! is_dir($targetDir) || ! is_writable($targetDir)){
 			delete_transient( self::$upload_transient );
-			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => __("Uploads folder is not writable.", "pmxi_plugin")), "id" => "id")));
+			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => __("Uploads folder is not writable.", "wp_all_import_plugin")), "id" => "id")));
 		}
 
 		$cleanupTargetDir = true; // Remove old files
@@ -258,6 +282,10 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 
 		// Clean the fileName for security reasons
 		$fileName = preg_replace('/[^\w\._]+/', '_', $fileName);
+
+		if ( ! preg_match('%\W(xml|gzip|zip|csv|gz|json|txt|dat|psv|sql)$%i', trim(basename($fileName)))) {	
+			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => __("Uploaded file must be XML, CSV, ZIP, GZIP, GZ, JSON, SQL, TXT, DAT or PSV", "wp_all_import_plugin")), "id" => "id")));
+		}
 
 		// Make sure the fileName is unique but only if chunking is disabled
 		if ($chunks < 2 && file_exists($targetDir . DIRECTORY_SEPARATOR . $fileName)) {
@@ -292,7 +320,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 			closedir($dir);
 		} else{
 			delete_transient( self::$upload_transient );
-			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => __("Failed to open temp directory.", "pmxi_plugin")), "id" => "id")));
+			exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 100, "message" => __("Failed to open temp directory.", "wp_all_import_plugin")), "id" => "id")));
 		}
 			
 
@@ -317,18 +345,18 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 							fwrite($out, $buff);
 					} else{
 						delete_transient( self::$upload_transient );
-						exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 101, "message" => __("Failed to open input stream.", "pmxi_plugin")), "id" => "id")));
+						exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 101, "message" => __("Failed to open input stream.", "wp_all_import_plugin")), "id" => "id")));
 					}
 					fclose($in);
 					fclose($out);
 					@unlink($_FILES['file']['tmp_name']);
 				} else{
 					delete_transient( self::$upload_transient );					
-					exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 102, "message" => __("Failed to open output stream.", "pmxi_plugin")), "id" => "id")));
+					exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 102, "message" => __("Failed to open output stream.", "wp_all_import_plugin")), "id" => "id")));
 				}
 			} else{
 				delete_transient( self::$upload_transient );
-				exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 103, "message" => __("Failed to move uploaded file.", "pmxi_plugin")), "id" => "id")));
+				exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 103, "message" => __("Failed to move uploaded file.", "wp_all_import_plugin")), "id" => "id")));
 			}
 		} else {
 			// Open temp file
@@ -342,14 +370,14 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 						fwrite($out, $buff);
 				} else{
 					delete_transient( self::$upload_transient );
-					exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 101, "message" => __("Failed to open input stream.", "pmxi_plugin")), "id" => "id")));
+					exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 101, "message" => __("Failed to open input stream.", "wp_all_import_plugin")), "id" => "id")));
 				}
 
 				fclose($in);
 				fclose($out);
 			} else{
 				delete_transient( self::$upload_transient );
-				exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 102, "message" => __("Failed to open output stream.", "pmxi_plugin")), "id" => "id")));
+				exit(json_encode(array("jsonrpc" => "2.0", "error" => array("code" => 102, "message" => __("Failed to open output stream.", "wp_all_import_plugin")), "id" => "id")));
 			}
 		}
 
@@ -390,7 +418,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 					$defaultXpath = "/". $file->options['element'];																			    		  
 				else
 					$is_valid = false;
-				
+
 				if ( $is_valid ){
 
 					while ($xml = $file->read()) {
@@ -420,13 +448,13 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 				}
 
 				unset($file);
-					
+				
 				if ( ! $is_valid )
 				{
 					ob_start();
 					?>
 					
-					<div class="error inline"><p><?php _e('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@wpallimport.com">support@wpallimport.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'pmxi_plugin'); ?></p></div>
+					<div class="error inline"><p><?php _e('Please confirm you are importing a valid feed.<br/> Often, feed providers distribute feeds with invalid data, improperly wrapped HTML, line breaks where they should not be, faulty character encodings, syntax errors in the XML, and other issues.<br/><br/>WP All Import has checks in place to automatically fix some of the most common problems, but we can’t catch every single one.<br/><br/>It is also possible that there is a bug in WP All Import, and the problem is not with the feed.<br/><br/>If you need assistance, please contact support – <a href="mailto:support@wpallimport.com">support@wpallimport.com</a> – with your XML/CSV file. We will identify the problem and release a bug fix if necessary.', 'wp_all_import_plugin'); ?></p></div>
 					
 					<?php
 					$response = ob_get_clean();
@@ -440,10 +468,6 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 		// Return JSON-RPC response
 		exit(json_encode(array("jsonrpc" => "2.0", "error" => null, "result" => null, "id" => "id", "name" => $filePath)));
 
-	}		
-
-	public function download(){
-		PMXI_download::csv(PMXI_Plugin::ROOT_DIR.'/logs/'.$_GET['file'].'.txt');
-	}
+	}	
 
 }

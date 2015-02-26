@@ -16,7 +16,7 @@ $config = array(
 	"dismiss_manage_bottom" => 0,
 	"html_entities" => 0,
 	"utf8_decode" => 0,
-	"cron_job_key" => url_title(rand_char(12)),
+	"cron_job_key" => wp_all_import_url_title(wp_all_import_rand_char(12)),
 	"chunk_size" => 32,
 	"pingbacks" => 1,
 	"legacy_special_character_handling" => 1,
@@ -28,5 +28,6 @@ $config = array(
 	"cron_processing_time_limit" => 120,
 	"secure" => 1,
 	"log_storage" => 5,
-	"cron_sleep" => ""
+	"cron_sleep" => "",
+	"port" => "",
 );

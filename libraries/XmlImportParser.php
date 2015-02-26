@@ -52,14 +52,14 @@ class XmlImportParser {
 		libxml_use_internal_errors(true);
 		try{ 
 			$this->xml = new SimpleXMLElement($xml);
-		} catch (Exception $e){ 
+		} catch (Exception $e){ 			
 			try{ 
 				$this->xml = new SimpleXMLElement(utf8_encode($xml));
 			} catch (Exception $e){ 
 				throw new XmlImportException($e->getMessage());
 			}
-		}
-		
+		}			
+
 		$this->rootNodeXPath = $rootNodeXPath;
 		$this->cachedTemplate = $cachedTemplate;
 	}
@@ -83,7 +83,7 @@ class XmlImportParser {
 	    		
 		for ($i = 0; $i < count($rootNodes); $i++) {
 			if (empty($records) or in_array($i + 1, $records)) {                
-				$rootNode = $rootNodes[$i];				
+				$rootNode = apply_filters('wpallimport_xml_row', $rootNodes[$i]);
 				$template = new XmlImportTemplate($rootNode, $this->cachedTemplate);
 				$result[] = $template->parse();
 			}

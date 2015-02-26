@@ -15,11 +15,11 @@
 		<div class="wpallimport-header">
 			<div class="wpallimport-logo"></div>
 			<div class="wpallimport-title">
-				<p><?php _e('WP All Import', 'pmxi_plugin'); ?></p>
-				<h2><?php _e('Import XML / CSV', 'pmxi_plugin'); ?></h2>					
+				<p><?php _e('WP All Import', 'wp_all_import_plugin'); ?></p>
+				<h2><?php _e('Import XML / CSV', 'wp_all_import_plugin'); ?></h2>					
 			</div>
 			<div class="wpallimport-links">
-				<a href="http://www.wpallimport.com/support/" target="_blank"><?php _e('Support', 'pmxi_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/" target="_blank"><?php _e('Documentation', 'pmxi_plugin'); ?></a>
+				<a href="http://www.wpallimport.com/support/" target="_blank"><?php _e('Support', 'wp_all_import_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/" target="_blank"><?php _e('Documentation', 'wp_all_import_plugin'); ?></a>
 			</div>
 		</div>	
 		<div class="clear"></div>		
@@ -46,8 +46,8 @@
 
 					<?php $post_type = $post['custom_type']; ?>				
 
-					<?php if ( ! $this->isWizard): ?>					
-
+					<?php  if ( ! $this->isWizard): ?>
+						
 						<?php include( 'options/_import_file.php' ); ?>
 
 					<?php endif; ?>
@@ -66,7 +66,7 @@
 
 				</form>					
 								
-				<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'pmxi_plugin'); ?> <span></span></a>
+				<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'wp_all_import_plugin'); ?> <span></span></a>
 					
 			</td>
 			<td class="right template-sidebar ">

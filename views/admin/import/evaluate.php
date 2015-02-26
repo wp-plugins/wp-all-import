@@ -1,12 +1,12 @@
 <div class="updated founded_records">
 	<?php if ($is_csv):?>
-		<h3><?php printf(__('<span class="matches_count">%s</span> <strong>%s</strong> will be imported', 'pmxi_plugin'), $node_list_count, _n('row', 'rows', $node_list_count, 'pmxi_plugin')); ?></h3>
+		<h3><?php printf(__('<span class="matches_count">%s</span> <strong>%s</strong> will be imported', 'wp_all_import_plugin'), $node_list_count, _n('row', 'rows', $node_list_count, 'wp_all_import_plugin')); ?></h3>
 	<?php else:?>
-		<h3><?php printf(__('<span class="matches_count">%s</span> <strong>%s</strong> %s will be imported', 'pmxi_plugin'), $node_list_count, PMXI_Plugin::$session->source['root_element'], _n('element', 'elements', $node_list_count, 'pmxi_plugin')); ?></h3>
+		<h3><?php printf(__('<span class="matches_count">%s</span> <strong>%s</strong> %s will be imported', 'wp_all_import_plugin'), $node_list_count, PMXI_Plugin::$session->source['root_element'], _n('element', 'elements', $node_list_count, 'wp_all_import_plugin')); ?></h3>
 	<?php endif; ?>
-	<h4><?php _e('Click an element to select it, or scroll down to add filtering options.', 'pmxi_plugin'); ?></h4>
+	<h4><?php _e('Click an element to select it, or scroll down to add filtering options.', 'wp_all_import_plugin'); ?></h4>
 	<?php if (PMXI_Plugin::getInstance()->getOption('highlight_limit') and $elements->length > PMXI_Plugin::getInstance()->getOption('highlight_limit')): ?>
-		<p><?php _e('<strong>Note</strong>: Highlighting is turned off since can be very slow on large sets of elements.', 'pmxi_plugin') ?></p>
+		<p><?php _e('<strong>Note</strong>: Highlighting is turned off since can be very slow on large sets of elements.', 'wp_all_import_plugin') ?></p>
 	<?php endif ?>
 </div>
 <div id="current_xml">

@@ -1,7 +1,7 @@
-<h2><?php _e('Delete Import', 'pmxi_plugin') ?></h2>
+<h2><?php _e('Delete Import', 'wp_all_import_plugin') ?></h2>
 
 <form method="post">
-	<p><?php printf(__('Are you sure you want to delete <strong>%s</strong> import?', 'pmxi_plugin'), $item->name) ?></p>
+	<p><?php printf(__('Are you sure you want to delete <strong>%s</strong> import?', 'wp_all_import_plugin'), $item->name) ?></p>
 	<div class="input">
 		<input type="checkbox" id="is_delete_posts" name="is_delete_posts" /> <label for="is_delete_posts">Delete associated posts as well</label>
 	</div>

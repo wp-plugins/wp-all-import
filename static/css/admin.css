@@ -423,7 +423,8 @@
 	height: 16px;
 	margin: 0px 3px;
 }
-.wpallimport-plugin .add-new-ico, 
+.wpallimport-plugin .add-new-ico,
+.wpallimport-plugin .add-new-cat, 
 .wpallimport-plugin .add-new-custom, 
 .wpallimport-plugin .add-new-key{ 
 	background: url("../img/ui_4.0/add.png") no-repeat 0px 5px;
@@ -495,12 +496,18 @@
 .wpallimport-plugin .tipsy{
 	font-size: 14px !important;
 }
+.wpallimport-plugin .assign_term{
+	left: -20px;
+	position: absolute;
+	top: 15px;
+}
 .wpallimport-plugin .wpallimport-free-edition-notice{
 	display: block;
 	margin-top: 40px;
 	padding: 20px;
-	background-color: #eee;
-	border: 1px solid #ddd;
+	background-color: #FFB8B8;
+	border: 1px solid #FF8383;
+	color: #000;
 }
 .wpallimport-plugin .pmxi_stars{
 	display: inline-block;
@@ -521,7 +528,7 @@
 	border-width: 1px;
 }
 .wpallimport-plugin .upgrade_link{
-	color: #21759B !important;
+	color: #000 !important;
 	font-size: 1.3em;
 	text-decoration: underline !important;
 }
@@ -864,7 +871,8 @@
 		margin-left: 0;
 	} 
 	.wpallimport-plugin table.form-table tr.template, 
-	.wpallimport-plugin table.form-table ol li.template, 
+	.wpallimport-plugin table.form-table ol li.template,
+	.wpallimport-plugin table.form-table ul li.template, 
 	.wpallimport-plugin table.cf-form-table tr.template, 
 	.wpallimport-plugin table.tax-form-table tr.template {
 		display: none;

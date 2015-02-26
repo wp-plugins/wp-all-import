@@ -1,6 +1,10 @@
 <?php
 function pmxi_wp_ajax_auto_detect_sf(){
 
+	if ( ! check_ajax_referer( 'wp_all_import_secure', 'security', false )){
+		exit( json_encode(array('result' => array(), 'msg' => __('Security check', 'wp_all_import_plugin'))) );
+	}
+
 	$input = new PMXI_Input();
 	$fieldName = $input->post('name', '');
 	$post_type = $input->post('post_type', 'post');

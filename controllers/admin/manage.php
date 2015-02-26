@@ -47,9 +47,10 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			
 		$this->data['page_links'] = paginate_links(array(
 			'base' => add_query_arg('pagenum', '%#%', $this->baseUrl),
+			'add_args' => array('page' => 'pmxi-admin-manage'),
 			'format' => '',
-			'prev_text' => __('&laquo;', 'pmxi_plugin'),
-			'next_text' => __('&raquo;', 'pmxi_plugin'),
+			'prev_text' => __('&laquo;', 'wp_all_import_plugin'),
+			'next_text' => __('&raquo;', 'wp_all_import_plugin'),
 			'total' => ceil($list->total() / $perPage),
 			'current' => $pagenum,
 		));
@@ -100,24 +101,30 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 	 * Cancel import processing
 	 */
 	public function cancel(){
-		
-		$id = $this->input->get('id');
-		
-		PMXI_Plugin::$session->clean_session( $id );
 
-		$item = new PMXI_Import_Record();
-		if ( ! $id or $item->getById($id)->isEmpty()) {
-			wp_redirect($this->baseUrl); die();
+		$nonce = (!empty($_REQUEST['_wpnonce'])) ? $_REQUEST['_wpnonce'] : '';
+		if ( ! wp_verify_nonce( $nonce, '_wpnonce-cancel_import' ) ) {		    
+		    die( __('Security check', 'wp_all_import_plugin') ); 
+		} else {
+		
+			$id = $this->input->get('id');
+			
+			PMXI_Plugin::$session->clean_session( $id );
+
+			$item = new PMXI_Import_Record();
+			if ( ! $id or $item->getById($id)->isEmpty()) {
+				wp_redirect($this->baseUrl); die();
+			}
+			$item->set(array(
+				'triggered'   => 0,
+				'processing'  => 0,
+				'executing'   => 0,
+				'canceled'    => 1,
+				'canceled_on' => date('Y-m-d H:i:s')
+			))->update();		
+
+			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Import canceled', 'wp_all_import_plugin')), $this->baseUrl)); die();
 		}
-		$item->set(array(
-			'triggered'   => 0,
-			'processing'  => 0,
-			'executing'   => 0,
-			'canceled'    => 1,
-			'canceled_on' => date('Y-m-d H:i:s')
-		))->update();		
-
-		wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Import canceled', 'pmxi_plugin')), $this->baseUrl)); die();
 	}
 	
 	/**
@@ -180,25 +187,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			// upload new file in case when import is not continue			
 			if ( empty(PMXI_Plugin::$session->chunk_number) ) {			
 								
-				if ($item->type == 'url'){ // up to date the file from URL
-					
-					$uploader = new PMXI_Upload(trim($item->path), $this->errors);			
-					$upload_result = $uploader->url($item->feed_type);
-					if ($upload_result instanceof WP_Error)
-						$this->errors = $upload_result;					
-					else
-						$filePath  = $upload_result['filePath'];									
-				} 
-				elseif ( $item->type == 'file' ) { // copy file from /uploads/wpallimport folder
-
-					$uploader = new PMXI_Upload(trim(basename($item->path)), $this->errors);			
-					$upload_result = $uploader->file();					
-					if ($upload_result instanceof WP_Error)
-						$this->errors = $upload_result;					
-					else										
-						$filePath  = $upload_result['filePath'];												
-				} 
-				elseif ( ! in_array($item->type, array('ftp'))){ // retrieve already uploaded file
+				if ( $item->type == 'upload' ){ // retrieve already uploaded file
 
 					$uploader = new PMXI_Upload(trim($item->path), $this->errors, rtrim(str_replace(basename($item->path), '', $item->path), '/'));			
 					$upload_result = $uploader->upload();					
@@ -206,7 +195,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						$this->errors = $upload_result;					
 					else						
 						$filePath  = $upload_result['filePath'];						
-				}				
+				}	
 
 				if (empty($item->options['encoding'])){
 					$currentOptions = $item->options;
@@ -214,7 +203,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 					$item->set(array(
 						'options' => $currentOptions
 					))->update();
-				}
+				}			
 
 				@set_time_limit(0);
 
@@ -252,7 +241,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 				}				
 
 				if (empty($chunks)) 
-					$this->errors->add('form-validation', __('No matching elements found for Root element and XPath expression specified', 'pmxi_plugin'));						
+					$this->errors->add('form-validation', __('No matching elements found for Root element and XPath expression specified', 'wp_all_import_plugin'));						
 																		   							
 			}							
 			
@@ -285,7 +274,8 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						'pointer' => 1,
 						'count' => (isset($chunks)) ? $chunks : 0,
 						'local_paths' => (!empty($local_paths)) ? $local_paths : array(), // ftp import local copies of remote files
-						'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',					
+						'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',	
+						'nonce' => wp_create_nonce( 'import' )				
 					);										
 					
 					foreach ($sesson_data as $key => $value) {
@@ -325,7 +315,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			do_action('pmxi_before_import_delete', $item, $this->input->post('is_delete_posts'));
 
 			$item->delete( ! $this->input->post('is_delete_posts'));
-			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Import deleted', 'pmxi_plugin')), $this->baseUrl)); die();
+			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Import deleted', 'wp_all_import_plugin')), $this->baseUrl)); die();
 		}
 		
 		$this->render();
@@ -353,7 +343,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 				$item->delete( ! $is_delete_posts);
 			}
 			
-			wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(__('<strong>%d</strong> %s deleted', 'pmxi_plugin'), $items->count(), _n('import', 'imports', $items->count(), 'pmxi_plugin'))), $this->baseUrl)); die();
+			wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(__('<strong>%d</strong> %s deleted', 'wp_all_import_plugin'), $items->count(), _n('import', 'imports', $items->count(), 'wp_all_import_plugin'))), $this->baseUrl)); die();
 		}
 		
 		$this->render();

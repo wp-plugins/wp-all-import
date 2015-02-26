@@ -1,13 +1,15 @@
 === Import any XML or CSV File to WordPress ===
-Contributors: soflyy, wpallimport
+Contributors: soflyy, wpallimport 
 Requires at least: 3.6.1
 Tested up to: 4.1
-Stable tag: 3.2.3
-Tags: wordpress csv import, wordpress xml import, xml, csv, datafeed, import, migrate, import csv to wordpress, import xml to wordpress, advanced xml import, advanced csv import, bulk csv import, bulk xml import, bulk data import, xml to custom post type, csv to custom post type, woocommerce csv import, woocommerce xml import, csv import, import csv, xml import, import xml
+Stable tag: 3.2.4
+Tags: wordpress csv import, wordpress xml import, xml, csv, datafeed, import, migrate, import csv to wordpress, import xml to wordpress, advanced xml import, advanced csv import, bulk csv import, bulk xml import, bulk data import, xml to custom post type, csv to custom post type, woocommerce csv import, woocommerce xml import, csv import, import csv, xml import, import xml, csv importer
 
-WP All Import is an extremely powerful plugin that makes it easy to import any XML or CSV file to WordPress.
+WP All Import is an extremely powerful importer that makes it easy to import any XML or CSV file to WordPress.
 
 == Description ==
+
+= WP All Import - Simple & Powerful XML / CSV Importer Plugin =
 
 *“It's a wonderful plugin that does so much, so well that it's hard to list all of the features. But I'll tell you this, I was able to import the content of a pair of websites running the ModX CMS into a WordPress install in less than 30 minutes. No joke!”*  
 **Alex Vasquez** - DigiSavvy Co-Founder & WordCamp Los Angeles Organizer
@@ -43,6 +45,31 @@ For technical support from the developers, please consider purchasing WP All Imp
 
 Need to [import XML and CSV to WooCommerce?](http://wordpress.org/plugins/woocommerce-xml-csv-product-import/) Check out our WooCommerce add-on.
 
+= WordPress CSV Imports =
+
+Read on to learn more about the CSV importer functionality of WP All Import. Importing CSVs with WP All Import is exactly the same as importing XML files, because internally, WP All Import actually converts your CSV file to an XML file on the fly. You can use the same XPath filtering options and all the same features you have when importing XML files.
+
+CSV imports don't require your CSV file to have a specific structure. Your CSV file can use any column names/headings. You can map the columns in your CSV file to the appropriate places in WordPress during the import process.
+
+When importing CSV files, your CSV should have UTF-8 encoding if you are having trouble importing special characters.
+
+In step 2 of a CSV import, you can specify an alternative delimiter if you aren't using a comma. WP All Import can import CSVs that are pipe-delimited, # delimited, or delimited/separated by any other character.
+
+For CSV import tutorials and example files, visit our [documentation](http://www.wpallimport.com/documentation/?utm_source=free-plugin&utm_medium=dot-org&utm_campaign=documentation). Please keep in mind CSV imports with WP All Import are just like XML imports - you have all the same functionality, and the process is exactly the same. Any of our tutorial videos that apply to XML files also apply to importing CSV files, so if you see a tutorial with us importing an XML file, know that you can follow the exact same steps for a CSV import.
+
+= Add-Ons =
+
+A number of premium add-ons are available to add functionality to the importer and make XML & CSV import tasks to complex plugins simple.
+
+ - Advanced Custom Fields Add-On - [ACF](http://www.advancedcustomfields.com/) XML & CSV importer
+ - WooCommerce Add-On - XML & CSV importer for all [WooCommerce](http://wordpress.org/plugins/woocommerce) product types
+ - User Import Add-On - XML & CSV importer for users, including user_meta
+ - Link Cloak Add-On - Auto-create redirects for links present during an XML or CSV import
+
+Learn more about our add-ons at [http://www.wpallimport.com/add-ons](http://www.wpallimport.com/add-ons?utm_source=free-plugin&utm_medium=dot-org&utm_campaign=add-ons)
+
+A [developer API](http://www.wpallimport.com/documentation/developers/action-reference/?utm_source=free-plugin&utm_medium=dot-org&utm_campaign=documentation) (action hooks) is also available.
+
 == Premium Support ==
 Upgrade to the professional edition of WP All Import for premium support.
 
@@ -75,6 +102,15 @@ Does it work with special character encoding like Hebrew, Arabic, Chinese, etc?
 4. Manage imports.
 
 == Changelog ==
+
+= 3.2.4 =
+* critical security fix - stopping non-logged in users from accessing adminInit http://www.wpallimport.com/2015/02/wp-import-4-1-1-mandatory-security-update/
+* added new option 'Search for existing attachments to prevent duplicates in media library'
+* added new filter 'wp_all_import_is_post_to_update' to skip needed posts
+* fixed imports pagination
+* fixed preview taxonomies
+* fixed upload folder creation when 'upload_dir' filter defined
+* fixed db schema for wpmu when new site added
 
 = 3.2.3 =
 * fixed re-count record when a file has been changed at an import setting screen

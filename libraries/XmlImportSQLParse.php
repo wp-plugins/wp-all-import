@@ -14,14 +14,14 @@ class PMXI_SQLParser{
 		
 		$wp_uploads = wp_upload_dir();		
 
-		$this->targetDir = (!$targetDir) ? pmxi_secure_file($wp_uploads['basedir'] . '/wpallimport/uploads', 'uploads') : $targetDir;
+		$this->targetDir = ( ! $targetDir ) ? wp_all_import_secure_file($wp_uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::UPLOADS_DIRECTORY ) : $targetDir;
 	}
 
 	public function parse(){		
 
         $tmpname = wp_unique_filename($this->targetDir, str_replace("sql", "xml", basename($this->_filename)));
         
-        $this->xml_path = $this->targetDir  . '/' . url_title($tmpname);
+        $this->xml_path = $this->targetDir  . '/' . wp_all_import_url_title($tmpname);
         
         $this->toXML();
 

@@ -2,6 +2,7 @@
  * plugin admin area javascript
  */
 (function($){$(function () {
+
 	if ( ! $('body.wpallimport-plugin').length) return; // do not execute any code if we are not on plugin page	
 	
 	// fix wpallimport-layout position
@@ -516,7 +517,7 @@
 					tagno += '#prev' == $(this).attr('href') ? -1 : 1;
 					$tag.addClass('loading').css('opacity', 0.7);
 					$preview.addClass('loading').css('opacity', 0.7);
-					$.post($tagURL, {tagno: tagno, import_action: import_action}, function (data) {
+					$.post($tagURL, {tagno: tagno, import_action: import_action, security: wp_all_import_security}, function (data) {
 						var $indicator = $('<span />').insertBefore($tag);
 						$tag.replaceWith(data.html);
 						fix_tag_position();
@@ -534,7 +535,7 @@
 				$preview.find('input[name="tagno"]').unbind('click').die('click').live('change', function () {
 					tagno = (parseInt($(this).val()) > parseInt($preview.find('.pmxi_count').html())) ? $preview.find('.pmxi_count').html() : ( (parseInt($(this).val())) ? $(this).val() : 1 );									
 					$tag.addClass('loading').css('opacity', 0.7);
-					$.post($tagURL, {tagno: tagno}, function (data) {
+					$.post($tagURL, {tagno: tagno, security: wp_all_import_security}, function (data) {
 						var $indicator = $('<span />').insertBefore($tag);
 						$tag.replaceWith(data.html);
 						fix_tag_position();
@@ -579,7 +580,8 @@
 			var request = {
 				action:'auto_detect_cf',			
 				fields: $('#existing_meta_keys').val().split(','),
-				post_type: $('input[name=custom_type]').val()
+				post_type: $('input[name=custom_type]').val(),
+				security: wp_all_import_security
 		    };		
 		    $(this).attr({'disabled':'disabled'});   
 
@@ -703,6 +705,7 @@
 				if ($cf_name != ''){
 					var request = {
 						action:'auto_detect_sf',
+						security: wp_all_import_security,
 						post_type: $('input[name=custom_type]').val(),
 						name: $cf_name
 				    };		
@@ -804,7 +807,8 @@
 			});
 				
 			var request = {
-				action:'test_images',			
+				action:'test_images',		
+				security: wp_all_import_security,	
 				download: ths.attr('rel'),
 				imgs:imgs				
 		    };		    
@@ -833,140 +837,7 @@
 				dataType: "json"
 			});
 			
-		});	
-
-		/* Merge Main XML file with sub file by provided fields */
-		$form.find('.parse').live('click', function(){
-
-			var submit = true;
-
-			if ("" == $form.find('input[name=nested_url]').val()){
-				$form.find('input[name=nested_url]').css({'background':'red'});
-				submit = false;
-			}
-			
-			if (submit){
-
-				var ths = $(this);		
-				var $fileURL = $form.find('input[name=nested_url]').val();
-
-				$(this).attr({'disabled':'disabled'});
-
-				var request = {
-					action:'nested_merge',
-					filePath: $fileURL,					
-			    };		    
-			    
-			    var $indicator = $('<span class="img_preloader" style="top:10px;"/>').insertBefore($(this)).show();
-
-			    $form.find('.nested_msgs').html('');
-
-				$.ajax({
-					type: 'POST',
-					url: ajaxurl + ((typeof import_id != "undefined") ? '?id=' + import_id : ''),
-					data: request,
-					success: function(response) {
-						$indicator.remove();
-						
-						if (response.success)
-						{
-							//$form.find('.nested_cancel').click();
-
-							$form.find('.nested_files ul').append('<li rel="' + $form.find('.nested_files ul').find('li').length + '">' + $fileURL + ' <a href="javascript:void(0);" class="unmerge">remove</a></li>');
-							$form.find('input[name=nested_files]').val(window.JSON.stringify(response.nested_files));
-
-							var $tag = $('.tag');
-							var $tagno = parseInt($tag.find('input[name="tagno"]').val());
-							var $tagURL = 'admin.php?page=pmxi-admin-import&action=tag' + ((typeof import_id != "undefined") ? '&id=' + import_id : '');
-							
-							$tag.addClass('loading').css('opacity', 0.7);
-							$.post($tagURL, {tagno: $tagno, import_action: import_action}, function (data) {
-								var $indicator = $('<span />').insertBefore($tag);
-								$tag.replaceWith(data.html);
-								fix_tag_position();
-								$indicator.next().tag().prevObject.remove();
-								if ($('#variations_xpath').length){						
-									$('#variations_xpath').data('checkedValue', '').change();
-								}												   
-							}, 'json');
-							return false;							
-
-						}
-						else
-						{
-							$form.find('.nested_msgs').html(response.msg);
-						}
-						ths.removeAttr('disabled');
-					},
-					error: function(request) {		
-						$indicator.remove();
-						ths.removeAttr('disabled');
-					},			
-					dataType: "json"
-				});
-			}
-		});
-
-		/* Unmerge nested XMl/CSV files */
-		$form.find('.unmerge').live('click', function(){
-
-			var ths = $(this);		
-
-			$(this).attr({'disabled':'disabled'});
-
-			var $indicator = $('<span class="img_preloader" style="top:5px;"/>').insertBefore($(this)).show();
-						
-			var request = {
-				action:'unmerge_file',
-				source: ths.parents('li:first').attr('rel'),				
-		    };		    
-
-		    $form.find('.nested_msgs').html('');
-
-			$.ajax({
-				type: 'POST',
-				url: ajaxurl + ((typeof import_id != "undefined") ? '?id=' + import_id : ''),
-				data: request,
-				success: function(response) {
-					$indicator.remove();
-					if (response.success){		
-
-						ths.parents('li:first').remove();
-						$form.find('input[name=nested_files]').val(window.JSON.stringify(response.nested_files));
-
-						var $tag = $('.tag');
-						var $tagno = parseInt($tag.find('input[name="tagno"]').val());
-						var $tagURL = 'admin.php?page=pmxi-admin-import&action=tag' + ((typeof import_id != "undefined") ? '&id=' + import_id : '');
-						
-						$tag.addClass('loading').css('opacity', 0.7);
-						$.post($tagURL, {tagno: $tagno, import_action: import_action}, function (data) {
-							var $indicator = $('<span />').insertBefore($tag);
-							$tag.replaceWith(data.html);
-							fix_tag_position();
-							$indicator.next().tag().prevObject.remove();
-							if ($('#variations_xpath').length){						
-								$('#variations_xpath').data('checkedValue', '').change();
-							}										   
-						}, 'json');
-						return false;						
-					}
-					else{
-						$form.find('.msgs').html(response.errors);
-						$form.find('.pmxi_counter').remove();
-					}
-					ths.removeAttr('disabled');
-				},
-				error: function(request) {		
-					$indicator.remove();						
-					ths.removeAttr('disabled');
-				},			
-				dataType: "json"
-			});
-		});
-
-		$form.find('input[name=nested_url]').focus(function(){
-			$(this).css({'background':'#fff'});
-		});		
+		});				
 
 		var is_firefox = navigator.userAgent.indexOf('Firefox') > -1;
 		var is_safari = navigator.userAgent.indexOf("Safari") > -1;
@@ -1068,7 +939,7 @@
 			go_to_template = false;
 			$submit.hide();
 			var evaluate = function(){				
-				$.post('admin.php?page=pmxi-admin-import&action=evaluate', {xpath: $input.val(), show_element: $goto_element.val(), root_element:$root_element.val(), is_csv: $apply_delimiter.length, delimiter:$csv_delimiter.val()}, function (response) {					
+				$.post('admin.php?page=pmxi-admin-import&action=evaluate', {xpath: $input.val(), show_element: $goto_element.val(), root_element:$root_element.val(), is_csv: $apply_delimiter.length, delimiter:$csv_delimiter.val(), security: wp_all_import_security}, function (response) {					
 					if (response.result){
 						$('.wpallimport-elements-preloader').hide();
 						$('.ajax-console').html(response.html);
@@ -1240,7 +1111,7 @@
 				else
 					filter += node.replace(/->/g, '/');
 
-				if (is_attr) filter += '[@' + attr_name;
+				if (is_attr) filter += '@' + attr_name;
  
 				switch (condition){
 					case 'equals':
@@ -1268,16 +1139,16 @@
 						filter += '[not(contains(.,"%s"))]';
 						break;
 					case 'is_empty':
-						filter += '[not(text())]';
+						filter += '[not(string())]';
 						break;
 					case 'is_not_empty':
-						filter += '[text()]';
+						filter += '[string()]';
 						break;
 				}
 
 				filter = filter.replace('%s', value);
 
-				if (is_attr) filter += ']';
+				//if (is_attr) filter += ']';
 
 				if (clause) filter += ' ' + clause + ' ';				
 
@@ -1345,7 +1216,7 @@
 			$tag.find('.navigation a').live('click', function () {
 				tagno += '#prev' == $(this).attr('href') ? -1 : 1;				
 				$tag.addClass('loading').css('opacity', 0.7);
-				$.post($tagURL, {tagno: tagno, import_action: import_action}, function (data) {
+				$.post($tagURL, {tagno: tagno, import_action: import_action, security: wp_all_import_security}, function (data) {
 					var $indicator = $('<span />').insertBefore($tag);
 					$tag.replaceWith(data.html);
 					fix_tag_position();
@@ -1361,7 +1232,7 @@
 				tagno = (parseInt($(this).val()) > parseInt($tag.find('.pmxi_count').html())) ? $tag.find('.pmxi_count').html() : ( (parseInt($(this).val())) ? $(this).val() : 1 );				
 				$(this).val(tagno);
 				$tag.addClass('loading').css('opacity', 0.7);
-				$.post($tagURL, {tagno: tagno, import_action: import_action}, function (data) {
+				$.post($tagURL, {tagno: tagno, import_action: import_action, security: wp_all_import_security}, function (data) {
 					var $indicator = $('<span />').insertBefore($tag);
 					$tag.replaceWith(data.html);
 					fix_tag_position();
@@ -1399,7 +1270,7 @@
 			
 			if ($key != "" && $custom_name.attr('rel') != "done"){
 				$ths.addClass('loading');
-				$.post('admin.php?page=pmxi-admin-settings&action=meta_values', {key: $key}, function (data) {
+				$.post('admin.php?page=pmxi-admin-settings&action=meta_values', {key: $key, security: wp_all_import_security}, function (data) {
 					if (data.meta_values.length){
 						$ths.autocomplete({
 							source: eval(data.meta_values),
@@ -1463,6 +1334,10 @@
 	 	if (parent_td.find('input:first').val() == '') parent_td.find('.hierarhy-output').val('');	 			 	
 	});
 
+	$('.tax_hierarchical_logic').find('.remove-ico').live('click', function(){
+		$(this).parents('li:first').remove();
+	});
+
 	$('.add-new-ico').live('click', function(){				
 		var count = $(this).parents('tr:first').find('ol.sortable').find('li.dragging').length + 1;
 
@@ -1484,6 +1359,15 @@
 		$('.widefat').bind('focus', insertxpath );
 
 	});	
+
+	$('.add-new-cat').click(function(){
+		var $template = $(this).parents('td:first').find('ul.tax_hierarchical_logic').children('li.template');		
+		var $number = $(this).parents('td:first').find('ul.tax_hierarchical_logic').children('li').length - 1;
+		var $cloneName = $template.find('input.assign_term').attr('name').replace('NUMBER', $number);		
+		$clone = $template.clone(true);
+		$clone.find('input[name^=tax_hierarchical_assing]').attr('name', $cloneName);
+		$clone.insertBefore($template).css('display', 'none').removeClass('template').fadeIn().find('input.switcher').change();	
+	});
 
 	$('ol.sortable').each(function(){
 		if ( ! $(this).children('li').not('.template').length ) $(this).next('.add-new-ico').click();
@@ -1630,7 +1514,7 @@
 
 		wplupload = $('#select-files').wplupload({
 			runtimes : 'gears,browserplus,html5,flash,silverlight,html4',
-			url : 'admin.php?page=pmxi-admin-settings&action=upload',
+			url : 'admin.php?page=pmxi-admin-settings&action=upload&_wpnonce=' + wp_all_import_security,
 			container: 'plupload-ui',
 			browse_button : 'select-files',
 			file_data_name : 'async-upload',

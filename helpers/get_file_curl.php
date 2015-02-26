@@ -2,18 +2,18 @@
 
 if ( ! function_exists('get_file_curl') ):
 
-	function get_file_curl($url, $fullpath, $to_variable = false, $iteration = 0) {
+	function get_file_curl($url, $fullpath, $to_variable = false, $iteration = 0) {		
 		
-		$request = wp_remote_get($url);
+		$request = wp_remote_get($url);		
 		
 		if ( ! is_wp_error($request) ){
 
 			$rawdata = wp_remote_retrieve_body( $request );				
 			
 			if (empty($rawdata)){
-				$result =  pmxi_curl_download($url, $fullpath, $to_variable);	
+				$result =  pmxi_curl_download($url, $fullpath, $to_variable);					
 				if ( ! $result and ! $iteration){					
-					$url = pmxi_translate_uri($url);
+					$url = wp_all_import_translate_uri($url);
 					return get_file_curl($url, $fullpath, $to_variable, 1);
 				}
 				return $result;
@@ -29,7 +29,7 @@ if ( ! function_exists('get_file_curl') ):
 			{			
 				$result =  pmxi_curl_download($url, $fullpath, $to_variable);	
 				if ( ! $result and ! $iteration){
-					$url = pmxi_translate_uri($url);
+					$url = wp_all_import_translate_uri($url);
 					return get_file_curl($url, $fullpath, $to_variable, 1);
 				}
 				return $result;
@@ -43,7 +43,7 @@ if ( ! function_exists('get_file_curl') ):
 			$curl = pmxi_curl_download($url, $fullpath, $to_variable);							
 
 			if ($curl === false and ! $iteration){				
-				$url = pmxi_translate_uri($url);
+				$url = wp_all_import_translate_uri($url);
 				return get_file_curl($url, $fullpath, $to_variable, 1);
 								
 			}
@@ -105,6 +105,14 @@ if ( ! function_exists('curl_exec_follow') ):
 	      $original_url = curl_getinfo($ch, CURLINFO_EFFECTIVE_URL);
 	      $newurl = $original_url;
 	      
+	      $url_data = parse_url($newurl);
+
+	      if (!empty($url_data['user']) and !empty($url_data['pass'])){
+	      	curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY );
+			curl_setopt($ch, CURLOPT_USERPWD, $url_data['user']. ":" . $url_data['pass']); 
+			$newurl = $url_data['scheme'] . '://' . $url_data['host'] . $url_data['path'] . '?' . $url_data['query'];			
+	      }
+
 	      $rch = curl_copy_handle($ch);
 	      
 	      curl_setopt($rch, CURLOPT_HEADER, true);

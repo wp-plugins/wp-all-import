@@ -1,5 +1,9 @@
 <?php
 function pmxi_wp_ajax_auto_detect_cf(){
+
+	if ( ! check_ajax_referer( 'wp_all_import_secure', 'security', false )){
+		exit( json_encode(array('result' => array(), 'msg' => __('Security check', 'wp_all_import_plugin'))) );
+	}
 	
 	$input = new PMXI_Input();
 	$fields = $input->post('fields', array());
@@ -45,12 +49,12 @@ function pmxi_wp_ajax_auto_detect_cf(){
 
 	if (empty($result)){
 		$custom_type = get_post_type_object( $post_type );		
-		$msg = sprintf(__('No Custom Fields are present in your database for %s', 'pmxi_plugin'), $custom_type->labels->name);
+		$msg = sprintf(__('No Custom Fields are present in your database for %s', 'wp_all_import_plugin'), $custom_type->labels->name);
 	}
 	elseif (count($result) === 1)
-		$msg = sprintf(__('%s field was automatically detected.', 'pmxi_plugin'), count($result));
+		$msg = sprintf(__('%s field was automatically detected.', 'wp_all_import_plugin'), count($result));
 	else{
-		$msg = sprintf(__('%s fields were automatically detected.', 'pmxi_plugin'), count($result));
+		$msg = sprintf(__('%s fields were automatically detected.', 'wp_all_import_plugin'), count($result));
 	}
 
 	exit( json_encode(array('result' => $result, 'msg' => $msg)) );

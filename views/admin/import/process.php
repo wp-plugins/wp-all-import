@@ -5,11 +5,11 @@
 	<div class="wpallimport-header">
 		<div class="wpallimport-logo"></div>
 		<div class="wpallimport-title">
-			<p><?php _e('WP All Import', 'pmxi_plugin'); ?></p>
-			<h2><?php _e('Import XML / CSV', 'pmxi_plugin'); ?></h2>					
+			<p><?php _e('WP All Import', 'wp_all_import_plugin'); ?></p>
+			<h2><?php _e('Import XML / CSV', 'wp_all_import_plugin'); ?></h2>					
 		</div>
 		<div class="wpallimport-links">
-			<a href="http://www.wpallimport.com/support/" target="_blank"><?php _e('Support', 'pmxi_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/" target="_blank"><?php _e('Documentation', 'pmxi_plugin'); ?></a>
+			<a href="http://www.wpallimport.com/support/" target="_blank"><?php _e('Support', 'wp_all_import_plugin'); ?></a> | <a href="http://www.wpallimport.com/documentation/" target="_blank"><?php _e('Documentation', 'wp_all_import_plugin'); ?></a>
 		</div>
 
 		<div class="clear"></div>	
@@ -18,47 +18,47 @@
 			<div class="clear"></div>
 
 			<div class="step_description">
-				<h2><?php _e('Import <span id="status">in Progress</span>', 'pmxi_plugin') ?></h2>
-				<h3 id="process_notice"><?php _e('Importing may take some time. Please do not close your browser or refresh the page until the process is complete.', 'pmxi_plugin'); ?></h3>		
+				<h2><?php _e('Import <span id="status">in Progress</span>', 'wp_all_import_plugin') ?></h2>
+				<h3 id="process_notice"><?php _e('Importing may take some time. Please do not close your browser or refresh the page until the process is complete.', 'wp_all_import_plugin'); ?></h3>		
 				
 			</div>		
 			<div id="processbar" class="rad14">
 				<div class="rad14"></div>			
 			</div>			
 			<div id="import_progress">
-				<span id="left_progress"><?php _e('Time Elapsed', 'pmxi_plugin');?> <span id="then">00:00:00</span></span>
+				<span id="left_progress"><?php _e('Time Elapsed', 'wp_all_import_plugin');?> <span id="then">00:00:00</span></span>
 				<span id="center_progress"><span id="percents_count">0</span>%</span>
-				<span id="right_progress"><?php _e('Created','pmxi_plugin');?> <span id="created_count"><?php echo $update_previous->created; ?></span> / <?php _e('Updated','pmxi_plugin');?> <span id="updated_count"><?php echo $update_previous->updated; ?></span> <?php _e('of', 'pmxi_plugin');?> <span id="of"><?php echo $update_previous->count; ?></span> <?php _e('records', 'pmxi_plugin'); ?></span>				
+				<span id="right_progress"><?php _e('Created','wp_all_import_plugin');?> <span id="created_count"><?php echo $update_previous->created; ?></span> / <?php _e('Updated','wp_all_import_plugin');?> <span id="updated_count"><?php echo $update_previous->updated; ?></span> <?php _e('of', 'wp_all_import_plugin');?> <span id="of"><?php echo $update_previous->count; ?></span> <?php _e('records', 'wp_all_import_plugin'); ?></span>				
 			</div>			
 		</div>
 
 		<div id="import_finished">
-			<h1><?php _e('Import Complete!', 'pmxi_plugin'); ?></h1>
-			<h3><?php printf(__('WP All Import successfully imported your file <span>%s</span> into your WordPress installation!','pmxi_plugin'), (PMXI_Plugin::$session->source['type'] != 'url') ? basename(PMXI_Plugin::$session->source['path']) : PMXI_Plugin::$session->source['path'])?></h3>			
+			<h1><?php _e('Import Complete!', 'wp_all_import_plugin'); ?></h1>
+			<h3><?php printf(__('WP All Import successfully imported your file <span>%s</span> into your WordPress installation!','wp_all_import_plugin'), (PMXI_Plugin::$session->source['type'] != 'url') ? basename(PMXI_Plugin::$session->source['path']) : PMXI_Plugin::$session->source['path'])?></h3>			
 			<?php if ($ajax_processing): ?>
-			<p class="wpallimport-log-details"><?php printf(__('There were <span class="wpallimport-errors-count">%s</span> errors and <span class="wpallimport-warnings-count">%s</span> warnings in this import. You can see these in the import log.', 'pmxi_plugin'), 0, 0); ?></p>
+			<p class="wpallimport-log-details"><?php printf(__('There were <span class="wpallimport-errors-count">%s</span> errors and <span class="wpallimport-warnings-count">%s</span> warnings in this import. You can see these in the import log.', 'wp_all_import_plugin'), 0, 0); ?></p>
 			<?php elseif ((int) PMXI_Plugin::$session->errors or (int) PMXI_Plugin::$session->warnings): ?>
-			<p class="wpallimport-log-details" style="display:block;"><?php printf(__('There were <span class="wpallimport-errors-count">%s</span> errors and <span class="wpallimport-warnings-count">%s</span> warnings in this import. You can see these in the import log.', 'pmxi_plugin'), PMXI_Plugin::$session->errors, PMXI_Plugin::$session->warnings); ?></p>
+			<p class="wpallimport-log-details" style="display:block;"><?php printf(__('There were <span class="wpallimport-errors-count">%s</span> errors and <span class="wpallimport-warnings-count">%s</span> warnings in this import. You can see these in the import log.', 'wp_all_import_plugin'), PMXI_Plugin::$session->errors, PMXI_Plugin::$session->warnings); ?></p>
 			<?php endif; ?>
 			<hr>
-			<a href="<?php echo add_query_arg(array('id' => $update_previous->id, 'page' => 'pmxi-admin-history'), $this->baseUrl); ?>" id="download_log"><?php _e('View Logs','pmxi_plugin');?></a>			
-			<a href="<?php echo add_query_arg(array('page' => 'pmxi-admin-manage'), remove_query_arg(array('id','page'), $this->baseUrl)); ?>" id="manage_imports"><?php _e('Manage Imports', 'pmxi_plugin') ?></a>
+			<a href="<?php echo add_query_arg(array('id' => $update_previous->id, 'page' => 'pmxi-admin-history'), $this->baseUrl); ?>" id="download_log"><?php _e('View Logs','wp_all_import_plugin');?></a>			
+			<a href="<?php echo add_query_arg(array('page' => 'pmxi-admin-manage'), remove_query_arg(array('id','page'), $this->baseUrl)); ?>" id="manage_imports"><?php _e('Manage Imports', 'wp_all_import_plugin') ?></a>
 		</div>
 
 	</div>
 
-	<div class="wpallimport-modal-message rad4"><?php printf(__('WP All Import tried to process <span id="wpallimport-records-per-iteration">%s</span> records in one iteration, but your server terminated the process before it could finish. <a href="javascript:void(0);" id="wpallimport-try-again">Click here to try again</a>, but with only <span id="wpallimport-new-records-per-iteration">%s</span> records per iteration.', 'pmxi_plugin'), $update_previous->options['records_per_request'], ((ceil($update_previous->options['records_per_request']/2)) ? ceil($update_previous->options['records_per_request']/2) : 1)); ?></div>
+	<div class="wpallimport-modal-message rad4"><?php printf(__('WP All Import tried to process <span id="wpallimport-records-per-iteration">%s</span> records in one iteration, but your server terminated the process before it could finish. <a href="javascript:void(0);" id="wpallimport-try-again">Click here to try again</a>, but with only <span id="wpallimport-new-records-per-iteration">%s</span> records per iteration.', 'wp_all_import_plugin'), $update_previous->options['records_per_request'], ((ceil($update_previous->options['records_per_request']/2)) ? ceil($update_previous->options['records_per_request']/2) : 1)); ?></div>
 	
 	<fieldset id="logwrapper">
-		<legend><?php _e('Log','pmxi_plugin');?></legend>
+		<legend><?php _e('Log','wp_all_import_plugin');?></legend>
 		<div id="loglist"></div>		
 	</fieldset>	
 
 	<input type="hidden" class="count_failures" value="0"/>
 	<input type="hidden" class="records_per_request" value="<?php echo $update_previous->options['records_per_request']; ?>"/>
-	<span id="wpallimport-error-terminated" style="display:none;"><?php printf(__('Unfortunately, your server terminated the import process. Click here for our <a href="%s" target="_blank">troubleshooting guide</a>, or ask your web host to look in your error_log file for an error that takes place at the same time you are trying to run your import, and fix whatever setting is causing the import to fail.', 'pmxi_plugin'), 'http://www.wpallimport.com/documentation/server-terminated-import'); ?></span>
+	<span id="wpallimport-error-terminated" style="display:none;"><?php printf(__('Unfortunately, your server terminated the import process. Click here for our <a href="%s" target="_blank">troubleshooting guide</a>, or ask your web host to look in your error_log file for an error that takes place at the same time you are trying to run your import, and fix whatever setting is causing the import to fail.', 'wp_all_import_plugin'), 'http://www.wpallimport.com/documentation/advanced/troubleshooting/'); ?></span>
 
-	<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'pmxi_plugin'); ?> <span></span></a>
+	<a href="http://soflyy.com/" target="_blank" class="wpallimport-created-by"><?php _e('Created by', 'wp_all_import_plugin'); ?> <span></span></a>
 	
 </div>
 
@@ -133,7 +133,7 @@
 
 		function parse_element(failures){			
 
-			$.post('admin.php?page=pmxi-admin-import&action=process&id=' + import_id + '&failures=' + failures, {}, function (data) {								
+			$.post('admin.php?page=pmxi-admin-import&action=process&id=' + import_id + '&failures=' + failures + '&_wpnonce=' + wp_all_import_security, {}, function (data) {								
 
 				// responce with error
 				if (data != null && typeof data.created != "undefined"){
@@ -194,7 +194,8 @@
 
 						var request = {
 							action:'import_failed',			
-							id: '<?php echo $update_previous->id; ?>'						
+							id: '<?php echo $update_previous->id; ?>',
+							security: wp_all_import_security
 					    };	
 
 					    $.ajax({

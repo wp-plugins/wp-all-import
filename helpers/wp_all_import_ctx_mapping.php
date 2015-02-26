@@ -1,7 +1,7 @@
 <?php
 
-if ( ! function_exists('pmxi_ctx_mapping')){
-	function pmxi_ctx_mapping( $ctx, $mapping_rules, $tx_name ){
+if ( ! function_exists('wp_all_import_ctx_mapping')){
+	function wp_all_import_ctx_mapping( $ctx, $mapping_rules, $tx_name ){
 		if ( ! empty( $mapping_rules) and $ctx['is_mapping']){			
 			foreach ($mapping_rules as $rule) {
 				if ( ! empty($rule[trim($ctx['name'])])){ 
@@ -9,7 +9,7 @@ if ( ! function_exists('pmxi_ctx_mapping')){
 					break;
 				}
 			}			
-		}		
+		}				
 		return apply_filters('pmxi_single_category', $ctx, $tx_name);
 	}
 }
