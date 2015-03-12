@@ -115,7 +115,7 @@ class PMXI_Handler extends PMXI_Session {
 		
 		$now                = time();
 		$expired_sessions   = array();
-		$wpallimport_session_expires = $wpdb->get_results( "SELECT option_name, option_value FROM $wpdb->options WHERE option_name LIKE '_wpallimport_session_expires_". $import_id ."_%'" );			
+		$wpallimport_session_expires = $wpdb->get_results( $wpdb->prepare("SELECT option_name, option_value FROM $wpdb->options WHERE option_name LIKE %s", "_wpallimport_session_expires_" . $import_id . "_%") );			
 		
 		foreach ( $wpallimport_session_expires as $wpallimport_session_expire ) {
 			//if ( $now > intval( $wpallimport_session_expire->option_value ) ) {

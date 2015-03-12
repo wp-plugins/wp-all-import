@@ -1231,6 +1231,10 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				$template_options['wizard_type'] = $post['wizard_type'];
 				$template_options['delimiter'] = $post['delimiter'];
 
+				if ($this->isWizard and $post['wizard_type'] == 'new') {
+					$template_options['create_new_records'] = 1;
+				}
+
 				$this->data['post'] = $template_options;
 				PMXI_Plugin::$session->set('is_loaded_template', $load_template);
 				PMXI_Plugin::$session->set('options', $template_options);

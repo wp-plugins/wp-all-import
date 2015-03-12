@@ -29,6 +29,14 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 		$get['pagenum'] = absint($get['pagenum']);
 		extract($get);
 		$this->data += $get;
+
+		if ( ! in_array($order_by, array('registered_on', 'id', 'name'))){
+			$order_by = 'registered_on';
+		}
+
+		if ( ! in_array($order, array('DESC', 'ASC'))){
+			$order = 'DESC';
+		}
 		
 		$list = new PMXI_Import_List();
 		$post = new PMXI_Post_Record();

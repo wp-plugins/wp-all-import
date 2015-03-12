@@ -7,23 +7,33 @@ function pmxi_admin_head(){
 		}
 	</style>
 	<?php	
+	
 	$input = new PMXI_Input();
-	$import_id = $input->get('id', false);
-	$import_action = $input->get('action', false);	
-	if ($import_id){
+	$get_params = $input->get(array(
+		'id' => false,
+		'action' => false
+	));
+	
+	if ($get_params['id']){
 		?>
 		<script type="text/javascript">
-			var import_id = '<?php echo $import_id; ?>';			
+			var import_id = '<?php echo $get_params["id"]; ?>';			
 		</script>
 		<?php
 	}
 
-	$wp_all_import_ajax_nonce = wp_create_nonce( "wp_all_import_secure" );
+	$wp_all_import_ajax_nonce = '';
+
+	if ( get_current_user_id() and current_user_can('manage_options')) {
+
+		$wp_all_import_ajax_nonce = wp_create_nonce( "wp_all_import_secure" );		
+
+	}
 
 	?>
-		<script type="text/javascript">
-			var import_action = '<?php echo $import_action; ?>';
-			var wp_all_import_security = '<?php echo $wp_all_import_ajax_nonce; ?>';
-		</script>
+	<script type="text/javascript">
+		var import_action = '<?php echo $get_params["action"]; ?>';
+		var wp_all_import_security = '<?php echo $wp_all_import_ajax_nonce; ?>';
+	</script>
 	<?php
 }

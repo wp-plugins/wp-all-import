@@ -25,7 +25,17 @@ class PMXI_Admin_History extends PMXI_Controller_Admin {
 			'id' => ''
 		));
 		$get['pagenum'] = absint($get['pagenum']);
+		$get['id'] = absint($get['id']);
 		extract($get);
+
+		if ( ! in_array($order_by, array('date', 'id', 'run_time', 'type'))){
+			$order_by = 'date';
+		}
+
+		if ( ! in_array($order, array('DESC', 'ASC'))){
+			$order = 'DESC';
+		}
+
 		if (empty($id)){ 
 			wp_redirect(add_query_arg(array('page' => 'pmxi-admin-manage', 'pmxi_nt' => urlencode(__('Import is not specified.', 'wp_all_import_plugin'))), $this->baseUrl)); die();
 		}

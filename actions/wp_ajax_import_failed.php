@@ -4,6 +4,10 @@ function pmxi_wp_ajax_import_failed(){
 	if ( ! check_ajax_referer( 'wp_all_import_secure', 'security', false )){
 		exit( json_encode(array('result' => false, 'msg' => __('Security check', 'wp_all_import_plugin'))) );
 	}
+
+	if ( ! current_user_can('manage_options') ){
+		exit( json_encode(array('result' => false, 'msg' => __('Security check', 'wp_all_import_plugin'))) );
+	}
 	
 	extract($_POST);
 	$import = new PMXI_Import_record();
