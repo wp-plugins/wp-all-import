@@ -634,16 +634,25 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 				'logger' => $logger,
 				'chunk'  => $chunk,
 				'xpath_prefix' => $xpath_prefix
-			);			
+			);		
+
+			$parse_functions = apply_filters('wp_all_import_addon_parse', array());
+
 			foreach (PMXI_Admin_Addons::get_active_addons() as $class) {							
 				$model_class = str_replace("_Plugin", "_Import_Record", $class);	
 				if (class_exists($model_class)){						
 					$addons[$class] = new $model_class();
 					$addons_data[$class] = ( method_exists($addons[$class], 'parse') ) ? $addons[$class]->parse($parsingData) : false;				
 				}
-				else{
-					$parse_func = $class . '_parse';					
-					if (function_exists($parse_func)) $addons_data[$class] = call_user_func($parse_func, $parsingData);					
+				else{					
+					if ( ! empty($parse_functions[$class]) ){ 
+
+						if ( is_array($parse_functions[$class]) and is_callable($parse_functions[$class]) or ! is_array($parse_functions[$class]) and function_exists($parse_functions[$class])  ){
+
+							$addons_data[$class] = call_user_func($parse_functions[$class], $parsingData);					
+						}
+						
+					}
 				}
 			}
 
@@ -1090,14 +1099,24 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						'xpath_prefix' => $xpath_prefix
 					);
 
+					$import_functions = apply_filters('wp_all_import_addon_import', array());
+
 					// deligate operation to addons
 					foreach (PMXI_Admin_Addons::get_active_addons() as $class){ 						
 						if (class_exists($class)){
 							if ( method_exists($addons[$class], 'import') ) $addons[$class]->import($importData);	
 						}
-						else{
-							$import_func = $class . '_import';							
-							if (function_exists($import_func)) call_user_func($import_func, $importData, $addons_data[$class]);
+						else{							
+
+							if ( ! empty($import_functions[$class]) ){ 
+
+								if ( is_array($import_functions[$class]) and is_callable($import_functions[$class]) or ! is_array($import_functions[$class]) and function_exists($import_functions[$class])  ){
+
+									call_user_func($import_functions[$class], $importData, $addons_data[$class]);			
+								}
+								
+							}
+
 						}
 					}
 					
@@ -1670,14 +1689,24 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						'logger' => $logger						
 					);
 
+					$saved_functions = apply_filters('wp_all_import_addon_saved_post', array());
+
 					// deligate operation to addons
 					foreach (PMXI_Admin_Addons::get_active_addons() as $class){ 
 						if (class_exists($class)){
 							if ( method_exists($addons[$class], 'saved_post') ) $addons[$class]->saved_post($importData);	
 						}
-						else{
-							$saved_func = $class . '_saved_post';
-							if (function_exists($saved_func)) call_user_func($saved_func, $importData);
+						else{							
+
+							if ( ! empty($saved_functions[$class]) ){ 
+
+								if ( is_array($saved_functions[$class]) and is_callable($saved_functions[$class]) or ! is_array($saved_functions[$class]) and function_exists($saved_functions[$class])  ){
+
+									call_user_func($saved_functions[$class], $importData);		
+								}
+								
+							}
+														
 						}
 					}
 					

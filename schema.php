@@ -47,7 +47,7 @@ CREATE TABLE {$table_prefix}imports (
 	feed_type ENUM('xml','csv','zip','gz','') NOT NULL DEFAULT '',	
 	path TEXT,	
 	xpath TEXT,		
-	options TEXT,		
+	options LONGTEXT,		
 	registered_on DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00',				
   	root_element VARCHAR(255) DEFAULT '',
   	processing BOOL NOT NULL DEFAULT 0,
