@@ -1423,7 +1423,7 @@
 	    			
 	    		}
 	    	});
-	    	$(this).find('input[name^=custom_mapping_rules]').val(window.JSON.stringify(values));
+	    	$(this).find('input[name^=custom_mapping_rules], .pmre_mapping_rules').val(window.JSON.stringify(values));
 	    });
 
 	    serialize_ctx_mapping();
