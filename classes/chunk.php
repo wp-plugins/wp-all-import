@@ -21,7 +21,9 @@ class PMXI_Chunk {
     'type' => 'upload',
     'encoding' => 'UTF-8',
     'pointer' => 1,
-    'chunkSize' => 1024
+    'chunkSize' => 1024,
+    'filter' => true,
+    'get_cloud' => false
   );
   
   /**
@@ -86,10 +88,10 @@ class PMXI_Chunk {
 
     if ($is_html) return;
 
-    if (empty($this->options['element'])){
+    if (empty($this->options['element']) or $this->options['get_cloud']){
       //$founded_tags = array();   
 
-      if (function_exists('stream_filter_register')){
+      if (function_exists('stream_filter_register') and $this->options['filter']){
         stream_filter_register('preprocessxml', 'preprocessXml_filter');
         $path = 'php://filter/read=preprocessxml/resource=' . $this->file;   
       }
@@ -126,7 +128,7 @@ class PMXI_Chunk {
         }              
       } */       
      
-      if (!empty($this->cloud)){      
+      if ( ! empty($this->cloud) and empty($this->options['element']) ){
         
         arsort($this->cloud);           
 
@@ -148,7 +150,7 @@ class PMXI_Chunk {
       }
     }                           
 
-    if (function_exists('stream_filter_register')){
+    if (function_exists('stream_filter_register') and $this->options['filter']){
       stream_filter_register('preprocessxml', 'preprocessXml_filter');
       $path = 'php://filter/read=preprocessxml/resource=' . $this->file;        
     }

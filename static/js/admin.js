@@ -53,19 +53,20 @@
 
 	// swither show/hide logic
 	$('input.switcher-horizontal').live('change', function (e) {	
-
-		if ($(this).is(':radio:checked')) {
-			$(this).parents('form').find('input.switcher-horizontal:radio[name="' + $(this).attr('name') + '"]').not(this).change();
+		
+		if ($(this).is(':checked')) {
+			$(this).parents('form').find('input.switcher-horizontal[name="' + $(this).attr('name') + '"]').not(this).change();
 		}
 		var $targets = $('.switcher-target-' + $(this).attr('id'));
 
 		var is_show = $(this).is(':checked'); if ($(this).is('.switcher-reversed')) is_show = ! is_show;
+		
 		if (is_show) {
-			$targets.animate({width:'toggle'}, 350);
+			$targets.animate({width:'205px'}, 350);
 		} else {
-			$targets.animate({width:'toggle'}, 1000).find('.clear-on-switch').add($targets.filter('.clear-on-switch')).val('');
+			$targets.animate({width:'0px'}, 1000).find('.clear-on-switch').add($targets.filter('.clear-on-switch')).val('');
 		}
-	}).change();
+	}).change();	
 	
 	// autoselect input content on click
 	$('input.selectable').live('click', function () {
@@ -1130,7 +1131,7 @@
 						filter += ' < %s';
 						break;
 					case 'equals_or_less':
-						filter += ' =< %s';
+						filter += ' <= %s';
 						break;
 					case 'contains':
 						filter += '[contains(.,"%s")]';
@@ -1672,6 +1673,15 @@
 			$parent.find('.wpallimport-collapsed-content:first').slideUp();
 		}
 	});	
+
+	$('#is_delete_posts').change(function(){
+		if ($(this).is(':checked')){
+			$('.wpallimport-delete-posts-warning').show();
+		}
+		else{
+			$('.wpallimport-delete-posts-warning').hide();
+		}
+	});
 
 	var fix_tag_position = function(){
 		if ($('.wpallimport-layout').length && $('.tag').length){

@@ -532,6 +532,9 @@
 	font-size: 1.3em;
 	text-decoration: underline !important;
 }
+.wpallimport-plugin .wpallimport-delete-posts-warning{
+	display: none;
+}
 /*--------------------------------------------------------------------------
 *
 *	Helpers
@@ -1885,7 +1888,8 @@
 	line-height: 25px;
 	width: 68% !important;
 }
-.wpallimport-plugin .wpallimport-custom-fields .wpallimport-custom-fields-actions{
+.wpallimport-plugin .wpallimport-custom-fields .wpallimport-custom-fields-actions,
+.wpallimport-plugin .wpallimport-real-estate .wpallimport-custom-fields-actions{
 	float: right;	
 	right: 30px;
 	position: relative;
@@ -2058,6 +2062,7 @@
 .wpallimport-plugin .post_taxonomy{	
 	/*margin-bottom: 15px;*/
 	overflow: hidden;
+	padding-left: 5px;
 	/*padding-bottom: 15px;*/
 }
 	.wpallimport-plugin .post_taxonomy .delim{
@@ -2196,8 +2201,8 @@
 	border: 0px;
 }
 .wpallimport-plugin .wpallimport-not-empty{
-	display: block;
-	padding: 5px;
+	/*display: block;
+	padding: 5px;*/
 }
 /*--------------------------------------------------------------------------
 *

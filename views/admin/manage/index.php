@@ -272,10 +272,15 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 										_e('Import failed, please check logs', 'wp_all_import_plugin');
 									}
 									else{
-										$custom_type = get_post_type_object( $item['options']['custom_type'] );
-										$cpt_name = ( ! empty($custom_type)) ? $custom_type->labels->singular_name : '';
+										if (!empty($item['options']['custom_type'])){
+											$custom_type = get_post_type_object( $item['options']['custom_type'] );
+											$cpt_name = ( ! empty($custom_type)) ? $custom_type->label : '';
+										}
+										else{
+											$cpt_name = '';
+										}
 										printf(__('Last run: %s', 'wp_all_import_plugin'), ($item['registered_on'] == '0000-00-00 00:00:00') ? __('never', 'wp_all_import_plugin') : get_date_from_gmt($item['registered_on'], "m/d/Y g:i a")); echo '<br/>';
-										printf(__('%d %ss created', 'wp_all_import_plugin'), $item['created'], $cpt_name); echo '<br/>';
+										printf(__('%d %s created', 'wp_all_import_plugin'), $item['created'], $cpt_name); echo '<br/>';
 										printf(__('%d updated, %d skipped, %d deleted'), $item['updated'], $item['skipped'], $item['deleted']);
 										//printf(__('%d records', 'wp_all_import_plugin'), $item['post_count']);
 									}

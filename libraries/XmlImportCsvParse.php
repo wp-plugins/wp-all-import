@@ -976,7 +976,7 @@ class PMXI_CsvParser
                 $buf_keys = $keys;
                 foreach ($keys as $key => $value) {    
                     if (!$create_new_headers and (preg_match('%\W(http:|https:|ftp:)$%i', $value) or is_numeric($value))) $create_new_headers = true;                                                                    
-                    $value = trim(strtolower(preg_replace('/^[0-9]{1}/','el_', preg_replace('/[^a-z0-9_]/i', '', $value))));                    
+                    $value = trim(strtolower(preg_replace('/^[0-9]{1}/','el_', preg_replace('/[^a-z0-9_]/i', '', $value))));
                     $keys[$key] = (!empty($value)) ? $value : 'undefined' . $key;
                 }            
                 $this->headers = $keys;                                

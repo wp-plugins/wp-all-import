@@ -2,8 +2,10 @@
 
 if ( ! function_exists('get_file_curl') ):
 
-	function get_file_curl($url, $fullpath, $to_variable = false, $iteration = 0) {		
+	function get_file_curl($url, $fullpath, $to_variable = false, $iteration = 0) {				
 		
+		if ( ! preg_match('%^(http|ftp)s?://%i', $url) ) return;
+
 		$request = wp_remote_get($url);		
 		
 		if ( ! is_wp_error($request) ){

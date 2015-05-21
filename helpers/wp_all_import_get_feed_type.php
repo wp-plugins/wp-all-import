@@ -14,7 +14,7 @@ if ( ! function_exists('wp_all_import_get_feed_type')){
 
 		}
 
-		$headers = get_headers($url, 1);
+		$headers = @get_headers($url, 1);
 		$extensions = array('gzip', 'gz', 'xml', 'csv', 'json', 'sql');	
 		$type = false;
 

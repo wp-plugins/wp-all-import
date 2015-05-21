@@ -6,11 +6,29 @@
 	<div class="wpallimport-content-section">
 		<div class="wpallimport-collapsed-header">					
 		<?php if ( "new" == $post['wizard_type']): ?>	
-			<?php if ( ! $this->isWizard ):?>
-				<h3><?php _e('Record Matching', 'wp_all_import_plugin'); ?></h3>	
-			<?php else: ?>
-				<h3 style="padding-left:0;"><?php printf(__('WP All Import will create new %s for each unique record in your file.','wp_all_import_plugin'), $custom_type->labels->name);?></h3>	
-			<?php endif; ?>			
+			<?php 
+				if ( ! $this->isWizard )
+				{
+					?>
+					<h3><?php _e('Record Matching', 'wp_all_import_plugin'); ?></h3>	
+					<?php 
+				}
+				else
+				{ 
+					if ( ! empty(PMXI_Plugin::$session->deligate) and PMXI_Plugin::$session->deligate == 'wpallexport' )
+					{
+						?>
+						<h3 style="padding-left:0;"><?php _e('Choose how exported data will be re-imported.','wp_all_import_plugin');?></h3>	
+						<?php 
+					}
+					else
+					{
+						?>
+						<h3 style="padding-left:0;"><?php printf(__('WP All Import will create new %s for each unique record in your file.','wp_all_import_plugin'), $custom_type->labels->name);?></h3>	
+						<?php 
+					}
+				} 
+			?>			
 			</div>
 			<div class="wpallimport-collapsed-content" style="padding: 0;">
 				<div class="wpallimport-collapsed-content-inner">					
@@ -21,7 +39,7 @@
 								<?php if ( ! $this->isWizard ):?>												 
 								<h4><?php printf(__('WP All Import will associate records in your file with %s it has already created from previous runs of this import based on the Unique Identifier.','wp_all_import_plugin'), $custom_type->labels->name);?></h4>
 								<?php endif; ?>
-								<div class="wpallimport-unique-key-wrapper">
+								<div class="wpallimport-unique-key-wrapper" <?php if (!empty(PMXI_Plugin::$session->deligate)):?>style="display:none;"<?php endif; ?>>
 									<label style="font-weight: bold;"><?php _e("Unique Identifier", "pmxi_plugin"); ?></label>										
 
 									<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php if ( ! $this->isWizard ) echo esc_attr($post['unique_key']); elseif ($post['tmp_unique_key']) echo esc_attr($post['unique_key']); ?>" <?php echo  ( ! $isWizard ) ? 'disabled="disabled"' : '' ?>/>
@@ -44,7 +62,7 @@
 										<p class="info_ico"><?php printf(__('If you run this import again with an updated file, the Unique Identifier allows WP All Import to correctly link the records in your updated file with the %s it will create right now. If multiple records in this file have the same Unique Identifier, only the first will be created. The others will be detected as duplicates.', 'wp_all_import_plugin'), $custom_type->labels->name); ?></p>
 									<?php endif; ?>
 								</div>					
-								<?php if ( ! $this->isWizard ):?>
+								<?php if ( ! $this->isWizard  or ! empty(PMXI_Plugin::$session->deligate) and PMXI_Plugin::$session->deligate == 'wpallexport'):?>
 									
 									<?php include( '_reimport_options.php' ); ?>
 

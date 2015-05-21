@@ -76,7 +76,12 @@ $l10n = array(
 						<div class="clear"></div>											
 						
 						<div class="wpallimport-import-types">
+							<?php if (empty($_GET['deligate'])): ?>	
 							<h2><?php _e('First, specify how you want to import your data', 'wp_all_import_plugin'); ?></h2>
+							<?php else: ?>
+							<h2 style="margin-bottom: 10px;"><?php _e('First, specify previously exported file', 'wp_all_import_plugin'); ?></h2>
+							<h2 class="wp_all_import_subheadline"><?php _e('The data in this file can be modified, but the structure of the file (column/element names) should not change.', 'wp_all_import_plugin'); ?></h2>
+							<?php endif; ?>							
 							<a class="wpallimport-import-from wpallimport-upload-type <?php echo ('upload' == $post['type'] and ! empty($_POST)) ? 'selected' : '' ?>" rel="upload_type" href="javascript:void(0);">
 								<span class="wpallimport-icon"></span>
 								<span class="wpallimport-icon-label"><?php _e('Upload a file', 'wp_all_import_plugin'); ?></span>

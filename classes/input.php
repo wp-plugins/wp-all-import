@@ -73,7 +73,7 @@ class PMXI_Input {
 			foreach ($this->filters as $filter) {
 				$val = call_user_func($filter, $val);
 			}
-		}
+		}		
 		return $val;
 	}
 }

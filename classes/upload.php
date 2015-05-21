@@ -243,6 +243,9 @@ if ( ! class_exists('PMXI_Upload')){
 				'root_element' => $this->root_element,
 				'is_csv' => $this->is_csv
 			);
-		}		
+		}
+
+		
 	}
+
 }

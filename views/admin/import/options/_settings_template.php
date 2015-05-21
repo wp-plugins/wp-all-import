@@ -35,6 +35,7 @@
 								<input type="hidden" name="is_fast_mode" value="0" />
 								<input type="checkbox" id="is_fast_mode" name="is_fast_mode" value="1" class="fix_checkbox" <?php echo $post['is_fast_mode'] ? 'checked="checked"': '' ?>/>
 								<label for="is_fast_mode"><?php _e('Increase speed by disabling do_action calls in wp_insert_post during import.', 'wp_all_import_plugin') ?> <a href="#help" class="wpallimport-help" style="position: relative; top: -2px;" title="<?php _e('This option is for advanced users with knowledge of WordPress development. Your theme or plugins may require these calls when posts are created. Verify your created posts work properly if you check this box.', 'wp_all_import_plugin') ?>">?</a></label>
+								<a href="#help" class="wpallimport-help" style="position: relative; top: -2px;" title="<?php _e('This option is for advanced users with knowledge of WordPress development. Your theme or plugins may require these calls when posts are created. Next action will be disabled: \'transition_post_status\', \'save_post\', \'pre_post_update\', \'add_attachment\', \'edit_attachment\', \'edit_post\', \'post_updated\', \'wp_insert_post\'. Verify your created posts work properly if you check this box.', 'wp_all_import_plugin') ?>">?</a></label>
 							</div>					
 							<?php if ( ! $this->isWizard ): ?>
 

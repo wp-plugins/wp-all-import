@@ -5,11 +5,11 @@ function pmxi_recursion_taxes($parent, $tx_name, $txes, $key){
 		
 		if ( empty($parent['parent']) ){
 
-			$term = term_exists($parent['name'], $tx_name);						
+			$term = term_exists($parent['name'], $tx_name, 0);						
 
 			if ( empty($term) and !is_wp_error($term) ){
 
-				$term = term_exists(htmlspecialchars($parent['name']), $tx_name);		
+				$term = term_exists(htmlspecialchars($parent['name']), $tx_name, 0);		
 				if ( empty($term) and !is_wp_error($term) ){		
 					$term = wp_insert_term(
 						$parent['name'], // the term 

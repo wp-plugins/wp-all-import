@@ -93,7 +93,7 @@ abstract class PMXI_Controller_Admin extends PMXI_Controller {
 		/* load plupload scripts */
 		wp_deregister_script('swfupload-all');
 		wp_deregister_script('swfupload-handlers');
-		wp_enqueue_script('swfupload-handlers', get_option('siteurl') . "/wp-includes/js/swfupload/handlers.js", array('jquery'), '2201-20100523');
+		wp_enqueue_script('swfupload-handlers', site_url() . "/wp-includes/js/swfupload/handlers.js", array('jquery'), '2201-20100523');
 
 		wp_enqueue_script('jquery-browserplus-min', WP_ALL_IMPORT_ROOT_URL . '/static/js/jquery/browserplus-min.js', array('jquery'));
 		wp_enqueue_script('full-plupload', WP_ALL_IMPORT_ROOT_URL . '/static/js/plupload/plupload.full.js', array('jquery-browserplus-min'));

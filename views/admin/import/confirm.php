@@ -100,7 +100,7 @@
 						<?php			
 							$path = $source['path'];				
 							$import_type = (!empty($source['type'])) ? $source['type'] : $import['type'];
-							if ( in_array($import_type, array('upload'))):
+							if ( in_array($import_type, array('upload'))){
 								$path_parts = pathinfo($source['path']);
 								if ( ! empty($path_parts['dirname'])){
 									$path_all_parts = explode('/', $path_parts['dirname']);
@@ -109,7 +109,9 @@
 										$path = str_replace($dirname, preg_replace('%^(.{3}).*(.{3})$%', '$1***$2', $dirname), str_replace('temp/', '', $source['path']));										
 									}
 								}
-							endif;
+							} else{
+								$path = str_replace("\\", '/', preg_replace('%^(\w+://[^:]+:)[^@]+@%', '$1*****@', $path));
+							}
 						?>
 						<p><?php printf(__('WP All Import will import the file <span style="color:#40acad;">%s</span>, which is <span style="color:#000; font-weight:bold;">%s</span>', 'wp_all_import_plugin'), $path, (isset($locfilePath)) ? human_filesize(filesize($locfilePath)) : __('undefined', 'wp_all_import_plugin')); ?></p>
 

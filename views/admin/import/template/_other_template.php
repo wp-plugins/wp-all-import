@@ -194,31 +194,63 @@
 							</div>	
 						</td>
 					</tr>
+					<?php endif; ?>
 					<tr>
 						<td>
-							<h4><?php _e('Page Parent', 'wp_all_import_plugin') ?></h4>
+							<?php if ( 'page' == $post_type ):?>	
 
-							<div class="input">
-								<input type="radio" id="is_multiple_page_parent_yes" name="is_multiple_page_parent" value="yes" <?php echo 'yes' == $post['is_multiple_page_parent'] ? 'checked="checked"' : '' ?> class="switcher" style="margin-left:0;"/>
-								<label for="is_multiple_page_parent_yes"><?php _e('Select page parent', 'wp_all_import_plugin') ?></label>
-								<div class="switcher-target-is_multiple_page_parent_yes">
-									<div class="input">
-									<?php wp_dropdown_pages(array('post_type' => 'page', 'selected' => $post['parent'], 'name' => 'parent', 'show_option_none' => __('(no parent)', 'wp_all_import_plugin'), 'sort_column'=> 'menu_order, post_title',)) ?>
+								<h4><?php _e('Page Parent', 'wp_all_import_plugin') ?></h4>
+
+								<div class="input">
+									<input type="radio" id="is_multiple_page_parent_yes" name="is_multiple_page_parent" value="yes" <?php echo 'yes' == $post['is_multiple_page_parent'] ? 'checked="checked"' : '' ?> class="switcher" style="margin-left:0;"/>
+									<label for="is_multiple_page_parent_yes"><?php _e('Select page parent', 'wp_all_import_plugin') ?></label>
+									<div class="switcher-target-is_multiple_page_parent_yes">
+										<div class="input">
+										<?php wp_dropdown_pages(array('post_type' => 'page', 'selected' => $post['parent'], 'name' => 'parent', 'show_option_none' => __('(no parent)', 'wp_all_import_plugin'), 'sort_column'=> 'menu_order, post_title',)) ?>
+										</div>
 									</div>
 								</div>
-							</div>
-							<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px; margin-top: 5px;">
-								<input type="radio" id="is_multiple_page_parent_no" class="switcher" name="is_multiple_page_parent" value="no" <?php echo 'no' == $post['is_multiple_page_parent'] ? 'checked="checked"': '' ?> style="margin-left:0;"/>
-								<label for="is_multiple_page_parent_no"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
-								<div class="switcher-target-is_multiple_page_parent_no">
-									<div class="input">
-										&nbsp;<input type="text" class="smaller-text" name="single_page_parent" style="width:190px;" value="<?php echo esc_attr($post['single_page_parent']) ?>"/>										
+
+								<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px; margin-top: 5px;">
+									<input type="radio" id="is_multiple_page_parent_no" class="switcher" name="is_multiple_page_parent" value="no" <?php echo 'no' == $post['is_multiple_page_parent'] ? 'checked="checked"': '' ?> style="margin-left:0;"/>
+									<label for="is_multiple_page_parent_no"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
+									<div class="switcher-target-is_multiple_page_parent_no">
+										<div class="input">
+											&nbsp;<input type="text" class="smaller-text" name="single_page_parent" style="width:190px;" value="<?php echo esc_attr($post['single_page_parent']) ?>"/>										
+										</div>
+									</div>
+								</div>	
+
+							<?php endif;?>
+
+							<?php if ( 'page' != $post_type && $custom_type->hierarchical ): ?>
+
+								<h4><?php _e('Post Parent', 'wp_all_import_plugin') ?><a href="#help" class="wpallimport-help" title="<?php _e('Enter the slug of the desired post parent. If adding the child and parent posts in the same import, set \'Records per Iteration\' to 1, run the import twice, or run separate imports for child and parent posts.', 'wp_all_import_plugin') ?>" style="position:relative; top:-1px;">?</a></h4>
+								
+								<div class="input">
+									<input type="radio" id="is_multiple_page_parent_yes" name="is_multiple_page_parent" value="yes" <?php echo 'yes' == $post['is_multiple_page_parent'] ? 'checked="checked"' : '' ?> class="switcher" style="margin-left:0;"/>
+									<label for="is_multiple_page_parent_yes"><?php _e('Select page parent', 'wp_all_import_plugin') ?></label>
+									<div class="switcher-target-is_multiple_page_parent_yes">
+										<div class="input">
+											<input type="text" class="" name="parent" value="<?php echo esc_attr($post['parent']) ?>" />									
+										</div>
 									</div>
 								</div>
-							</div>								
+
+								<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px; margin-top: 5px;">
+									<input type="radio" id="is_multiple_page_parent_no" class="switcher" name="is_multiple_page_parent" value="no" <?php echo 'no' == $post['is_multiple_page_parent'] ? 'checked="checked"': '' ?> style="margin-left:0;"/>
+									<label for="is_multiple_page_parent_no"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
+									<div class="switcher-target-is_multiple_page_parent_no">
+										<div class="input">
+											&nbsp;<input type="text" class="smaller-text" name="single_page_parent" style="width:190px;" value="<?php echo esc_attr($post['single_page_parent']) ?>"/>										
+										</div>
+									</div>
+								</div>	
+
+							<?php endif; ?>
+														
 						</td>
-					</tr>
-					<?php endif; ?>
+					</tr>	
 					<tr>
 						<td>
 							<h4><?php _e('Menu Order', 'wp_all_import_plugin') ?></h4>
@@ -226,7 +258,25 @@
 								<input type="text" class="" name="order" value="<?php echo esc_attr($post['order']) ?>" />
 							</div>
 						</td>
-					</tr>												
+					</tr>	
+					<?php if ( ! empty($post['deligate']) and $post['deligate'] == 'wpallexport' ): ?>
+					<tr>
+						<td>
+							<h4><?php _e('Override Post Type', 'wp_all_import_plugin') ?></h4>
+							<div class="input">
+								<div style="margin: 11px; float: left;">
+									<input type="hidden" name="is_override_post_type" value="0"/>
+									<input type="checkbox" value="1" class="switcher-horizontal fix_checkbox" name="is_override_post_type" id="is_override_post_type" <?php echo ( ! empty($post['is_override_post_type'])) ? 'checked="checked"' : '' ?>>
+									<label for="is_override_post_type"><?php _e('Override','wp_all_import_plugin');?></label>
+								</div>
+								<div class="switcher-target-is_override_post_type" style="float: left; overflow: hidden;">
+									<input type="text" name="post_type_xpath" style="vertical-align:middle; line-height: 26px;" value="<?php echo esc_attr($post['post_type_xpath']) ?>" />											
+								</div>	
+								<a href="#help" class="wpallimport-help" title="<?php _e('Slug for the post type.', 'wp_all_import_plugin') ?>" style="position:relative; top:12px;">?</a>
+							</div>
+						</td>
+					</tr>			
+					<?php endif; ?>													
 				</table>
 			</div>
 		</div>

@@ -5,7 +5,7 @@ function pmxi_admin_notices() {
 	$uploads = wp_upload_dir();		
 
 	// compare woocommerce add-on version	
-	if ( class_exists( 'PMWI_Plugin' ) and ( defined('PMWI_VERSION') and version_compare(PMWI_VERSION, '2.0.0-beta1') < 0 and PMWI_EDITION == 'paid' or defined('PMWI_FREE_VERSION') and version_compare(PMWI_FREE_VERSION, '1.2.0') < 0 and PMWI_EDITION == 'free') ) {
+	if ( class_exists( 'PMWI_Plugin' ) and ( defined('PMWI_VERSION') and version_compare(PMWI_VERSION, '2.1.4') < 0 and PMWI_EDITION == 'paid' or defined('PMWI_FREE_VERSION') and version_compare(PMWI_FREE_VERSION, '1.2.2') < 0 and PMWI_EDITION == 'free') ) {
 		?>
 		<div class="error"><p>
 			<?php printf(
@@ -17,11 +17,16 @@ function pmxi_admin_notices() {
 			
 		if (defined('PMWI_EDITION') and PMWI_EDITION == 'paid')
 		{
-			deactivate_plugins( PMWI_ROOT_DIR . '/plugin.php');
+			deactivate_plugins( PMWI_ROOT_DIR . '/wpai-woocommerce-add-on.php');
 		}
-		else 
+		else
 		{	
-			deactivate_plugins( PMWI_FREE_ROOT_DIR . '/plugin.php');		
+			if (defined('PMWI_FREE_ROOT_DIR')){ 
+				deactivate_plugins( PMWI_FREE_ROOT_DIR . '/plugin.php');		
+			}
+			else{
+				deactivate_plugins( PMWI_ROOT_DIR . '/plugin.php');		
+			}
 		}
 		
 	}
@@ -39,7 +44,7 @@ function pmxi_admin_notices() {
 			
 		if (defined('PMAI_EDITION') and PMAI_EDITION == 'paid')
 		{
-			deactivate_plugins( PMAI_ROOT_DIR . '/plugin.php');
+			deactivate_plugins( PMAI_ROOT_DIR . '/wpai-acf-add-on.php');
 		}				
 	}
 
@@ -56,7 +61,7 @@ function pmxi_admin_notices() {
 			
 		if (defined('PMLCA_EDITION') and PMLCA_EDITION == 'paid')
 		{
-			deactivate_plugins( PMLCA_ROOT_DIR . '/plugin.php');
+			deactivate_plugins( PMLCA_ROOT_DIR . '/wpai-linkcloak-add-on.php');
 		}				
 	}
 
@@ -73,7 +78,7 @@ function pmxi_admin_notices() {
 			
 		if (defined('PMUI_EDITION') and PMUI_EDITION == 'paid')
 		{
-			deactivate_plugins( PMUI_ROOT_DIR . '/plugin.php');
+			deactivate_plugins( PMUI_ROOT_DIR . '/wpai-user-add-on.php');
 		}				
 	}
 

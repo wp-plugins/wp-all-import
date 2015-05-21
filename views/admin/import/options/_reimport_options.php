@@ -3,6 +3,9 @@
 	<input type="hidden" name="create_new_records" value="0" />
 	<input type="checkbox" id="create_new_records" name="create_new_records" value="1" <?php echo $post['create_new_records'] ? 'checked="checked"' : '' ?> />
 	<label for="create_new_records"><?php _e('Create new posts from records newly present in your file', 'wp_all_import_plugin') ?></label>
+	<?php if ( ! empty(PMXI_Plugin::$session->deligate) and PMXI_Plugin::$session->deligate == 'wpallexport' ): ?>
+	<a href="#help" class="wpallimport-help" title="<?php _e('New posts will only be created when ID column is present and value in ID column is unique.', 'wp_all_import_plugin') ?>" style="top: -1px;">?</a>
+	<?php endif; ?>
 </div>
 <?php if ( "new" == $post['wizard_type']): ?>
 <div class="switcher-target-auto_matching">
@@ -169,7 +172,7 @@
 					<?php
 					$existing_taxonomies = array();
 					$hide_taxonomies = (class_exists('PMWI_Plugin')) ? array('product_type') : array();
-					$post_taxonomies = array_diff_key(get_taxonomies_by_object_type(array($post_type), 'object'), array_flip($hide_taxonomies));
+					$post_taxonomies = array_diff_key(get_taxonomies_by_object_type($post['is_override_post_type'] ? array_keys(get_post_types( '', 'names' )) : array($post_type), 'object'), array_flip($hide_taxonomies));
 					if (!empty($post_taxonomies)): 
 						foreach ($post_taxonomies as $ctx):  if ("" == $ctx->labels->name or (class_exists('PMWI_Plugin') and $post_type == "product" and strpos($ctx->name, "pa_") === 0)) continue;
 							$existing_taxonomies[] = $ctx->name;												
