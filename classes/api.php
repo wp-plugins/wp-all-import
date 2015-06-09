@@ -27,38 +27,87 @@ class PMXI_API
 			'xpath' => '',
 			'field_name' => '',
 			'field_value' => '',
-			'addon_prefix' => ''
+			'addon_prefix' => '',
+			'sub_fields' => array(),
+			'is_main_field' => false,
+			'in_the_bottom' => false			
 		);
 
 		ob_start();
-		if ($label != ""){
+		if ($label != "" and $field_type != "accordion"){
 			?>
 			<label for="<?php echo sanitize_title($params['field_name']); ?>"><?php echo $label;?></label>			
 			<?php
 		}
 		if ( ! empty($params['tooltip'])){
 			?>
-			<a href="#help" class="wpallimport-help" title="<?php echo $params['tooltip']; ?>" style="position: relative; top: -2px;">?</a>
+			<a href="#help" class="wpallimport-help" title="<?php echo esc_attr($params['tooltip']); ?>" style="position: relative; top: -2px;">?</a>
 			<?php
 		}
+
+		if ( ! $params['in_the_bottom'] ){
 		?>
 		<div class="input">
 		<?php
+		}
+		
 		switch ($field_type){
+
 			case 'simple':
 				?>
 				<input type="text" name="<?php echo $params['field_name']; ?>" id="<?php echo sanitize_title($params['field_name']); ?>" value="<?php echo $params['field_value']; ?>" style="width:100%;"/>
 				<?php
 				break;
+
 			case 'enum':
-				?>
 				
-				<?php foreach ($params['enum_values'] as $key => $value):?>
-				<div class="form-field wpallimport-radio-field">
-					<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>" class="switcher" name="<?php echo $params['field_name']; ?>" value="<?php echo $key; ?>" <?php echo $key == $params['field_value'] ? 'checked="checked"': '' ?>/>
-					<label for="<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>"><?php echo $value; ?></label>
-				</div>
-				<?php endforeach;?>							
+				$is_set_with_xpath_visible = true;
+				foreach ($params['enum_values'] as $key => $value): ?>
+					<div class="form-field wpallimport-radio-field">
+						<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>" class="switcher" name="<?php echo $params['field_name']; ?>" value="<?php echo $key; ?>" <?php echo $key == $params['field_value'] ? 'checked="checked"': '' ?>/>
+						<?php  
+							$label = '';
+							$tooltip = '';
+							if (is_array($value)){
+								$label = array_shift($value);
+							}
+							else{
+								$label = $value;
+							}
+						?>
+						<label for="<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>"><?php echo $label; ?></label>
+						<?php 
+							if (is_array($value) and ! empty($value)){
+								foreach ($value as $k => $p) {
+									if ( ! is_array($p)){
+										?>
+										<a href="#help" class="wpallimport-help" title="<?php echo esc_attr($p); ?>" style="position: relative; top: -2px;">?</a>
+										<?php
+										break;
+									}
+								}
+							}
+						?>
+						<?php
+							if (! empty($params['sub_fields'][$key])){
+								?>
+								<div class="switcher-target-<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>">
+									<div class="input sub_input">
+										<?php
+										foreach ($params['sub_fields'][$key] as $sub_field) {												
+											PMXI_API::add_field($sub_field['type'], $sub_field['label'], $sub_field['params']);											
+										}
+										?>
+									</div>
+								</div>
+								<?php
+								$is_set_with_xpath_visible = false;
+							}
+						?>
+
+					</div>
+				<?php endforeach;?>		
+				<?php if ( $is_set_with_xpath_visible ): ?>
 				<div class="form-field wpallimport-radio-field">
 					<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_xpath" class="switcher" name="<?php echo $params['field_name']; ?>" value="xpath" <?php echo 'xpath' == $params['field_value'] ? 'checked="checked"': '' ?>/>
 					<label for="<?php echo sanitize_title($params['field_name']); ?>_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label>
@@ -71,132 +120,136 @@ class PMXI_API
 										<input type="text" class="smaller-text" name="<?php echo $params['addon_prefix'];?>[xpaths][<?php echo $params['field_key']; ?>]" value="<?php echo esc_attr($params['xpath']) ?>"/>	
 									</td>
 									<td class="action">
+
 										<?php if ($params['mapping']): ?>
 
-										<?php $custom_mapping_rules = (!empty($params['mapping_rules'])) ? json_decode($params['mapping_rules'], true) : false; ?>
-										
-										<div class="input wpallimport-custom-fields-actions">
-											<a href="javascript:void(0);" class="wpallimport-cf-options"><?php _e('Field Options...', 'wp_all_import_plugin'); ?></a>
-											<ul id="wpallimport-cf-menu-<?php echo sanitize_title($params['field_name']);?>" class="wpallimport-cf-menu">						
-												<li class="<?php echo ( ! empty($custom_mapping_rules) ) ? 'active' : ''; ?>">
-													<a href="javascript:void(0);" class="set_mapping pmxi_cf_mapping" rel="cf_mapping_<?php echo sanitize_title($params['field_name']); ?>"><?php _e('Mapping', 'wp_all_import_plugin'); ?></a>
-												</li>
-											</ul>														
-										</div>
-										<div id="cf_mapping_<?php echo sanitize_title($params['field_name']); ?>" class="custom_type" rel="mapping" style="display:none;">
-											<fieldset>
-												<table cellpadding="0" cellspacing="5" class="cf-form-table" rel="cf_mapping_<?php echo sanitize_title($params['field_name']); ?>">
-													<thead>
-														<tr>
-															<td><?php _e('In Your File', 'wp_all_import_plugin') ?></td>
-															<td><?php _e('Translated To', 'wp_all_import_plugin') ?></td>
-															<td>&nbsp;</td>						
-														</tr>
-													</thead>
-													<tbody>	
-														<?php																																	
-															if ( ! empty($custom_mapping_rules) and is_array($custom_mapping_rules)){
-																
-																foreach ($custom_mapping_rules as $key => $value) {
+											<?php $custom_mapping_rules = (!empty($params['mapping_rules'])) ? json_decode($params['mapping_rules'], true) : false; ?>
+											
+											<div class="input wpallimport-custom-fields-actions">
+												<a href="javascript:void(0);" class="wpallimport-cf-options"><?php _e('Field Options...', 'wp_all_import_plugin'); ?></a>
+												<ul id="wpallimport-cf-menu-<?php echo sanitize_title($params['field_name']);?>" class="wpallimport-cf-menu">						
+													<li class="<?php echo ( ! empty($custom_mapping_rules) ) ? 'active' : ''; ?>">
+														<a href="javascript:void(0);" class="set_mapping pmxi_cf_mapping" rel="cf_mapping_<?php echo sanitize_title($params['field_name']); ?>"><?php _e('Mapping', 'wp_all_import_plugin'); ?></a>
+													</li>
+												</ul>														
+											</div>
+											<div id="cf_mapping_<?php echo sanitize_title($params['field_name']); ?>" class="custom_type" rel="mapping" style="display:none;">
+												<fieldset>
+													<table cellpadding="0" cellspacing="5" class="cf-form-table" rel="cf_mapping_<?php echo sanitize_title($params['field_name']); ?>">
+														<thead>
+															<tr>
+																<td><?php _e('In Your File', 'wp_all_import_plugin') ?></td>
+																<td><?php _e('Translated To', 'wp_all_import_plugin') ?></td>
+																<td>&nbsp;</td>						
+															</tr>
+														</thead>
+														<tbody>	
+															<?php																																	
+																if ( ! empty($custom_mapping_rules) and is_array($custom_mapping_rules)){
+																	
+																	foreach ($custom_mapping_rules as $key => $value) {
 
-																	$k = $key;
+																		$k = $key;
 
-																	if (is_array($value)){
-																		$keys = array_keys($value);
-																		$k = $keys[0];
+																		if (is_array($value)){
+																			$keys = array_keys($value);
+																			$k = $keys[0];
+																		}
+
+																		?>
+																		<tr class="form-field">
+																			<td>
+																				<input type="text" class="mapping_from widefat" value="<?php echo esc_textarea($k); ?>">
+																			</td>
+																			<td>
+																				<input type="text" class="mapping_to widefat" value="<?php echo esc_textarea((is_array($value)) ? $value[$k] : $value); ?>">
+																			</td>
+																			<td class="action remove">
+																				<a href="#remove" style="right:-10px;"></a>
+																			</td>
+																		</tr>
+																		<?php
 																	}
-
-																	?>
-																	<tr class="form-field">
-																		<td>
-																			<input type="text" class="mapping_from widefat" value="<?php echo esc_textarea($k); ?>">
-																		</td>
-																		<td>
-																			<input type="text" class="mapping_to widefat" value="<?php echo esc_textarea((is_array($value)) ? $value[$k] : $value); ?>">
-																		</td>
-																		<td class="action remove">
-																			<a href="#remove" style="right:-10px;"></a>
-																		</td>
-																	</tr>
-																	<?php
 																}
-															}
-															else{
-																if ( ! empty($params['enum_values']) and is_array($params['enum_values'])){
-																	foreach ($params['enum_values'] as $key => $value){
-																	?>
-																	<tr class="form-field">
-																		<td>
-																			<input type="text" class="mapping_from widefat">
-																		</td>
-																		<td>
-																			<input type="text" class="mapping_to widefat" value="<?php echo $key; ?>">
-																		</td>
-																		<td class="action remove">
-																			<a href="#remove" style="right:-10px;"></a>
-																		</td>
-																	</tr>
-																	<?php
+																else{
+																	if ( ! empty($params['enum_values']) and is_array($params['enum_values'])){
+																		foreach ($params['enum_values'] as $key => $value){
+																		?>
+																		<tr class="form-field">
+																			<td>
+																				<input type="text" class="mapping_from widefat">
+																			</td>
+																			<td>
+																				<input type="text" class="mapping_to widefat" value="<?php echo $key; ?>">
+																			</td>
+																			<td class="action remove">
+																				<a href="#remove" style="right:-10px;"></a>
+																			</td>
+																		</tr>
+																		<?php
+																		}
+																	} else {
+																		?>
+																		<tr class="form-field">
+																			<td>
+																				<input type="text" class="mapping_from widefat">
+																			</td>
+																			<td>
+																				<input type="text" class="mapping_to widefat">
+																			</td>
+																			<td class="action remove">
+																				<a href="#remove" style="right:-10px;"></a>
+																			</td>
+																		</tr>
+																		<?php
 																	}
-																} else {
-																	?>
-																	<tr class="form-field">
-																		<td>
-																			<input type="text" class="mapping_from widefat">
-																		</td>
-																		<td>
-																			<input type="text" class="mapping_to widefat">
-																		</td>
-																		<td class="action remove">
-																			<a href="#remove" style="right:-10px;"></a>
-																		</td>
-																	</tr>
-																	<?php
 																}
-															}
-														?>												
-														<tr class="form-field template">
-															<td>
-																<input type="text" class="mapping_from widefat">
-															</td>
-															<td>
-																<input type="text" class="mapping_to widefat">
-															</td>
-															<td class="action remove">
-																<a href="#remove" style="right:-10px;"></a>
-															</td>
-														</tr>
-														<tr>
-															<td colspan="3">
-																<a href="javascript:void(0);" title="<?php _e('Add Another', 'wp_all_import_plugin')?>" class="action add-new-key add-new-entry"><?php _e('Add Another', 'wp_all_import_plugin') ?></a>
-															</td>
-														</tr>
-														<tr>																										
-															<td colspan="3">
-																<div class="wrap" style="position:relative;">
-																	<a class="save_popup save_mr" href="javascript:void(0);"><?php _e('Save Rules', 'wp_all_import_plugin'); ?></a>
-																</div>
-															</td>
-														</tr>
-													</tbody>
-												</table>
-												<input type="hidden" class="pmre_mapping_rules" name="<?php echo $params['addon_prefix'];?>[mapping][<?php echo $params['field_key']; ?>]" value="<?php if (!empty($params['mapping_rules'])) echo esc_html($params['mapping_rules']); ?>"/>
-											</fieldset>
-										</div>
+															?>												
+															<tr class="form-field template">
+																<td>
+																	<input type="text" class="mapping_from widefat">
+																</td>
+																<td>
+																	<input type="text" class="mapping_to widefat">
+																</td>
+																<td class="action remove">
+																	<a href="#remove" style="right:-10px;"></a>
+																</td>
+															</tr>
+															<tr>
+																<td colspan="3">
+																	<a href="javascript:void(0);" title="<?php _e('Add Another', 'wp_all_import_plugin')?>" class="action add-new-key add-new-entry"><?php _e('Add Another', 'wp_all_import_plugin') ?></a>
+																</td>
+															</tr>
+															<tr>																										
+																<td colspan="3">
+																	<div class="wrap" style="position:relative;">
+																		<a class="save_popup save_mr" href="javascript:void(0);"><?php _e('Save Rules', 'wp_all_import_plugin'); ?></a>
+																	</div>
+																</td>
+															</tr>
+														</tbody>
+													</table>
+													<input type="hidden" class="pmre_mapping_rules" name="<?php echo $params['addon_prefix'];?>[mapping][<?php echo $params['field_key']; ?>]" value="<?php if (!empty($params['mapping_rules'])) echo esc_html($params['mapping_rules']); ?>"/>
+												</fieldset>
+											</div>
 										<?php endif; ?>
 									</td>
 								</tr>
 							</table>								
 						</span>
 					</div>
-				</div>																
+				</div>	
+				<?php endif; ?>															
 				<?php
 				break;
+
 			case 'textarea':
 				?>
 				<textarea name="<?php echo $params['field_name']; ?>" id="<?php echo sanitize_title($params['field_name']); ?>" class="rad4 newline" style="height: 70px;margin: 5px 0;padding-top: 5px;width: 70%;"><?php echo $params['field_value']; ?></textarea>
 				<?php
 				break;
+
 			case 'image':
 				?>
 				<div class="input">
@@ -216,11 +269,63 @@ class PMXI_API
 				</div>
 				<?php
 				break;
+
+			case 'accordion':
+
+				$is_full_width = true;
+				if ( ! empty($params['sub_fields']) ){
+					foreach ($params['sub_fields'] as $sub_field) {						
+						if ($sub_field[0]['params']['is_main_field']){
+							PMXI_API::add_field($sub_field[0]['type'], $sub_field[0]['label'], $sub_field[0]['params']);			
+							$is_full_width = false;
+							break;
+						}
+					}
+				}			
+
+				$in_the_bottom = $params['in_the_bottom'];
+
+				$styles = ($is_full_width) ? 'margin-left: -25px; margin-right: -25px;' : 'margin-top: -16px;';
+
+				if ( ! $in_the_bottom and $is_full_width ) $styles .= 'margin-top: 25px; margin-bottom: 25px;';
+				
+				?>				
+				<div class="wpallimport-collapsed closed wpallimport-section <?php echo (($in_the_bottom and $is_full_width) ? 'wpallimport-sub-options-full-width' : 'wpallimport-sub-options'); echo ((!$is_full_width) ? ' wpallimport-dependent-options' : '');?> " style="<?php echo $styles; ?>">
+					<div class="wpallimport-content-section <?php echo (($is_full_width and !$in_the_bottom) ? 'rad0' : 'wpallimport-bottom-radius');?> ">
+						<div class="wpallimport-collapsed-header">
+							<h3 style="color:#40acad;"><?php echo $label; ?></h3>	
+						</div>
+						<div class="wpallimport-collapsed-content" style="padding: 0;">										
+							<div class="wpallimport-collapsed-content-inner">	
+								
+								<?php
+									if ( ! empty($params['sub_fields']) ){
+										foreach ($params['sub_fields'] as $sub_field) {																						
+											if ( ! $sub_field[0]['params']['is_main_field'])
+												PMXI_API::add_field($sub_field[0]['type'], $sub_field[0]['label'], $sub_field[0]['params']);																																					
+										}
+									}
+								?>
+				
+				 			</div>
+				 		</div>
+				 	</div>
+				</div>
+				<?php
+				break;
 		}
+		if ( ! $params['in_the_bottom'] ){
 		?>
 		</div>
 		<?php
+		}
 		echo ob_get_clean();
+	}
+
+	public static function add_additional_images_section( $section_title, $section_slug, $post, $post_type = '', $section_is_show_hints = true, $section_is_show_warning = false, $section_type = 'images'){				
+
+		include( WP_ALL_IMPORT_ROOT_DIR . '/views/admin/import/template/_featured_template.php' );
+
 	}
 
 	public static function upload_image($pid, $img_url, $download_images, $logger, $create_image = false, $image_name = ""){

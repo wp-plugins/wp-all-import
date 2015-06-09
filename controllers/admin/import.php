@@ -914,12 +914,16 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 		
 		if ( ! $this->errors->get_error_codes()) {
 
+			$get = $this->data['get'] = $this->input->get(array(
+				'slug' => ''				
+			));	
+
 			$post = $this->data['post'] = $this->input->post(array(
-				'download_images' => 'no',
-				'download_featured_delim' => '',
-				'featured_delim' => '',
-				'download_featured_image' => '',
-				'featured_image' => '',		
+				$get['slug'] . 'download_images' => 'no',
+				$get['slug'] . 'download_featured_delim' => '',
+				$get['slug'] . 'featured_delim' => '',
+				$get['slug'] . 'download_featured_image' => '',
+				$get['slug'] . 'featured_image' => '',		
 				'import_encoding' => 'UTF-8',	
 				'tagno' => 0
 			));		
@@ -993,7 +997,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 			
 			// validate
 			try {
-				$featured_image = ( 'yes' == $post['download_images']) ? $post['download_featured_image'] : $post['featured_image'];
+				$featured_image = ( 'yes' == $post[$get['slug'] . 'download_images']) ? $post[$get['slug'] . 'download_featured_image'] : $post[$get['slug'] . 'featured_image'];
 				if (empty($xml)){
 					$this->errors->add('form-validation', __('WP All Import lost track of where you are.<br/><br/>Maybe you cleared your cookies or maybe it is just a temporary issue on your web host\'s end.<br/>If you can\'t do an import without seeing this error, change your session settings on the All Import -> Settings page.', 'wp_all_import_plugin'));
 				} elseif (empty($featured_image)){				
@@ -1368,18 +1372,7 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				$this->warnings->add('2', __('<strong>Warning:</strong> your content is blank.', 'wp_all_import_plugin'));
 			}
 			
-			if ( ! $this->errors->get_error_codes()) {
-
-				if ( ! empty($post['name']) and !empty($post['save_template_as']) ) { // save template in database
-					$template->getByName($post['name'])->set(array(
-						'name' => $post['name'],						
-						'is_keep_linebreaks' => $post['is_keep_linebreaks'],
-						'is_leave_html' => $post['is_leave_html'],
-						'fix_characters' => $post['fix_characters'],
-						'options' => $post
-					))->save();
-					PMXI_Plugin::$session->set('saved_template', $template->id);
-				}
+			if ( ! $this->errors->get_error_codes()) {				
 
 				// Attributes fields logic
 				$post = apply_filters('pmxi_save_options', $post);					
@@ -1447,7 +1440,18 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 					// assign some defaults
 					'' !== $post['date'] or $post['date'] = 'now';
 					'' !== $post['date_start'] or $post['date_start'] = 'now';
-					'' !== $post['date_end'] or $post['date_end'] = 'now';										
+					'' !== $post['date_end'] or $post['date_end'] = 'now';			
+
+					if ( ! empty($post['name']) and !empty($post['save_template_as']) ) { // save template in database
+						$template->getByName($post['name'])->set(array(
+							'name' => $post['name'],						
+							'is_keep_linebreaks' => $post['is_keep_linebreaks'],
+							'is_leave_html' => $post['is_leave_html'],
+							'fix_characters' => $post['fix_characters'],
+							'options' => $post
+						))->save();
+						PMXI_Plugin::$session->set('saved_template', $template->id);
+					}							
 
 					if ($this->isWizard) {
 						PMXI_Plugin::$session->set('options', $post);

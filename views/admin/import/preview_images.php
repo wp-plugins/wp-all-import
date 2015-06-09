@@ -23,11 +23,11 @@
 			?>
 			<p><?php _e('Click to test button to have WP All Import ensure it can import your images.', 'wp_all_import_plugin'); ?></p>
 
-			<a class="test_images" href="javascript:void(0);" style="margin-left:0;" rel="<?php echo $post['download_images']; ?>"><?php _e('Test', 'wp_all_import_plugin'); ?></a>
+			<a class="test_images" href="javascript:void(0);" style="margin-left:0;" rel="<?php echo $post[$get['slug'] . 'download_images']; ?>"><?php _e('Test', 'wp_all_import_plugin'); ?></a>
 					
 			<?php
 
-			$featured_delim = ( "yes" == $post['download_images'] ) ? $post['download_featured_delim'] : $post['featured_delim'];
+			$featured_delim = ( "yes" == $post[$get['slug'] . 'download_images'] ) ? $post[$get['slug'] . 'download_featured_delim'] : $post[ $get['slug'] . 'featured_delim'];
 			$imgs = array();
 
 			$line_imgs = explode("\n", $featured_images);
@@ -37,7 +37,7 @@
 
 			$imgs = array_filter($imgs);
 			
-			if ( "yes" == $post['download_images']):				
+			if ( "yes" == $post[$get['slug'] . 'download_images']):				
 						
 				?>
 				<div class="test_progress">
