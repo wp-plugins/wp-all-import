@@ -62,7 +62,7 @@ class PMXI_API
 			case 'enum':
 				
 				$is_set_with_xpath_visible = true;
-				foreach ($params['enum_values'] as $key => $value): ?>
+				foreach ($params['enum_values'] as $key => $value):?>
 					<div class="form-field wpallimport-radio-field">
 						<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>" class="switcher" name="<?php echo $params['field_name']; ?>" value="<?php echo $key; ?>" <?php echo $key == $params['field_value'] ? 'checked="checked"': '' ?>/>
 						<?php  
@@ -109,7 +109,7 @@ class PMXI_API
 				<?php endforeach;?>		
 				<?php if ( $is_set_with_xpath_visible ): ?>
 				<div class="form-field wpallimport-radio-field">
-					<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_xpath" class="switcher" name="<?php echo $params['field_name']; ?>" value="xpath" <?php echo 'xpath' == $params['field_value'] ? 'checked="checked"': '' ?>/>
+					<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_xpath" class="switcher" name="<?php echo $params['field_name']; ?>" value="xpath" <?php echo 'xpath' === $params['field_value'] ? 'checked="checked"': '' ?>/>
 					<label for="<?php echo sanitize_title($params['field_name']); ?>_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label>
 					<span class="wpallimport-clear"></span>
 					<div class="switcher-target-<?php echo sanitize_title($params['field_name']); ?>_xpath set_with_xpath">
@@ -270,6 +270,26 @@ class PMXI_API
 				<?php
 				break;
 
+			case 'file':
+				?>
+				<div class="input">
+					<div class="input" style="margin: 0px;">
+						<input type="radio" name="<?php echo $params['addon_prefix'];?>[download_image][<?php echo $params['field_key'];?>]" value="yes" id="<?php echo sanitize_title($params['field_name']); ?>_yes" <?php echo ("yes" == $params['download_image']) ? 'checked="checked"' : '';?>/>
+						<label for="<?php echo sanitize_title($params['field_name']); ?>_yes"><?php _e('Download file hosted elsewhere'); ?></label>
+						<a href="#help" class="wpallimport-help" title="<?php _e('http:// or https://', 'wp_all_import_plugin') ?>" style="position: relative; top: -2px;">?</a>
+					</div>
+					<div class="input" style="margin: 0px;">
+						<?php $wp_uploads = wp_upload_dir(); ?>																					
+						<input type="radio" name="<?php echo $params['addon_prefix'];?>[download_image][<?php echo $params['field_key'];?>]" value="no" id="<?php echo sanitize_title($params['field_name']); ?>_no" <?php echo ("yes" != $params['download_image']) ? 'checked="checked"' : '';?>/>
+						<label for="<?php echo sanitize_title($params['field_name']); ?>_no"><?php printf(__('Use file(s) currently uploaded in %s', 'wp_all_import_plugin'), $wp_uploads['basedir'] . DIRECTORY_SEPARATOR . PMXI_Plugin::FILES_DIRECTORY . DIRECTORY_SEPARATOR); ?></label>
+					</div>						
+					<div class="input">						
+						<input type="text" name="<?php echo $params['field_name']; ?>" style="width:100%;" placeholder="" value="<?php echo esc_attr($params['field_value']); ?>"/>
+					</div>										
+				</div>
+				<?php
+				break;
+
 			case 'accordion':
 
 				$is_full_width = true;
@@ -285,13 +305,13 @@ class PMXI_API
 
 				$in_the_bottom = $params['in_the_bottom'];
 
-				$styles = ($is_full_width) ? 'margin-left: -25px; margin-right: -25px;' : 'margin-top: -16px;';
+				$styles = ($is_full_width and $in_the_bottom) ? 'wpallimport-full-with-bottom' : '';
 
-				if ( ! $in_the_bottom and $is_full_width ) $styles .= 'margin-top: 25px; margin-bottom: 25px;';
+				if ( ! $in_the_bottom and $is_full_width ) $styles = 'wpallimport-full-with-not-bottom';
 				
 				?>				
-				<div class="wpallimport-collapsed closed wpallimport-section <?php echo (($in_the_bottom and $is_full_width) ? 'wpallimport-sub-options-full-width' : 'wpallimport-sub-options'); echo ((!$is_full_width) ? ' wpallimport-dependent-options' : '');?> " style="<?php echo $styles; ?>">
-					<div class="wpallimport-content-section <?php echo (($is_full_width and !$in_the_bottom) ? 'rad0' : 'wpallimport-bottom-radius');?> ">
+				<div class="wpallimport-collapsed closed wpallimport-section <?php echo (($in_the_bottom and $is_full_width) ? 'wpallimport-sub-options-full-width' : 'wpallimport-sub-options'); echo ((!$is_full_width) ? ' wpallimport-dependent-options' : '');?> <?php echo $styles; ?>">
+					<div class="wpallimport-content-section <?php echo (($is_full_width and !$in_the_bottom) ? 'rad4' : 'wpallimport-bottom-radius');?>">
 						<div class="wpallimport-collapsed-header">
 							<h3 style="color:#40acad;"><?php echo $label; ?></h3>	
 						</div>
@@ -328,13 +348,15 @@ class PMXI_API
 
 	}
 
-	public static function upload_image($pid, $img_url, $download_images, $logger, $create_image = false, $image_name = ""){
+	public static function upload_image($pid, $img_url, $download_images, $logger, $create_image = false, $image_name = "", $file_type = 'images'){
+
+		if (empty($img_url)) return false;
 
 		$url = str_replace(" ", "%20", trim($img_url));
 		$bn  = preg_replace('/[\\?|&].*/', '', basename($url));
 
 		if ($image_name == ""){
-			$img_ext = pmxi_getExtensionFromStr($url);
+			$img_ext = pmxi_getExtensionFromStr($url);			
 			$default_extension = pmxi_getExtension($bn);
 			if ($img_ext == "") $img_ext = pmxi_get_remote_image_ext($url);
 			$image_name = urldecode(sanitize_file_name(($img_ext) ? str_replace("." . $default_extension, "", $bn) : $bn)) . (("" != $img_ext) ? '.' . $img_ext : '');
@@ -345,6 +367,7 @@ class PMXI_API
 		$targetUrl = $uploads['url'];
 		$download_image = true;
 		$result = false;
+		$wp_filetype = false;
 
 		global $wpdb;
 
@@ -371,31 +394,63 @@ class PMXI_API
 			$logger and call_user_func($logger, sprintf(__('- Searching for existing image `%s` in `%s` folder', 'wp_all_import_plugin'), $wpai_image_path, $wpai_uploads));
 
 			if ( @file_exists($wpai_image_path) and @copy( $wpai_image_path, $image_filepath )){
-				$download_image = false;																				
-				if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
-					$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'wp_all_import_plugin'), $image_filepath));					
-					@unlink($image_filepath);
-				} else {
-					$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully founded', 'wp_all_import_plugin'), $wpai_image_path));
-					$result = true;
+				$download_image = false;		
+				// valdate import attachments
+				if ($file_type == 'files'){
+					if( ! $wp_filetype = wp_check_filetype(basename($image_filepath), null )) {
+						$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: Can\'t detect attachment file type %s', 'wp_all_import_plugin'), trim($image_filepath)));
+						$logger and !$is_cron and PMXI_Plugin::$session->warnings++;
+						@unlink($image_filepath);
+					}
+					else {
+						$result = true;											
+						$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully founded', 'wp_all_import_plugin'), $wpai_image_path));
+					}
+				}	
+				// validate import images
+				elseif($file_type == 'images'){
+					if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
+						$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'wp_all_import_plugin'), $image_filepath));					
+						@unlink($image_filepath);
+					} else {
+						$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully founded', 'wp_all_import_plugin'), $wpai_image_path));
+						$result = true;
+					}
 				}
 			}													
 		}	
 
 		if ($download_image){
 			
-			$logger and call_user_func($logger, sprintf(__('- Downloading image from `%s`', 'wp_all_import_plugin'), $url));
+			if ($file_type == 'images'){
+				$logger and call_user_func($logger, sprintf(__('- Downloading image from `%s`', 'wp_all_import_plugin'), $url));
+			}
+			elseif ($file_type == 'files') {
+				$logger and call_user_func($logger, sprintf(__('- Downloading file from `%s`', 'wp_all_import_plugin'), $url));
+			}
 
 			$request = get_file_curl($url, $image_filepath);
 
 			if ( (is_wp_error($request) or $request === false) and ! @file_put_contents($image_filepath, @file_get_contents($url))) {
 				@unlink($image_filepath); // delete file since failed upload may result in empty file created
-			} elseif( ($image_info = @getimagesize($image_filepath)) and in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
-				$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully downloaded', 'wp_all_import_plugin'), $url));									
-				$result = true;
+			} else{
+					
+				if($file_type == 'images'){
+					if( ($image_info = @getimagesize($image_filepath)) and in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
+						$result = true;		
+						$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully downloaded', 'wp_all_import_plugin'), $url));									
+					}
+				}
+				elseif($file_type == 'files'){
+					if( $wp_filetype = wp_check_filetype(basename($image_filepath), null )) {
+						$result = true;		
+						$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully downloaded', 'wp_all_import_plugin'), $url));
+					}
+				}
+
 			}																	
 
-			if (!$result){
+			if ( ! $result ){
 				$url = str_replace(" ", "%20", trim(pmxi_convert_encoding($img_url)));
 				
 				$request = get_file_curl($url, $image_filepath);
@@ -403,27 +458,47 @@ class PMXI_API
 				if ( (is_wp_error($request) or $request === false) and ! @file_put_contents($image_filepath, @file_get_contents($url))) {
 					$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: File %s cannot be saved locally as %s', 'wp_all_import_plugin'), $url, $image_filepath));				
 					@unlink($image_filepath); // delete file since failed upload may result in empty file created										
-				} elseif( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
-					$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'wp_all_import_plugin'), $url));		
-					@unlink($image_filepath);
-				} else {				
-					$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully downloaded', 'wp_all_import_plugin'), $url));											
-					$result = true;
+				} else{
+					
+					if($file_type == 'images'){
+						if( ! ($image_info = @getimagesize($image_filepath)) or ! in_array($image_info[2], array(IMAGETYPE_GIF, IMAGETYPE_JPEG, IMAGETYPE_PNG))) {
+							$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'wp_all_import_plugin'), $url));							
+							@unlink($image_filepath);
+						} else {
+							$result = true;	
+							$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully downloaded', 'wp_all_import_plugin'), $url));												
+						}
+					}
+					elseif($file_type == 'files'){
+						if( ! $wp_filetype = wp_check_filetype(basename($image_filepath), null )) {
+							$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: Can\'t detect attachment file type %s', 'wp_all_import_plugin'), trim($url)));							
+							@unlink($image_filepath);
+						}
+						else {
+							$result = true;											
+							$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully founded', 'wp_all_import_plugin'), $url));
+						}
+					}					
 				}
 			}			
 		}
 
 		if ($create_image and $result){
 
-			$logger and call_user_func($logger, sprintf(__('- Creating an attachment for image `%s`', 'wp_all_import_plugin'), $targetUrl . '/' . $image_filename));	
+			if($file_type == 'images'){
+				$logger and call_user_func($logger, sprintf(__('- Creating an attachment for image `%s`', 'wp_all_import_plugin'), $targetUrl . '/' . $image_filename));	
+			}
+			else{
+				$logger and call_user_func($logger, sprintf(__('- Creating an attachment for file `%s`', 'wp_all_import_plugin'), $targetUrl . '/' . $image_filename));	
+			}
 
 			$attachment = array(
-				'post_mime_type' => image_type_to_mime_type($image_info[2]),
+				'post_mime_type' => ($file_type == 'images') ? image_type_to_mime_type($image_info[2]) : $wp_filetype['type'],
 				'guid' => $targetUrl . '/' . $image_filename,
 				'post_title' => $image_filename,
 				'post_content' => '',				
 			);
-			if (($image_meta = wp_read_image_metadata($image_filepath))) {
+			if ($file_type == 'images' and ($image_meta = wp_read_image_metadata($image_filepath))) {
 				if (trim($image_meta['title']) && ! is_numeric(sanitize_title($image_meta['title'])))
 					$attachment['post_title'] = $image_meta['title'];
 				if (trim($image_meta['caption']))

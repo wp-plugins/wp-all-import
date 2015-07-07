@@ -18,6 +18,11 @@ function pmxi_findDuplicates($articleData, $custom_duplicate_name = '', $custom_
 				'post_type'   => $post_types,
 				'post_status' => array('any'),
 				'meta_query'  => array(
+					'relation' => 'OR',
+					array(
+						'key' => trim($custom_duplicate_name),
+						'value' => trim($custom_duplicate_value),
+					),
 					array(
 						'key' => trim($custom_duplicate_name),
 						'value' => htmlspecialchars(trim($custom_duplicate_value)),

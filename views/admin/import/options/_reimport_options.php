@@ -127,6 +127,13 @@
 					<div class="input" style="margin-bottom:3px;">								
 						<input type="radio" id="update_images_logic_full_update" name="update_images_logic" value="full_update" <?php echo ( "full_update" == $post['update_images_logic'] ) ? 'checked="checked"': '' ?> />
 						<label for="update_images_logic_full_update"><?php _e('Update all images', 'wp_all_import_plugin') ?></label>
+						<div class="switcher-target-update_images_logic_full_update" style="padding-left:27px;">
+							<div class="input">
+								<input type="hidden" name="do_not_remove_images" value="0" />
+								<input type="checkbox" id="do_not_remove_images" name="do_not_remove_images" value="1" <?php echo $post['do_not_remove_images'] ? 'checked="checked"': '' ?> />
+								<label for="do_not_remove_images"><?php _e('Do not remove images from media gallery', 'wp_all_import_plugin') ?></label>
+							</div>
+						</div>
 					</div>
 					<?php $is_show_add_new_images = apply_filters('wp_all_import_is_show_add_new_images', true, $post_type); ?>
 					<?php if ($is_show_add_new_images): ?>

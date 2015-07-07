@@ -36,7 +36,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 
 		if ( ! in_array($order, array('DESC', 'ASC'))){
 			$order = 'DESC';
-		}
+		}		
 		
 		$list = new PMXI_Import_List();
 		$post = new PMXI_Post_Record();
@@ -62,8 +62,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			'total' => ceil($list->total() / $perPage),
 			'current' => $pagenum,
 		));
-		
-		//pmxi_session_unset();		
+				
 		PMXI_Plugin::$session->clean_session();
 
 		$this->render();
@@ -193,9 +192,9 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			$filePath = '';
 			
 			// upload new file in case when import is not continue			
-			if ( empty(PMXI_Plugin::$session->chunk_number) ) {			
-								
-				if ( $item->type == 'upload' ){ // retrieve already uploaded file
+			if ( empty(PMXI_Plugin::$session->chunk_number) ) {		
+
+				if ( in_array($item->type, array('upload'))){ // retrieve already uploaded file
 
 					$uploader = new PMXI_Upload(trim($item->path), $this->errors, rtrim(str_replace(basename($item->path), '', $item->path), '/'));			
 					$upload_result = $uploader->upload();					
@@ -283,7 +282,8 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 						'count' => (isset($chunks)) ? $chunks : 0,
 						'local_paths' => (!empty($local_paths)) ? $local_paths : array(), // ftp import local copies of remote files
 						'action' => (!empty($action_type) and $action_type == 'continue') ? 'continue' : 'update',	
-						'nonce' => wp_create_nonce( 'import' )				
+						'nonce' => wp_create_nonce( 'import' ),
+						'deligate' => false				
 					);										
 					
 					foreach ($sesson_data as $key => $value) {
@@ -322,7 +322,10 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 			
 			do_action('pmxi_before_import_delete', $item, $this->input->post('is_delete_posts'));
 
-			$item->delete( ! $this->input->post('is_delete_posts'));
+			$is_deleted_images = $this->input->post('is_delete_images');
+			$is_delete_attachments = $this->input->post('is_delete_attachments');
+
+			$item->delete( ! $this->input->post('is_delete_posts'), $is_deleted_images, $is_delete_attachments);
 			wp_redirect(add_query_arg('pmxi_nt', urlencode(__('Import deleted', 'wp_all_import_plugin')), $this->baseUrl)); die();
 		}
 		
@@ -351,7 +354,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 				$item->delete( ! $is_delete_posts);
 			}
 			
-			wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(__('<strong>%d</strong> %s deleted', 'wp_all_import_plugin'), $items->count(), _n('import', 'imports', $items->count(), 'wp_all_import_plugin'))), $this->baseUrl)); die();
+			wp_redirect(add_query_arg('pmxi_nt', urlencode(sprintf(__('%d %s deleted', 'wp_all_import_plugin'), $items->count(), _n('import', 'imports', $items->count(), 'wp_all_import_plugin'))), $this->baseUrl)); die();
 		}
 		
 		$this->render();

@@ -165,6 +165,17 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 				}
 			}
 
+			if ( "xpath" == $this->options['post_format'] ){
+				$chunk == 1 and $logger and call_user_func($logger, __('Composing post formats...', 'wp_all_import_plugin'));			
+				$post_format = array();
+				if (!empty($this->options['post_format_xpath'])){
+					$post_format = XmlImportParser::factory($xml, $cxpath, $this->options['post_format_xpath'], $file)->parse($records); $tmp_files[] = $file;
+				}
+				else{
+					count($titles) and $post_format = array_fill(0, count($titles), 'open');
+				}
+			}
+
 			if ( "no" == $this->options['is_multiple_page_template'] ){
 				$chunk == 1 and $logger and call_user_func($logger, __('Composing page templates...', 'wp_all_import_plugin'));			
 				$page_template = array();
@@ -549,7 +560,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					}
 				endforeach;
 			endif;			
-			// [/custom taxonomies]			
+			// [/custom taxonomies]														
 
 			// Composing featured images			
 			$image_sections = apply_filters('wp_all_import_image_sections', array( 
@@ -668,7 +679,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					}
 
 				}				
-			}					
+			}
 
 			// Composing attachments
 			if ( ! (($uploads = wp_upload_dir()) && false === $uploads['error'])) {
@@ -1035,7 +1046,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						// handle obsolete attachments (i.e. delete or keep) according to import settings
 						if ( $this->options['update_all_data'] == 'yes' or ( $this->options['update_all_data'] == 'no' and $this->options['is_update_images'] and $this->options['update_images_logic'] == "full_update")){
 							$logger and call_user_func($logger, sprintf(__('Deleting images for `%s`', 'wp_all_import_plugin'), $articleData['post_title']));								
-							wp_delete_attachments($articleData['ID'], true, 'images');
+							wp_delete_attachments($articleData['ID'], ! $this->options['do_not_remove_images'], 'images');
 						}
 
 					}
@@ -1137,7 +1148,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					}
 				}		
 
-				// insert article being imported		
+				// insert article being imported						
 				if ($this->options['is_fast_mode']){
 					foreach (array('transition_post_status', 'save_post', 'pre_post_update', 'add_attachment', 'edit_attachment', 'edit_post', 'post_updated', 'wp_insert_post', 'save_post_' . $post_type[$i]) as $act) {
 						remove_all_actions($act);
@@ -1180,8 +1191,8 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 
 					// [post format]
 					if ( current_theme_supports( 'post-formats' ) && post_type_supports( $post_type[$i], 'post-formats' ) ){						
-						set_post_format($pid, $this->options['post_format'] ); 						
-						$logger and call_user_func($logger, sprintf(__('Associate post `%s` with post format %s ...', 'wp_all_import_plugin'), $articleData['post_title'], (!empty($this->options['post_format'])) ? $this->options['post_format'] : 'Standart'));
+						set_post_format($pid, ("xpath" == $this->options['post_format']) ? $post_format[$i] : $this->options['post_format'] ); 						
+						$logger and call_user_func($logger, sprintf(__('Associate post `%s` with post format %s ...', 'wp_all_import_plugin'), $articleData['post_title'], ("xpath" == $this->options['post_format']) ? $post_format[$i] : $this->options['post_format']));
 					}
 					// [/post format]									
 
@@ -1233,7 +1244,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						
 						if ( ! empty($images_bundle) ){
 
-							$is_show_add_new_images = apply_filters('wp_all_import_is_show_add_new_images', true, $post_type[$i]);
+							$is_show_add_new_images = apply_filters('wp_all_import_is_show_add_new_images', true, $post_type[$i]); 
 
 							foreach ($images_bundle as $slug => $bundle_data) {
 								
@@ -1627,6 +1638,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 								}
 							}
 						}
+
 					}
 					else
 					{
@@ -1799,14 +1811,14 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 										$is_created_term = false;
 										if (is_array($single_tax) and ! empty($single_tax['name'])){																														
 
-											$parent_id = (!empty($single_tax['parent'])) ? pmxi_recursion_taxes($single_tax['parent'], $tx_name, $txes[$i], $key) : '';
+											$parent_id = ( ! empty($single_tax['parent'])) ? pmxi_recursion_taxes($single_tax['parent'], $tx_name, $txes[$i], $key) : '';
 											
-											$term = term_exists($single_tax['name'], $tx_name, (int)$parent_id);		
-											
+											$term = (empty($this->options['tax_is_full_search_' . $this->options['tax_logic'][$tx_name]][$tx_name])) ? term_exists($single_tax['name'], $tx_name, (int)$parent_id) : term_exists($single_tax['name'], $tx_name);																																			
+
 											if ( empty($term) and !is_wp_error($term) ){
-												$term = term_exists(htmlspecialchars($single_tax['name']), $tx_name, (int)$parent_id);		
+												$term = (empty($this->options['tax_is_full_search_' . $this->options['tax_logic'][$tx_name]][$tx_name])) ? term_exists(htmlspecialchars($single_tax['name']), $tx_name, (int)$parent_id) : term_exists(htmlspecialchars($single_tax['name']), $tx_name);		
 												if ( empty($term) and !is_wp_error($term) ){
-													$term_attr = array('parent'=> (!empty($parent_id)) ? $parent_id : 0);
+													$term_attr = array('parent'=> ( ! empty($parent_id) ) ? $parent_id : 0);
 													$term = wp_insert_term(
 														$single_tax['name'], // the term 
 													  	$tx_name, // the taxonomy
@@ -1828,12 +1840,22 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 												$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: `%s`', 'wp_all_import_plugin'), $term->get_error_message()));
 												$logger and !$is_cron and PMXI_Plugin::$session->warnings++;
 											}
-											elseif ( ! empty($term)) {												
-												$cat_id = $term['term_id'];
+											elseif ( ! empty($term)) {													
+
+												$cat_id = $term['term_id'];																								
+
 												if ($cat_id and $single_tax['assign']) 
 												{
 													$term = get_term_by('id', $cat_id, $tx_name);
-													if (!in_array($term->slug, $assign_taxes)) $assign_taxes[] = $term->term_taxonomy_id;		
+													if ( $term->parent != '0' and ! empty($this->options['tax_is_full_search_' . $this->options['tax_logic'][$tx_name]][$tx_name]) and empty($this->options['tax_assign_to_one_term_' . $this->options['tax_logic'][$tx_name]][$tx_name])){
+														$parent_ids = wp_all_import_get_parent_terms($cat_id, $tx_name);
+														if ( ! empty($parent_ids)){
+															foreach ($parent_ids as $p) {
+																if (!in_array($p, $assign_taxes)) $assign_taxes[] = $p;
+															}
+														}
+													}													
+													if (!in_array($term->term_taxonomy_id, $assign_taxes)) $assign_taxes[] = $term->term_taxonomy_id;		
 													if (!$is_created_term){														
 														if ( empty($parent_id) ){															
 															$logger and call_user_func($logger, sprintf(__('- Attempted to create parent %s %s `%s`, duplicate detected. Importing %s to existing `%s` %s, ID %d, slug `%s` ...', 'wp_all_import_plugin'), $custom_type_details->labels->singular_name, $tx_name, $single_tax['name'], $custom_type_details->labels->singular_name, $term->name, $tx_name, $term->term_id, $term->slug));	
@@ -1876,6 +1898,15 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 						$logger and call_user_func($logger, sprintf(__('<b>CREATED</b> `%s` `%s` (ID: %s)', 'wp_all_import_plugin'), $articleData['post_title'], $custom_type_details->labels->singular_name, $pid));
 					} else {						
 						$logger and call_user_func($logger, sprintf(__('<b>UPDATED</b> `%s` `%s` (ID: %s)', 'wp_all_import_plugin'), $articleData['post_title'], $custom_type_details->labels->singular_name, $pid));
+					}
+
+					// fire important hooks after custom fields are added
+					if ( ! $this->options['is_fast_mode'] and $this->options['custom_type'] != 'import_users'){
+						$post_object = get_post( $pid );
+						$is_update = ! empty($articleData['ID']);
+						do_action( "save_post_" . $articleData['post_type'], $pid, $post_object, $is_update );
+						do_action( 'save_post', $pid, $post_object, $is_update );
+						do_action( 'wp_insert_post', $pid, $post_object, $is_update );
 					}
 
 					// [addons import]
@@ -1995,7 +2026,7 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 										// Remove attachments										
 										empty($this->options['is_keep_attachments']) and wp_delete_attachments($id, true, 'files');						
 										// Remove images										
-										empty($this->options['is_keep_imgs']) and wp_delete_attachments($id, true);																		
+										empty($this->options['is_keep_imgs']) and wp_delete_attachments($id, true, 'images');																		
 
 										// Clear post's relationships
 										if ( $post_type[$i] != "import_users" ) wp_delete_object_term_relationships($id, get_object_taxonomies('' != $this->options['custom_type'] ? $this->options['custom_type'] : 'post'));
@@ -2201,15 +2232,29 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 	 * @return PMXI_Import_Record
 	 * @chainable
 	 */
-	public function deletePosts($keepPosts = TRUE) {
+	public function deletePosts($keepPosts = TRUE, $is_deleted_images = 'auto', $is_delete_attachments = 'auto') {
 		$post = new PMXI_Post_List();		
 		if ( ! $keepPosts) {								
 			$ids = array();
 			foreach ($post->getBy('import_id', $this->id)->convertRecords() as $p) {				
 				// Remove attachments
-				empty($this->options['is_keep_attachments']) and wp_delete_attachments($p->post_id, true, 'files');
+				if ($is_delete_attachments == 'yes' or $is_delete_attachments == 'auto' and empty($this->options['is_keep_attachments']))
+				{
+					wp_delete_attachments($p->post_id, true, 'files');
+				}
+				else
+				{
+					wp_delete_attachments($p->post_id, false, 'files');
+				}
 				// Remove images
-				empty($this->options['is_keep_imgs']) and wp_delete_attachments($p->post_id, true);				
+				if ($is_deleted_images == 'yes' or $is_deleted_images == 'auto' and empty($this->options['is_keep_imgs']))
+				{
+					wp_delete_attachments($p->post_id, true, 'images');
+				}
+				else
+				{
+					wp_delete_attachments($p->post_id, false, 'images');
+				}
 				$ids[] = $p->post_id;
 			}
 
@@ -2289,8 +2334,8 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 	 * @see parent::delete()
 	 * @param bool[optional] $keepPosts When set to false associated wordpress posts will be deleted as well
 	 */
-	public function delete($keepPosts = TRUE) {
-		$this->deletePosts($keepPosts)->deleteFiles()->deleteHistories()->deleteChildren($keepPosts);
+	public function delete($keepPosts = TRUE, $is_deleted_images = 'auto', $is_delete_attachments = 'auto') {
+		$this->deletePosts($keepPosts, $is_deleted_images, $is_delete_attachments)->deleteFiles()->deleteHistories()->deleteChildren($keepPosts);
 		
 		return parent::delete();
 	}

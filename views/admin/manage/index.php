@@ -161,7 +161,7 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 												}
 											}
 											?>
-											<em><?php echo $path; ?></em>
+											<em><a href="javascript:void(0);" class="wp_all_import_show_path" rel="<?php echo $item['path']; ?>"><?php echo $path; ?></a></em>
 										<?php else:?>
 										<em><?php echo str_replace("\\", '/', preg_replace('%^(\w+://[^:]+:)[^@]+@%', '$1*****@', $item['path'])); ?></em>
 										<?php endif; ?>

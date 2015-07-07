@@ -3,7 +3,7 @@
 Plugin Name: WP All Import
 Plugin URI: http://www.wpallimport.com/upgrade-to-pro?utm_source=wordpress.org&utm_medium=plugins-page&utm_campaign=free+plugin
 Description: The most powerful solution for importing XML and CSV files to WordPress. Create Posts and Pages with content from any XML or CSV file. A paid upgrade to WP All Import Pro is available for support and additional features.
-Version: 3.2.9
+Version: 3.3.0
 Author: Soflyy
 */
 
@@ -25,7 +25,7 @@ define('WP_ALL_IMPORT_ROOT_URL', rtrim(plugin_dir_url(__FILE__), '/'));
  */
 define('WP_ALL_IMPORT_PREFIX', 'pmxi_');
 
-define('PMXI_VERSION', '3.2.9');
+define('PMXI_VERSION', '3.3.0');
 
 define('PMXI_EDITION', 'free');
 
@@ -964,7 +964,7 @@ final class PMXI_Plugin {
 			'post_type_xpath' => '',
 			'deligate' => '',
 			'wizard_type' => 'new',
-			'custom_type' => '',				
+			'custom_type' => '',
 			'featured_delim' => ',',
 			'atch_delim' => ',',
 			'is_search_existing_attach' => 0,
@@ -995,7 +995,7 @@ final class PMXI_Plugin {
 			'create_draft' => 'no',
 			'author' => '',
 			'post_excerpt' => '',
-			'post_slug' => '',				
+			'post_slug' => '',
 			'attachments' => '',
 			'is_import_specified' => 0,
 			'import_specified' => '',
@@ -1013,7 +1013,7 @@ final class PMXI_Plugin {
 			'update_missing_cf_name' => '',
 			'update_missing_cf_value' => '',
 
-			'is_keep_former_posts' => 'no',				
+			'is_keep_former_posts' => 'no',
 			'is_update_status' => 1,
 			'is_update_content' => 1,
 			'is_update_title' => 1,
@@ -1027,34 +1027,36 @@ final class PMXI_Plugin {
 			'taxonomies_except_list' => array(),
 			'is_update_attachments' => 1,
 			'is_update_images' => 1,
-			'update_images_logic' => 'full_update',				
+			'update_images_logic' => 'full_update',
 			'is_update_dates' => 1,
 			'is_update_menu_order' => 1,
-			'is_update_parent' => 1,			
+			'is_update_parent' => 1,
 			'is_keep_attachments' => 0,
 			'is_keep_imgs' => 0,
-			
+			'do_not_remove_images' => 0,
+
 			'is_update_custom_fields' => 1,
 			'update_custom_fields_logic' => 'full_update',
-			'custom_fields_list' => array(),				
-			'custom_fields_only_list' => array(),				
-			'custom_fields_except_list' => array(),								
+			'custom_fields_list' => array(),
+			'custom_fields_only_list' => array(),
+			'custom_fields_except_list' => array(),
 
 			'duplicate_matching' => 'auto',
-			'duplicate_indicator' => 'title',								
+			'duplicate_indicator' => 'title',
 			'custom_duplicate_name' => '',
 			'custom_duplicate_value' => '',
 			'is_update_previous' => 0,
 			'is_scheduled' => '',
-			'scheduled_period' => '',										
-			'friendly_name' => '',				
+			'scheduled_period' => '',
+			'friendly_name' => '',
 			'records_per_request' => 20,
 			'auto_rename_images' => 0,
 			'auto_rename_images_suffix' => '',
-			'images_name' => 'filename',				
+			'images_name' => 'filename',
 			'post_format' => 'standard',
+			'post_format_xpath' => '',
 			'encoding' => 'UTF-8',
-			'delimiter' => '',				
+			'delimiter' => '',
 			'image_meta_title' => '',
 			'image_meta_title_delim' => ',',
 			'image_meta_caption' => '',
@@ -1064,7 +1066,7 @@ final class PMXI_Plugin {
 			'image_meta_description' => '',
 			'image_meta_description_delim' => ',',
 			'status_xpath' => '',
-			'download_images' => 'yes',															
+			'download_images' => 'yes',
 			'converted_options' => 0,
 			'update_all_data' => 'yes',
 			'is_fast_mode' => 0,
@@ -1086,7 +1088,7 @@ final class PMXI_Plugin {
 			'set_image_meta_title' => 0,
 			'set_image_meta_caption' => 0,
 			'set_image_meta_alt' => 0,
-			'set_image_meta_description' => 0,				
+			'set_image_meta_description' => 0,
 			'auto_set_extension' => 0,
 			'new_extension' => '',
 			'tax_logic' => array(),
@@ -1104,6 +1106,10 @@ final class PMXI_Plugin {
 			'tax_hierarchical_logic_entire' => array(),
 			'tax_hierarchical_logic_manual' => array(),
 			'tax_enable_mapping' => array(),
+			'tax_is_full_search_single' => array(),
+			'tax_is_full_search_multiple' => array(),
+			'tax_assign_to_one_term_single' => array(),
+			'tax_assign_to_one_term_multiple' => array(),
 			'tax_mapping' => array(),
 			'tax_logic_mapping' => array(),
 			'is_tax_hierarchical_group_delim' => array(),

@@ -1704,6 +1704,11 @@
 	    }
 	}
 
+	$('.wp_all_import_show_path').click(function(){
+		var path = $(this).attr('rel');
+		$(this).parents('em:first').html(path);
+	});
+
 	fix_tag_position();	
 
 	$(document).scroll(function() {    	    				

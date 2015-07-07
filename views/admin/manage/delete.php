@@ -3,7 +3,19 @@
 <form method="post">
 	<p><?php printf(__('Are you sure you want to delete <strong>%s</strong> import?', 'wp_all_import_plugin'), $item->name) ?></p>
 	<div class="input">
-		<input type="checkbox" id="is_delete_posts" name="is_delete_posts" /> <label for="is_delete_posts">Delete associated posts as well</label>
+		<input type="checkbox" id="is_delete_posts" name="is_delete_posts" class="switcher"/> <label for="is_delete_posts"><?php _e('Delete associated posts as well','wp_all_import_plugin');?> </label>
+		<div class="switcher-target-is_delete_posts" style="padding: 5px 17px;">
+			<div class="input">
+				<input type="hidden" name="is_delete_images" value="no"/>
+				<input type="checkbox" id="is_delete_images" name="is_delete_images" value="yes" />
+				<label for="is_delete_images"><?php _e('Delete associated images from media gallery', 'wp_all_import_plugin') ?></label>			
+			</div>
+			<div class="input">
+				<input type="hidden" name="is_delete_attachments" value="no"/>
+				<input type="checkbox" id="is_delete_attachments" name="is_delete_attachments" value="yes" />
+				<label for="is_delete_attachments"><?php _e('Delete associated files from media gallery', 'wp_all_import_plugin') ?></label>			
+			</div>
+		</div>
 		<?php if ( ! empty($item->options['deligate']) and $item->options['deligate'] == 'wpallexport' and class_exists('PMXE_Plugin')): ?>
 			<?php
 				$export = new PMXE_Export_Record();

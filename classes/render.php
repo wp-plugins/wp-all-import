@@ -103,7 +103,7 @@ if ( ! class_exists('PMXI_Render')){
 		
 			if ("" != $path){ 
 				if ($lvl > 1) $path .= "->" . $el->nodeName; else $path = $el->nodeName; 
-				echo '<option value="'.$path.'">' .$path . '</option>';
+				echo '<option value="'.$path.'['. $lvl .']">' .$path . '['. $lvl .']</option>';
 			}
 			else $path = $el->nodeName;		
 					

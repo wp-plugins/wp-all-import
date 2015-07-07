@@ -56,11 +56,8 @@
 	if ( ! function_exists('pmxi_getExtensionFromStr')){
 		function pmxi_getExtensionFromStr($str) 
 	    {
-	        $i = strrpos($str,".");
-	        if ($i === false) return "";
-	        $l = strlen($str) - $i;
-	        $ext = substr($str,$i+1,$l);	       
-	        return (preg_match('%(jpg|jpeg|gif|png)$%i', $ext) and strlen($ext) <= 4) ? $ext : "";
+	    	$filetype = wp_check_filetype($str);	              
+	        return $filetype['ext'];
 		}
 	}			
 

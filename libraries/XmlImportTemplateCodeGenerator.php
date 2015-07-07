@@ -101,7 +101,7 @@ class XmlImportTemplateCodeGenerator
     }	
     if (is_null($filename))
     {
-       $filename = tempnam(XmlImportConfig::getInstance()->getCacheDirectory(), 'xim');
+       $filename = @tempnam(XmlImportConfig::getInstance()->getCacheDirectory(), 'xim');
     }
 	  if ( ! $filename or ! @is_writable($filename) ){
       $uploads  = wp_upload_dir();
@@ -110,6 +110,7 @@ class XmlImportTemplateCodeGenerator
     }
     
     file_put_contents($filename, $result);
+    //@chmod($filename, 0666);
     return $filename;
   }
 

@@ -27,7 +27,7 @@ $table_prefix = PMXI_Plugin::getInstance()->getTablePrefix();
 $plugin_queries = <<<SCHEMA
 CREATE TABLE {$table_prefix}templates (
 	id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-	options TEXT,	
+	options LONGTEXT,	
 	scheduled VARCHAR(64) NOT NULL DEFAULT '',
 	name VARCHAR(200) NOT NULL DEFAULT '',	
 	title TEXT,
