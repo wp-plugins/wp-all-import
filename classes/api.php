@@ -55,15 +55,15 @@ class PMXI_API
 
 			case 'simple':
 				?>
-				<input type="text" name="<?php echo $params['field_name']; ?>" id="<?php echo sanitize_title($params['field_name']); ?>" value="<?php echo $params['field_value']; ?>" style="width:100%;"/>
+				<input type="text" name="<?php echo $params['field_name']; ?>" id="<?php echo sanitize_title($params['field_name']); ?>" value="<?php echo esc_attr($params['field_value']); ?>" style="width:100%;"/>
 				<?php
 				break;
 
-			case 'enum':
-				
+			case 'enum':				
+
 				$is_set_with_xpath_visible = true;
-				foreach ($params['enum_values'] as $key => $value):?>
-					<div class="form-field wpallimport-radio-field">
+				foreach ($params['enum_values'] as $key => $value): ?>
+					<div class="form-field wpallimport-radio-field wpallimport-<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>">						
 						<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_<?php echo $key; ?>" class="switcher" name="<?php echo $params['field_name']; ?>" value="<?php echo $key; ?>" <?php echo $key == $params['field_value'] ? 'checked="checked"': '' ?>/>
 						<?php  
 							$label = '';
@@ -108,7 +108,7 @@ class PMXI_API
 					</div>
 				<?php endforeach;?>		
 				<?php if ( $is_set_with_xpath_visible ): ?>
-				<div class="form-field wpallimport-radio-field">
+				<div class="form-field wpallimport-radio-field wpallimport-<?php echo sanitize_title($params['field_name']); ?>_xpath">
 					<input type="radio" id="<?php echo sanitize_title($params['field_name']); ?>_xpath" class="switcher" name="<?php echo $params['field_name']; ?>" value="xpath" <?php echo 'xpath' === $params['field_value'] ? 'checked="checked"': '' ?>/>
 					<label for="<?php echo sanitize_title($params['field_name']); ?>_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label>
 					<span class="wpallimport-clear"></span>
@@ -246,7 +246,7 @@ class PMXI_API
 
 			case 'textarea':
 				?>
-				<textarea name="<?php echo $params['field_name']; ?>" id="<?php echo sanitize_title($params['field_name']); ?>" class="rad4 newline" style="height: 70px;margin: 5px 0;padding-top: 5px;width: 70%;"><?php echo $params['field_value']; ?></textarea>
+				<textarea name="<?php echo $params['field_name']; ?>" id="<?php echo sanitize_title($params['field_name']); ?>" class="rad4 newline" style="height: 70px;margin: 5px 0;padding-top: 5px;width: 70%;"><?php echo esc_attr($params['field_value']); ?></textarea>
 				<?php
 				break;
 
@@ -404,7 +404,7 @@ class PMXI_API
 					}
 					else {
 						$result = true;											
-						$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully founded', 'wp_all_import_plugin'), $wpai_image_path));
+						$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully found', 'wp_all_import_plugin'), $wpai_image_path));
 					}
 				}	
 				// validate import images
@@ -413,7 +413,7 @@ class PMXI_API
 						$logger and call_user_func($logger, sprintf(__('- <b>WARNING</b>: File %s is not a valid image and cannot be set as featured one', 'wp_all_import_plugin'), $image_filepath));					
 						@unlink($image_filepath);
 					} else {
-						$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully founded', 'wp_all_import_plugin'), $wpai_image_path));
+						$logger and call_user_func($logger, sprintf(__('- Image `%s` has been successfully found', 'wp_all_import_plugin'), $wpai_image_path));
 						$result = true;
 					}
 				}
@@ -476,7 +476,7 @@ class PMXI_API
 						}
 						else {
 							$result = true;											
-							$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully founded', 'wp_all_import_plugin'), $url));
+							$logger and call_user_func($logger, sprintf(__('- File `%s` has been successfully found', 'wp_all_import_plugin'), $url));
 						}
 					}					
 				}

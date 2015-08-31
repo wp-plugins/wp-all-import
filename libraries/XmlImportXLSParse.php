@@ -30,7 +30,7 @@ class PMXI_XLSParser{
 
 	protected function toXML(){
 
-		include_once( PMXI_Plugin::ROOT_DIR . '/libraries/PHPExcel/IOFactory.php' );
+		include_once( PMXI_Plugin::ROOT_DIR . '/classes/PHPExcel/IOFactory.php' );
 
 		$objPHPExcel = PHPExcel_IOFactory::load($this->_filename);
 

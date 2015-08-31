@@ -971,6 +971,13 @@ class PMXI_CsvParser
         $create_new_headers = false;
                 
         while ($keys = fgetcsv($res, $l, $d, $e)) {
+            
+            $empty_columns = 0;
+            foreach ($keys as $key) {
+                if ($key == '') $empty_columns++;
+            }
+            // skip empty lines
+            if ($empty_columns == count($keys)) continue;
 
             if ($c == 0) {
                 $buf_keys = $keys;

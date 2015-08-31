@@ -23,7 +23,7 @@
 								<input type="radio" id="status_draft" name="status" value="draft" <?php echo 'draft' == $post['status'] ? 'checked="checked"' : '' ?> class="switcher"/>
 								<label for="status_draft"><?php _e('Draft', 'wp_all_import_plugin') ?></label>
 							</div>
-							<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px;">
+							<div class="input fleft" style="position:relative;width:220px;">
 								<input type="radio" id="status_xpath" class="switcher" name="status" value="xpath" <?php echo 'xpath' == $post['status'] ? 'checked="checked"': '' ?>/>
 								<label for="status_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
 								<div class="switcher-target-status_xpath">
@@ -72,7 +72,7 @@
 								<input type="radio" id="comment_status_closed" name="comment_status" value="closed" <?php echo 'closed' == $post['comment_status'] ? 'checked="checked"' : '' ?> class="switcher"/>
 								<label for="comment_status_closed"><?php _e('Closed', 'wp_all_import_plugin') ?></label>
 							</div>
-							<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px;">
+							<div class="input fleft" style="position:relative;width:220px;">
 								<input type="radio" id="comment_status_xpath" class="switcher" name="comment_status" value="xpath" <?php echo 'xpath' == $post['comment_status'] ? 'checked="checked"': '' ?>/>
 								<label for="comment_status_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
 								<div class="switcher-target-comment_status_xpath">
@@ -95,7 +95,7 @@
 								<input type="radio" id="ping_status_closed" name="ping_status" value="closed" <?php echo 'closed' == $post['ping_status'] ? 'checked="checked"' : '' ?> class="switcher"/>
 								<label for="ping_status_closed"><?php _e('Closed', 'wp_all_import_plugin') ?></label>
 							</div>
-							<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px;">
+							<div class="input fleft" style="position:relative;width:220px;">
 								<input type="radio" id="ping_status_xpath" class="switcher" name="ping_status" value="xpath" <?php echo 'xpath' == $post['ping_status'] ? 'checked="checked"': '' ?>/>
 								<label for="ping_status_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
 								<div class="switcher-target-ping_status_xpath">
@@ -162,6 +162,15 @@
 										}
 									}			
 								?>
+								<div class="input fleft" style="position:relative;width:220px; ">
+									<input type="radio" id="post_format_xpath" class="switcher" name="post_format" value="xpath" <?php echo 'xpath' == $post['post_format'] ? 'checked="checked"': '' ?>/>
+									<label for="post_format_xpath"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
+									<div class="switcher-target-post_format_xpath">
+										<div class="input">
+											&nbsp;<input type="text" class="smaller-text" name="post_format_xpath" style="width:190px;" value="<?php echo esc_attr($post['post_format_xpath']) ?>"/>											
+										</div>
+									</div>
+								</div>	
 							</div>									
 						</td>
 					</tr>
@@ -183,7 +192,7 @@
 									</div>
 								</div>
 							</div>
-							<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px; margin-top: 5px;">
+							<div class="input fleft" style="position:relative;width:220px; margin-top: 5px;">
 								<input type="radio" id="is_multiple_page_template_no" class="switcher" name="is_multiple_page_template" value="no" <?php echo 'no' == $post['is_multiple_page_template'] ? 'checked="checked"': '' ?> style="margin-left:0;"/>
 								<label for="is_multiple_page_template_no"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
 								<div class="switcher-target-is_multiple_page_template_no">
@@ -199,7 +208,7 @@
 						<td>
 							<?php if ( 'page' == $post_type ):?>	
 
-								<h4><?php _e('Page Parent', 'wp_all_import_plugin') ?></h4>
+								<h4><?php _e('Page Parent', 'wp_all_import_plugin') ?><a href="#help" class="wpallimport-help" title="<?php _e('Enter the slug of the desired page parent. If adding the child and parent pages in the same import, set \'Records per Iteration\' to 1, run the import twice, or run separate imports for child and parent pages.', 'wp_all_import_plugin') ?>" style="position:relative; top:-1px;">?</a></h4>
 
 								<div class="input">
 									<input type="radio" id="is_multiple_page_parent_yes" name="is_multiple_page_parent" value="yes" <?php echo 'yes' == $post['is_multiple_page_parent'] ? 'checked="checked"' : '' ?> class="switcher" style="margin-left:0;"/>
@@ -211,7 +220,7 @@
 									</div>
 								</div>
 
-								<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px; margin-top: 5px;">
+								<div class="input fleft" style="position:relative;width:220px; margin-top: 5px;">
 									<input type="radio" id="is_multiple_page_parent_no" class="switcher" name="is_multiple_page_parent" value="no" <?php echo 'no' == $post['is_multiple_page_parent'] ? 'checked="checked"': '' ?> style="margin-left:0;"/>
 									<label for="is_multiple_page_parent_no"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
 									<div class="switcher-target-is_multiple_page_parent_no">
@@ -229,7 +238,7 @@
 								
 								<div class="input">
 									<input type="radio" id="is_multiple_page_parent_yes" name="is_multiple_page_parent" value="yes" <?php echo 'yes' == $post['is_multiple_page_parent'] ? 'checked="checked"' : '' ?> class="switcher" style="margin-left:0;"/>
-									<label for="is_multiple_page_parent_yes"><?php _e('Select page parent', 'wp_all_import_plugin') ?></label>
+									<label for="is_multiple_page_parent_yes"><?php _e('Set post parent', 'wp_all_import_plugin') ?></label>
 									<div class="switcher-target-is_multiple_page_parent_yes">
 										<div class="input">
 											<input type="text" class="" name="parent" value="<?php echo esc_attr($post['parent']) ?>" />									
@@ -237,7 +246,7 @@
 									</div>
 								</div>
 
-								<div class="input fleft" style="position:relative;width:220px; margin-bottom:15px; margin-top: 5px;">
+								<div class="input fleft" style="position:relative;width:220px; margin-top: 5px;">
 									<input type="radio" id="is_multiple_page_parent_no" class="switcher" name="is_multiple_page_parent" value="no" <?php echo 'no' == $post['is_multiple_page_parent'] ? 'checked="checked"': '' ?> style="margin-left:0;"/>
 									<label for="is_multiple_page_parent_no"><?php _e('Set with XPath', 'wp_all_import_plugin' )?></label> <br>
 									<div class="switcher-target-is_multiple_page_parent_no">
@@ -250,7 +259,7 @@
 							<?php endif; ?>
 														
 						</td>
-					</tr>	
+					</tr>					
 					<tr>
 						<td>
 							<h4><?php _e('Menu Order', 'wp_all_import_plugin') ?></h4>
@@ -258,7 +267,7 @@
 								<input type="text" class="" name="order" value="<?php echo esc_attr($post['order']) ?>" />
 							</div>
 						</td>
-					</tr>	
+					</tr>					
 					<?php if ( ! empty($post['deligate']) and $post['deligate'] == 'wpallexport' ): ?>
 					<tr>
 						<td>
@@ -276,7 +285,7 @@
 							</div>
 						</td>
 					</tr>			
-					<?php endif; ?>													
+					<?php endif; ?>									
 				</table>
 			</div>
 		</div>

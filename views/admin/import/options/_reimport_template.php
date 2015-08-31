@@ -5,7 +5,8 @@
 	</script>	
 	<div class="wpallimport-content-section">
 		<div class="wpallimport-collapsed-header">					
-		<?php if ( "new" == $post['wizard_type']): ?>	
+		<?php 		
+		if ( "new" == $post['wizard_type']): ?>	
 			<?php 
 				if ( ! $this->isWizard )
 				{
@@ -14,7 +15,7 @@
 					<?php 
 				}
 				else
-				{ 
+				{ 					
 					if ( ! empty(PMXI_Plugin::$session->deligate) and PMXI_Plugin::$session->deligate == 'wpallexport' )
 					{
 						?>
@@ -42,18 +43,23 @@
 								<div class="wpallimport-unique-key-wrapper" <?php if (!empty(PMXI_Plugin::$session->deligate)):?>style="display:none;"<?php endif; ?>>
 									<label style="font-weight: bold;"><?php _e("Unique Identifier", "pmxi_plugin"); ?></label>										
 
-									<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php if ( ! $this->isWizard ) echo esc_attr($post['unique_key']); elseif ($post['tmp_unique_key']) echo esc_attr($post['unique_key']); ?>" <?php echo  ( ! $isWizard ) ? 'disabled="disabled"' : '' ?>/>
+									<input type="text" class="smaller-text" name="unique_key" style="width:300px;" value="<?php if ( ! $this->isWizard ) echo esc_attr($post['unique_key']); elseif ($post['tmp_unique_key']) echo esc_attr($post['unique_key']); ?>" <?php echo  ( ! $isWizard and ! empty($post['unique_key']) ) ? 'disabled="disabled"' : '' ?>/>
 
 									<?php if ( $this->isWizard ): ?>
 									<input type="hidden" name="tmp_unique_key" value="<?php echo ($post['unique_key']) ? esc_attr($post['unique_key']) : esc_attr($post['tmp_unique_key']); ?>"/>
 									<a href="javascript:void(0);" class="wpallimport-auto-detect-unique-key"><?php _e('Auto-detect', 'wp_all_import_plugin'); ?></a>
 									<?php else: ?>
-									<a href="javascript:void(0);" class="wpallimport-change-unique-key"><?php _e('Edit', 'wp_all_import_plugin'); ?></a>
-									<div id="dialog-confirm" title="<?php _e('Warning: Are you sure you want to edit the Unique Identifier?','wp_all_import_plugin');?>" style="display:none;">
-										<p><?php printf(__('It is recommended you delete all %s associated with this import before editing the unique identifier.', 'wp_all_import_plugin'), strtolower($custom_type->labels->name)); ?></p>
-										<p><?php printf(__('Editing the unique identifier will dissociate all existing %s linked to this import. Future runs of the import will result in duplicates, as WP All Import will no longer be able to update these %s.', 'wp_all_import_plugin'), strtolower($custom_type->labels->name), strtolower($custom_type->labels->name)); ?></p>
-										<p><?php _e('You really should just re-create your import, and pick the right unique identifier to start with.', 'wp_all_import_plugin'); ?></p>
-									</div>
+										<?php if ( ! empty($post['unique_key']) ): ?>
+										<a href="javascript:void(0);" class="wpallimport-change-unique-key"><?php _e('Edit', 'wp_all_import_plugin'); ?></a>
+										<div id="dialog-confirm" title="<?php _e('Warning: Are you sure you want to edit the Unique Identifier?','wp_all_import_plugin');?>" style="display:none;">
+											<p><?php printf(__('It is recommended you delete all %s associated with this import before editing the unique identifier.', 'wp_all_import_plugin'), strtolower($custom_type->labels->name)); ?></p>
+											<p><?php printf(__('Editing the unique identifier will dissociate all existing %s linked to this import. Future runs of the import will result in duplicates, as WP All Import will no longer be able to update these %s.', 'wp_all_import_plugin'), strtolower($custom_type->labels->name), strtolower($custom_type->labels->name)); ?></p>
+											<p><?php _e('You really should just re-create your import, and pick the right unique identifier to start with.', 'wp_all_import_plugin'); ?></p>
+										</div>
+										<?php else:?>
+										<input type="hidden" name="tmp_unique_key" value="<?php echo ($post['unique_key']) ? esc_attr($post['unique_key']) : esc_attr($post['tmp_unique_key']); ?>"/>
+										<a href="javascript:void(0);" class="wpallimport-auto-detect-unique-key"><?php _e('Auto-detect', 'wp_all_import_plugin'); ?></a>
+										<?php endif; ?>
 									<?php endif; ?>
 
 									<p>&nbsp;</p>
@@ -62,7 +68,8 @@
 										<p class="info_ico"><?php printf(__('If you run this import again with an updated file, the Unique Identifier allows WP All Import to correctly link the records in your updated file with the %s it will create right now. If multiple records in this file have the same Unique Identifier, only the first will be created. The others will be detected as duplicates.', 'wp_all_import_plugin'), $custom_type->labels->name); ?></p>
 									<?php endif; ?>
 								</div>					
-								<?php if ( ! $this->isWizard  or ! empty(PMXI_Plugin::$session->deligate) and PMXI_Plugin::$session->deligate == 'wpallexport'):?>
+								<?php 
+								if ( ! $this->isWizard  or ! empty(PMXI_Plugin::$session->deligate) and PMXI_Plugin::$session->deligate == 'wpallexport'):?>
 									
 									<?php include( '_reimport_options.php' ); ?>
 

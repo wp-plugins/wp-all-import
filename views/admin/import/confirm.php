@@ -25,6 +25,10 @@
 		<?php if ($this->warnings->get_error_codes()): ?>
 			<?php $this->warning() ?>
 		<?php endif ?>
+
+		<?php 
+			wp_all_import_template_notifications( $post );								
+		?>
 	</div>
 
 	<?php $custom_type = get_post_type_object( PMXI_Plugin::$session->custom_type ); ?>
@@ -98,7 +102,7 @@
 						
 						<!-- General -->
 						<?php			
-							$path = $source['path'];				
+							$path = wp_all_import_get_absolute_path($source['path']);				
 							$import_type = (!empty($source['type'])) ? $source['type'] : $import['type'];
 							if ( in_array($import_type, array('upload'))){
 								$path_parts = pathinfo($source['path']);
@@ -106,12 +110,13 @@
 									$path_all_parts = explode('/', $path_parts['dirname']);
 									$dirname = array_pop($path_all_parts);
 									if ( wp_all_import_isValidMd5($dirname)){								
-										$path = str_replace($dirname, preg_replace('%^(.{3}).*(.{3})$%', '$1***$2', $dirname), str_replace('temp/', '', $source['path']));										
+										$path = str_replace($dirname, preg_replace('%^(.{3}).*(.{3})$%', '$1***$2', $dirname), str_replace('temp/', '', $path));										
 									}
-								}
+								}								
 							} else{
 								$path = str_replace("\\", '/', preg_replace('%^(\w+://[^:]+:)[^@]+@%', '$1*****@', $path));
 							}
+							if ( in_array($import_type, array('upload', 'file'))){ $path = preg_replace('%.*wp-content/%', 'wp-content/', $path); }
 						?>
 						<p><?php printf(__('WP All Import will import the file <span style="color:#40acad;">%s</span>, which is <span style="color:#000; font-weight:bold;">%s</span>', 'wp_all_import_plugin'), $path, (isset($locfilePath)) ? human_filesize(filesize($locfilePath)) : __('undefined', 'wp_all_import_plugin')); ?></p>
 

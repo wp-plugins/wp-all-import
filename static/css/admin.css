@@ -501,6 +501,9 @@
 	position: absolute;
 	top: 15px;
 }
+.wpallimport-plugin .wpallimport-delete-posts-warning{
+	display: none;
+}
 .wpallimport-plugin .wpallimport-free-edition-notice{
 	display: block;
 	margin-top: 40px;
@@ -529,10 +532,9 @@
 }
 .wpallimport-plugin .upgrade_link{
 	color: #000 !important;
-	font-size: 1.3em;
-	text-decoration: underline !important;
+	font-size: 1.3em !important;	
 }
-.wpallimport-plugin .wpallimport-delete-posts-warning{
+.wpallimport-plugin .auto-generate-template{
 	display: none;
 }
 /*--------------------------------------------------------------------------
@@ -1158,6 +1160,7 @@
 	-webkit-border-top-left-radius: 4px !important;						
 	-webkit-border-top-right-radius: 4px !important;
 }
+
 .wpallimport-plugin .wpallimport-choose-post-type{ padding-top: 40px; }
 .wpallimport-plugin .wpallimport-file-upload-result{ padding-top: 30px; overflow: hidden; }
 .wpallimport-plugin .wpallimport-upload-resource-step-one{ padding-bottom: 40px; }
@@ -1635,7 +1638,7 @@
 		font-weight: 16px;
 		text-align: left;
 	}
-.wpallimport-plugin .ajax-console .founded_records{
+.wpallimport-plugin .ajax-console .found_records{
 	background: url('../img/ui_4.0/elements.png') no-repeat !important;
 	padding-left: 80px;	
 	margin-bottom: 0;	
@@ -1644,14 +1647,14 @@
 	margin-bottom: 20px;
 	position: relative;
 }
-	.wpallimport-plugin .ajax-console .founded_records h3{
+	.wpallimport-plugin .ajax-console .found_records h3{
 		color: #425f9a;
 		margin-bottom: 0;
 		margin-top: 3px;
 		font-size: 22px;
 		line-height: 28px;
 	}
-	.wpallimport-plugin .ajax-console .founded_records h4{
+	.wpallimport-plugin .ajax-console .found_records h4{
 		color: #777;
 		margin-top: 5px;
 		font-size:20px;
@@ -1713,6 +1716,11 @@
 		margin: 0 auto;
 		line-height: 45px;
 	}
+	.wpallimport-plugin .import_information h3.wp_all_import_warning{
+		background: url('../img/ui_4.0/exclamation.png') no-repeat;
+		display: none;
+	}
+
 	.wpallimport-plugin .import_information h3 span{
 		color:#46ba69;
 	}
@@ -1744,6 +1752,11 @@
 	font-size: 20px; 
 	padding-top: 17px; 
 	margin-right: 10px;
+}
+.wpallimport-plugin .wp_all_import_subheadline{
+	color: #777 !important;
+	font-size: 1em !important;
+	margin-bottom: 20px !important;
 }
 /*--------------------------------------------------------------------------
 *
@@ -2509,13 +2522,13 @@
 		color: #46ba69;
 		font-weight: normal;
 	}
-	.wpallimport-plugin #import_finished h3{
+	.wpallimport-plugin #import_finished h3.wpallimport-complete-success{
 		font-size: 21px;
 		color: #777;
 		font-weight: normal;
 		line-height: 30px;
 	}
-		.wpallimport-plugin #import_finished h3 span{
+		.wpallimport-plugin #import_finished h3.wpallimport-complete-success span{
 			color: #000;
 		}
 	.wpallimport-plugin #import_finished hr{
@@ -2825,7 +2838,6 @@
 	border-spacing:0;
 }
 /*@*/
-
 /*--------------------------------------------------------------------------
 *
 *	Manage Imports
@@ -2912,7 +2924,52 @@
 	color: #777;
 	margin-top: 2px;
 }
+.wpallimport-plugin .wpallimport-complete-warning{
+	display: none;
+	background: url('../img/ui_4.0/exclamation.png') #fff 25px 40px no-repeat;
+	padding: 30px 20px 10px 25px;
+	margin: 40px 0;
+	text-align: left;
+}
+.wpallimport-plugin .wpallimport-complete-warning h3
+{
+	color: #425f9a;
+	font-size: 22px;
+	line-height: 28px;
+	margin-bottom: 15px;	
+	padding-left: 65px; 
+	margin-top: 20px;
+}
+.wpallimport-plugin .wpallimport-complete-warning h4
+{
+	color: #777;
+	font-size: 19px;
+	margin-top: 5px;
+	line-height: 30px;
+	width: 97%;
+	padding-top: 5px;
+}
+.wpallimport-plugin .wpallimport-delete-and-edit{
+	position: absolute;
+	right: 5%;
+	top: 42px;
+}
+/*--------------------------------------------------------------------------
+*
+*	RTL
+*	
+*-------------------------------------------------------------------------*/
 
+body.rtl.wpallimport-plugin .wpallimport-collapsed .wpallimport-collapsed-header
+{
+	padding-left: 0;
+	padding-right: 60px;
+}
+body.rtl.wpallimport-plugin .show_hints
+{
+	right: auto;
+	left: -1px;
+}
 /*--------------------------------------------------------------------------
 *
 *	Media Queries
@@ -3034,7 +3091,7 @@
 	.wpallimport-plugin .wpallimport-upload-type-container{
 		padding: 0 40px;
 	}
-	.wpallimport-plugin .ajax-console .founded_records h4{
+	.wpallimport-plugin .ajax-console .found_records h4{
 		font-size: 18px;
 	}
 	.wpallimport-plugin #pmxi_add_rule{
@@ -3044,7 +3101,9 @@
 		font-size: 15px;
 	}
 	.wpallimport-plugin #process_notice,
-	.wpallimport-plugin #import_finished h3{
+	.wpallimport-plugin #import_finished h3.wpallimport-complete-success,
+	.wpallimport-plugin #import_finished .wpallimport-complete-warning h3,
+	.wpallimport-plugin #import_finished .wpallimport-complete-warning h4{
 		font-size: 16px;
 	}
 	.wpallimport-plugin .change_file .wpallimport-import-types{
@@ -3101,7 +3160,7 @@
 	.wpallimport-plugin .wpallimport-upload-type-container{
 		padding: 0 40px;
 	}
-	.wpallimport-plugin .ajax-console .founded_records h4{
+	.wpallimport-plugin .ajax-console .found_records h4{
 		font-size: 14px;
 	}
 	.wpallimport-plugin .wpallimport-ready-to-go h4{
@@ -3111,7 +3170,9 @@
 		padding: 20px 10px 20px 10px;
 	}
 	.wpallimport-plugin #process_notice,
-	.wpallimport-plugin #import_finished h3{
+	.wpallimport-plugin #import_finished h3.wpallimport-complete-success,
+	.wpallimport-plugin #import_finished .wpallimport-complete-warning h3,
+	.wpallimport-plugin #import_finished .wpallimport-complete-warning h4{
 		font-size: 14px;
 	}
 	.wpallimport-plugin #import_progress{
@@ -3179,7 +3240,7 @@
 	.wpallimport-plugin .wpallimport-import-to{
 		width: 330px;
 	}
-	.wpallimport-plugin .ajax-console .founded_records h4{
+	.wpallimport-plugin .ajax-console .found_records h4{
 		font-size: 13px;
 	}
 	.wpallimport-plugin .wpallimport-ready-to-go h4{
@@ -3189,7 +3250,9 @@
 		padding: 20px 10px 20px 10px;
 	}
 	.wpallimport-plugin #process_notice,
-	.wpallimport-plugin #import_finished h3{
+	.wpallimport-plugin #import_finished h3.wpallimport-complete-success,
+	.wpallimport-plugin #import_finished .wpallimport-complete-warning h3,
+	.wpallimport-plugin #import_finished .wpallimport-complete-warning h4{
 		font-size: 13px;
 	}
 	.wpallimport-plugin #import_progress{

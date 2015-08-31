@@ -31,7 +31,7 @@
 					<?php $this->warning() ?>
 				<?php endif ?>
 				
-				<?php $post_type = $post['custom_type']; ?>
+				<?php $post_type = $post['custom_type'];?>
 
 				<?php if ( in_array('caption', $visible_sections) ): ?>								
 
@@ -108,9 +108,10 @@
 
 					if ( in_array('featured', $visible_sections) ) {
 						$is_images_section_enabled = apply_filters('wp_all_import_is_images_section_enabled', true, $post_type);						
-						if ( $is_images_section_enabled ) {							
+						if ( $is_images_section_enabled ) {
 							PMXI_API::add_additional_images_section(__('Images', 'wp_all_import_plugin'), '', $post, $post_type, true, true);
 						}
+							
 						do_action('pmxi_extend_options_featured', $post_type, $post);
 					}
 
@@ -139,6 +140,10 @@
 				<hr>
 				
 				<div class="input wpallimport-section" style="padding-bottom: 8px; padding-left: 8px;">
+
+					<?php 
+						wp_all_import_template_notifications( $post, 'notice' );							
+					?>					
 										
 					<p style="margin: 11px; float: left;">
 						<input type="hidden" name="save_template_as" value="0" />

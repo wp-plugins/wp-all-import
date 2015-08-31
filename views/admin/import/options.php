@@ -40,6 +40,10 @@
 					<?php if ($this->warnings->get_error_codes()): ?>
 						<?php $this->warning() ?>
 					<?php endif ?>
+
+					<?php 
+						wp_all_import_template_notifications( $post );			
+					?>						
 				</div>											
 
 				<form class="<?php echo ! $isWizard ? 'edit' : 'options' ?>" method="post" enctype="multipart/form-data" autocomplete="off" <?php echo ! $isWizard ? 'style="overflow:visible;"' : '' ?>>

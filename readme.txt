@@ -1,7 +1,7 @@
 === Import any XML or CSV File to WordPress ===
 Contributors: soflyy, wpallimport 
-Requires at least: 3.6.1
-Tested up to: 4.2.2
+Requires at least: 4.1
+Tested up to: 4.3
 Stable tag: 3.3.0
 Tags: wordpress csv import, wordpress xml import, xml, csv, datafeed, import, migrate, import csv to wordpress, import xml to wordpress, advanced xml import, advanced csv import, bulk csv import, bulk xml import, bulk data import, xml to custom post type, csv to custom post type, woocommerce csv import, woocommerce xml import, csv import, import csv, xml import, import xml, csv importer
 
@@ -102,6 +102,21 @@ Does it work with special character encoding like Hebrew, Arabic, Chinese, etc?
 4. Manage imports.
 
 == Changelog ==
+
+= 3.3.1 =
+* fixed parsing CSV with empty lines
+* fixed parsing multiple IF statements
+* fixed preview in case when ‘Disable the visual editor when writing’ is enabled
+* fixed conflict with WooCommerce - Store Exporter Deluxe
+* added notifications for required addons
+* added support for wp all export bundle
+* added support for manual import bundle
+* added feature 'click to download import file'
+* added validation for excerpt and images sections
+* added auto-detect a broken Unique ID notification
+* added import template notifications
+* removed support for importing WooCommerce Orders
+* changed absolute paths to relative in db
 
 = 3.3.0 =
 * added new options to taxonomies import 'Try to match terms to existing child Product Categories' & 'Only assign Products to the imported Product Category, not the entire hierarchy'

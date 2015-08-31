@@ -49,4 +49,6 @@ function wp_delete_attachments($parent_id, $unlink = true, $type = 'images') {
 			clean_attachment_cache( $att_id );
 		}
 	}
+
+	return $ids;
 }

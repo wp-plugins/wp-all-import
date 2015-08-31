@@ -9,7 +9,7 @@ function pmxi_admin_notices() {
 		?>
 		<div class="error"><p>
 			<?php printf(
-					__('<b>%s Plugin</b>: Please update your WP All Import WooCommerce add-on to the latest version</a>', 'pmwi_plugin'),
+					__('<b>%s Plugin</b>: Please update your WP All Import WooCommerce add-on to the latest version', 'pmwi_plugin'),
 					PMWI_Plugin::getInstance()->getName()
 			) ?>
 		</p></div>
@@ -138,4 +138,5 @@ function pmxi_admin_notices() {
 			endif;
 		}
 	}	
+	wp_all_import_addon_notifications();	
 }

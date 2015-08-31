@@ -147,8 +147,9 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 									<strong><?php echo apply_filters("pmxi_import_name", (!empty($item['friendly_name'])) ? $item['friendly_name'] : $item['name'], $item['id']); ?></strong><br>																		
 
 									<?php if ($item['path']): ?>
+										<?php $item['path'] = wp_all_import_get_absolute_path($item['path']); ?>
 										<?php if ( in_array($item['type'], array('upload'))): ?>
-											<?php
+											<?php											
 											$path = $item['path'];
 											$path_parts = pathinfo($item['path']);
 											if ( ! empty($path_parts['dirname'])){
@@ -161,8 +162,10 @@ $columns = apply_filters('pmxi_manage_imports_columns', $columns);
 												}
 											}
 											?>
-											<em><a href="javascript:void(0);" class="wp_all_import_show_path" rel="<?php echo $item['path']; ?>"><?php echo $path; ?></a></em>
-										<?php else:?>
+											<em><a href="<?php echo add_query_arg(array('id' => $item['id'], 'action' => 'feed', '_wpnonce' => wp_create_nonce( '_wpnonce-download_feed' )), $this->baseUrl); ?>" class="wp_all_import_show_path" rel="<?php echo $item['path']; ?>"><?php echo preg_replace('%.*wp-content/%', 'wp-content/', $path); ?></a></em>
+										<?php elseif (in_array($item['type'], array('file'))):?>
+											<em><a href="<?php echo add_query_arg(array('id' => $item['id'], 'action' => 'feed', '_wpnonce' => wp_create_nonce( '_wpnonce-download_feed' )), $this->baseUrl); ?>" class="wp_all_import_show_path" rel="<?php echo $item['path']; ?>"><?php echo preg_replace('%.*wp-content/%', 'wp-content/', $item['path']); ?></a></em>
+										<?php else: ?>
 										<em><?php echo str_replace("\\", '/', preg_replace('%^(\w+://[^:]+:)[^@]+@%', '$1*****@', $item['path'])); ?></em>
 										<?php endif; ?>
 									<?php endif ?>
