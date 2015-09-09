@@ -106,6 +106,11 @@
 				<label for="is_update_parent"><?php _e('Parent post', 'wp_all_import_plugin') ?></label>
 			</div>	
 			<div class="input">
+				<input type="hidden" name="is_update_comment_status" value="0" />
+				<input type="checkbox" id="is_update_comment_status" name="is_update_comment_status" value="1" <?php echo $post['is_update_comment_status'] ? 'checked="checked"': '' ?> />
+				<label for="is_update_comment_status"><?php _e('Comment status', 'wp_all_import_plugin') ?></label>
+			</div>	
+			<div class="input">
 				<input type="hidden" name="is_update_attachments" value="0" />
 				<input type="checkbox" id="is_update_attachments" name="is_update_attachments" value="1" <?php echo $post['is_update_attachments'] ? 'checked="checked"': '' ?> />
 				<label for="is_update_attachments"><?php _e('Attachments', 'wp_all_import_plugin') ?></label>

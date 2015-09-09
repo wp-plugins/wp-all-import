@@ -226,7 +226,7 @@ class PMXI_Admin_Manage extends PMXI_Controller_Admin {
 
 				if ( in_array($item->type, array('upload'))){ // retrieve already uploaded file
 
-					$uploader = new PMXI_Upload(trim($item->path), $this->errors, rtrim(str_replace(basename($item->path), '', $item->path), '/'));			
+					$uploader = new PMXI_Upload(trim($item->path), $this->errors, rtrim(str_replace(basename($item->path), '', wp_all_import_get_absolute_path($item->path)), '/'));			
 					$upload_result = $uploader->upload();					
 					if ($upload_result instanceof WP_Error)
 						$this->errors = $upload_result;					

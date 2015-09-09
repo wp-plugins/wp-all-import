@@ -40,18 +40,7 @@ class PMXI_Admin_Settings extends PMXI_Controller_Admin {
 	
 	public function index() {
 
-		$this->data['post'] = $post = $this->input->post(PMXI_Plugin::getInstance()->getOption());
-
-		/*$addons = new PMXI_Admin_Addons();
-
-		$this->data['addons'] = $addons->get_premium_addons();*/
-
-		$this->data['addons']['PMXI_Plugin'] = array(
-			'title' => __('WP All Import', 'wp_all_import_plugin'),
-			'active' => (class_exists('PMXI_Plugin') and defined('PMXI_EDITION') and PMXI_EDITION == 'paid')
-		);
-
-		$this->data['addons'] = array_reverse($this->data['addons']);
+		$this->data['post'] = $post = $this->input->post(PMXI_Plugin::getInstance()->getOption());		
 		
 		if ($this->input->post('is_settings_submitted')) { // save settings form
 			check_admin_referer('edit-settings', '_wpnonce_edit-settings');

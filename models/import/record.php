@@ -909,21 +909,26 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 					}
 					
 					$logger and call_user_func($logger, sprintf(__('Find corresponding article among database for post `%s`...', 'wp_all_import_plugin'), $articleData['post_title']));
+					
+					if ('pid' == $this->options['duplicate_indicator']) {
+						$duplicate_id = $post_ids[$i];						
+					}
 					// handle duplicates according to import settings
-					if ($duplicates = pmxi_findDuplicates($articleData, $custom_duplicate_name[$i], $custom_duplicate_value[$i], $this->options['duplicate_indicator'])) {															
-						$duplicate_id = array_shift($duplicates);						
-						if ($duplicate_id) {	
-							$logger and call_user_func($logger, sprintf(__('Duplicate post was found for post `%s`...', 'wp_all_import_plugin'), $articleData['post_title']));
-							if ( $this->options['custom_type'] == 'import_users'){													
-								$post_to_update = get_user_by('id', $post_to_update_id = $duplicate_id);
-							}
-							else{
-								$post_to_update = get_post($post_to_update_id = $duplicate_id);
-							}
-						}	
+					elseif ($duplicates = pmxi_findDuplicates($articleData, $custom_duplicate_name[$i], $custom_duplicate_value[$i], $this->options['duplicate_indicator'])) {															
+						$duplicate_id = array_shift($duplicates);																
+					}					
+
+					if ( ! empty($duplicate_id)) {	
+						$logger and call_user_func($logger, sprintf(__('Duplicate post was found for post `%s`...', 'wp_all_import_plugin'), $articleData['post_title']));
+						if ( $this->options['custom_type'] == 'import_users'){													
+							$post_to_update = get_user_by('id', $post_to_update_id = $duplicate_id);
+						}
 						else{
-							$logger and call_user_func($logger, sprintf(__('Duplicate post wasn\'n found for post `%s`...', 'wp_all_import_plugin'), $articleData['post_title']));
-						}					
+							$post_to_update = get_post($post_to_update_id = $duplicate_id);
+						}
+					}	
+					else{
+						$logger and call_user_func($logger, sprintf(__('Duplicate post wasn\'n found for post `%s`...', 'wp_all_import_plugin'), $articleData['post_title']));
 					}					
 				}
 
@@ -1027,6 +1032,10 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 								$articleData['post_name'] = $post_to_update->post_name;			
 								$logger and call_user_func($logger, sprintf(__('Preserve slug of already existing article for `%s`', 'wp_all_import_plugin'), $articleData['post_title']));																	
 							}
+							elseif( ! empty($articleData['post_name']) and $articleData['post_name'] != $post_to_update->post_name)
+							{
+								update_post_meta($pid, '_wp_old_slug', $post_to_update->post_name);
+							}
 							if ( ! $this->options['is_update_excerpt']){ 
 								$articleData['post_excerpt'] = $post_to_update->post_excerpt;
 								$logger and call_user_func($logger, sprintf(__('Preserve excerpt of already existing article for `%s`', 'wp_all_import_plugin'), $articleData['post_title']));																				
@@ -1038,6 +1047,10 @@ class PMXI_Import_Record extends PMXI_Model_Record {
 							if ( ! $this->options['is_update_parent']){ 
 								$articleData['post_parent'] = $post_to_update->post_parent;
 								$logger and call_user_func($logger, sprintf(__('Preserve post parent of already existing article for `%s`', 'wp_all_import_plugin'), $articleData['post_title']));								
+							}
+							if ( ! $this->options['is_update_comment_status']){ 
+								$articleData['comment_status'] = $post_to_update->comment_status;
+								$logger and call_user_func($logger, sprintf(__('Preserve comment status of already existing article for `%s`', 'wp_all_import_plugin'), $articleData['post_title']));								
 							}
 							if ( ! $this->options['is_update_author']){ 
 								$articleData['post_author'] = $post_to_update->post_author;

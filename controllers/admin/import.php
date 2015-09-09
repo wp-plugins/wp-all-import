@@ -1723,7 +1723,11 @@ class PMXI_Admin_Import extends PMXI_Controller_Admin {
 				if ('' == $post['custom_duplicate_value'])
 					$this->errors->add('form-validation', __('Custom field value must be specified.', 'wp_all_import_plugin'));
 			}
-
+			if ( 'manual' == $post['duplicate_matching'] and 'pid' == $post['duplicate_indicator']){
+				if ('' == $post['pid_xpath'])
+					$this->errors->add('form-validation', __('Post ID must be specified.', 'wp_all_import_plugin'));				
+			}
+			
 			// Categories/taxonomies logic
 			if ($post['update_categories_logic'] == 'only' and ! empty($post['taxonomies_only_list'])){
 				$post['taxonomies_list'] = explode(",", $post['taxonomies_only_list']); 

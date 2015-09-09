@@ -99,15 +99,24 @@
 											<input type="radio" id="duplicate_indicator_title" class="switcher" name="duplicate_indicator" value="title" <?php echo 'title' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
 											<label for="duplicate_indicator_title"><?php _e('Title', 'wp_all_import_plugin' )?></label><br>
 											<input type="radio" id="duplicate_indicator_content" class="switcher" name="duplicate_indicator" value="content" <?php echo 'content' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
-											<label for="duplicate_indicator_content"><?php _e('Content', 'wp_all_import_plugin' )?></label><br>
-											<input type="radio" id="duplicate_indicator_custom_field" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
-											<label for="duplicate_indicator_custom_field"><?php _e('Custom field', 'wp_all_import_plugin' )?></label><br>
-											<span class="switcher-target-duplicate_indicator_custom_field" style="vertical-align:middle; padding-left:17px;">
-												<?php _e('Name', 'wp_all_import_plugin') ?>
-												<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" />
-												<?php _e('Value', 'wp_all_import_plugin') ?>
-												<input type="text" name="custom_duplicate_value" value="<?php echo esc_attr($post['custom_duplicate_value']) ?>" />
-											</span>
+											<label for="duplicate_indicator_content"><?php _e('Content', 'wp_all_import_plugin' )?></label><br>											
+											<div class="input">
+												<input type="radio" id="duplicate_indicator_custom_field" class="switcher" name="duplicate_indicator" value="custom field" <?php echo 'custom field' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
+												<label for="duplicate_indicator_custom_field"><?php _e('Custom field', 'wp_all_import_plugin' )?></label><br>
+												<span class="switcher-target-duplicate_indicator_custom_field" style="vertical-align:middle; padding-left:17px;">
+													<?php _e('Name', 'wp_all_import_plugin') ?>
+													<input type="text" name="custom_duplicate_name" value="<?php echo esc_attr($post['custom_duplicate_name']) ?>" />
+													<?php _e('Value', 'wp_all_import_plugin') ?>
+													<input type="text" name="custom_duplicate_value" value="<?php echo esc_attr($post['custom_duplicate_value']) ?>" />
+												</span>
+											</div>
+											<div class="input">
+												<input type="radio" id="duplicate_indicator_pid" class="switcher" name="duplicate_indicator" value="pid" <?php echo 'pid' == $post['duplicate_indicator'] ? 'checked="checked"': '' ?>/>
+												<label for="duplicate_indicator_pid"><?php _e('Post ID', 'wp_all_import_plugin' )?></label><br>
+												<span class="switcher-target-duplicate_indicator_pid" style="vertical-align:middle; padding-left:17px;">												
+													<input type="text" name="pid_xpath" value="<?php echo esc_attr($post['pid_xpath']) ?>" />
+												</span>
+											</div>
 										</div>
 									</div>
 								</div>								

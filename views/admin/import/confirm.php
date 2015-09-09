@@ -161,6 +161,7 @@
 						
 							<?php
 							$criteria = '';
+							if ( 'pid' == $post['duplicate_indicator']) $criteria = 'has the same ID';
 							if ( 'title' == $post['duplicate_indicator']) $criteria = 'has the same Title';
 							if ( 'content' == $post['duplicate_indicator']) $criteria = 'has the same Content';
 							if ( 'custom field' == $post['duplicate_indicator']) $criteria = 'has Custom Field named "'. $post['custom_duplicate_name'] .'" with value = ' . $post['custom_duplicate_value'];
